@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Callable, Iterable
 
 DEFAULT_INDEX_PATH = Path(__file__).resolve().parent / "servants.json"
+# Hand-curated NPC/boss units (the Beasts, story bosses). Maintained by hand and kept
+# out of the Atlas sync, so re-running scripts/sync_atlas.py never clobbers them.
+DEFAULT_NPC_PATH = Path(__file__).resolve().parent / "npc_servants.json"
 
 
 @dataclass(frozen=True)
@@ -19,6 +22,8 @@ class Servant:
     figure: dict[str, str]  # charaFigure ascension -> URL (guess_shadow)
     face: str | None = None  # Atlas face portrait (host avatars)
     cv: str | None = None    # seiyuu / voice actor (Atlas profile.cv)
+    npc: bool = False        # hand-curated enemy/boss; art game only (npc_servants.json)
+    aliases: tuple[str, ...] = ()  # extra accepted answers for NPCs (normalized at match)
 
     def assets(self, kind: str) -> dict[str, str]:
         return self.figure if kind == "figure" else self.art
@@ -31,14 +36,24 @@ class ServantIndex:
         self._spaced_names: tuple[str, ...] | None = None  # lazy cache for uniqueness checks
 
     @classmethod
-    def load(cls, path: Path | str = DEFAULT_INDEX_PATH) -> "ServantIndex":
+    def load(
+        cls,
+        path: Path | str = DEFAULT_INDEX_PATH,
+        npc_path: Path | str = DEFAULT_NPC_PATH,
+    ) -> "ServantIndex":
         p = Path(path)
         if not p.exists():
             raise FileNotFoundError(
                 f"Servant index not found at {p}. "
                 "Run `python scripts/sync_atlas.py` to build it."
             )
-        raw = json.loads(p.read_text())
+        # (record, is_npc): Atlas-synced playable servants, then any hand-curated NPC
+        # bosses. NPCs share this index so matching, reveals, and restrictions treat
+        # them uniformly; the npc flag is what keeps them out of the shadow/voice pools.
+        raw = [(item, False) for item in json.loads(p.read_text())]
+        npc_p = Path(npc_path)
+        if npc_p.exists():
+            raw += [(item, True) for item in json.loads(npc_p.read_text())]
         servants = (
             Servant(
                 id=item["id"],
@@ -49,8 +64,10 @@ class ServantIndex:
                 figure={str(k): v for k, v in item.get("figure", {}).items() if v},
                 face=item.get("face"),
                 cv=item.get("cv"),
+                npc=is_npc or bool(item.get("npc")),
+                aliases=tuple(item.get("aliases", ())),
             )
-            for item in raw
+            for item, is_npc in raw
         )
         return cls(s for s in servants if s.art or s.figure)
 
@@ -122,7 +139,9 @@ class ServantIndex:
         NON-restricted ascension for the safe reveal art, or None if every ascension
         is restricted (the reveal then shows no image)."""
         gate = allow or (lambda _sid, _asc: True)
-        servants = [s for s in self._by_id.values() if s.art]
+        # NPC/boss units are art-game only: skip them so the voice game never lands on
+        # a unit with no voice lines.
+        servants = [s for s in self._by_id.values() if s.art and not s.npc]
         if not servants:
             return None
         servant = random.choice(servants)

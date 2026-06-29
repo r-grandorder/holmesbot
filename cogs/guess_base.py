@@ -252,6 +252,12 @@ class ChatRound:
         if self.claimed:
             return
         aliases = self.bot.aliases.for_servant(self.servant.id)
+        if self.servant.aliases:
+            # NPC bosses carry their accepted answers statically (npc_servants.json);
+            # fold them in alongside any DB-curated aliases, normalized to match.
+            aliases = aliases | frozenset(
+                matching.normalize(a) for a in self.servant.aliases
+            )
         if matching.is_correct_guess(
             message.content,
             self.servant.name,
