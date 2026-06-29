@@ -8,6 +8,7 @@ import discord
 from aiohttp import web
 from discord.ext import commands
 
+import branding
 from config import Config
 from data import host
 from data.servants import ServantIndex
@@ -81,6 +82,7 @@ class HolmesBot(commands.Bot):
 
         await self._start_health_server()
 
+        branding.configure(self.config.qp_emote)
         for ext in COGS:
             await self.load_extension(ext)
 

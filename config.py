@@ -22,6 +22,7 @@ class Config:
     health_port: int
     log_level: str
     assets_base_url: str | None
+    qp_emote: str
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -38,6 +39,7 @@ class Config:
             health_port=int(os.environ.get("HEALTH_PORT", "8080")),
             log_level=os.environ.get("LOG_LEVEL", "INFO").upper(),
             assets_base_url=(os.environ.get("ASSETS_BASE_URL") or "").rstrip("/") or None,
+            qp_emote=os.environ.get("QP_EMOTE", "QP"),
         )
 
 

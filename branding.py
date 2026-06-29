@@ -1,15 +1,26 @@
 """Shared branding: the QP currency emote and formatting helper."""
 from __future__ import annotations
 
-# The bot's application emote for QP. Custom emoji render by ID, so the name part
-# is cosmetic. If it ever shows as raw text, confirm the emote is static (a
-# leading "a:" is needed for animated emotes).
-QP_EMOTE = "<:qp:1519844883408355358>"
+# The QP emote is per-application (a custom emote's ID belongs to one bot app), so
+# it comes from config (the QP_EMOTE env var) and is set once at startup via
+# configure(). Falls back to plain text "QP" if unset, which renders fine.
+_QP_EMOTE = "QP"
+
+
+def configure(emote: str) -> None:
+    """Set the QP emote from config. Called once at startup, before cogs load."""
+    global _QP_EMOTE
+    _QP_EMOTE = emote or "QP"
+
+
+def qp_emote() -> str:
+    """The configured QP emote string (a custom-emote ref, or the fallback text)."""
+    return _QP_EMOTE
 
 
 def qp(amount: int) -> str:
     """Format an amount as QP, e.g. '1,234 <:qp:...>'."""
-    return f"{amount:,} {QP_EMOTE}"
+    return f"{amount:,} {_QP_EMOTE}"
 
 
 MAX_QP = 100_000_000_000  # 100 billion: per-user cap, enforced in the scoring service

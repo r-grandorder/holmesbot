@@ -11,7 +11,7 @@ from typing import Awaitable, Callable
 import aiohttp
 import discord
 
-from branding import QP_EMOTE, qp
+from branding import qp, qp_emote
 from data import host, matching
 from data.servants import Servant
 from permissions import is_mod
@@ -29,7 +29,6 @@ TITLES = {
 
 WIN_REACTION = "\N{WHITE HEAVY CHECK MARK}"
 WRONG_REACTION = "\N{CROSS MARK}"
-QP_REACTION = discord.PartialEmoji.from_str(QP_EMOTE)  # custom QP emote, for the win
 FORFEIT_EMOTE = "\N{WAVING WHITE FLAG}\N{VARIATION SELECTOR-16}"  # vote-to-give-up react
 FORFEIT_VOTES = 3  # distinct humans whose reaction ends the round
 HINT_REWARD = (1.0, 0.6, 0.3)  # win multiplier by hints used (0, 1, 2): hints cost QP
@@ -269,7 +268,7 @@ class ChatRound:
         total = await self.bot.scoring.award(message.guild.id, message.author.id, award)
         await self.bot.games.resolve(self.game_id, "win", message.author.id, award)
         await self._react(message, WIN_REACTION)
-        await self._react(message, QP_REACTION)
+        await self._react(message, discord.PartialEmoji.from_str(qp_emote()))
         # Post the FULL reveal at the bottom, where the action is -- nobody
         # backscrolls to the prompt -- tagging the winner with their reward.
         praise = host.line(self.host_id, "correct", player=message.author.display_name)
@@ -537,7 +536,7 @@ async def launch_round(
             title=title,
             description=(
                 f"*{intro}*\n\n{how} "
-                f"Reward: **{points:,}** {QP_EMOTE}.\n"
+                f"Reward: **{points:,}** {qp_emote()}.\n"
                 f"Game ends <t:{int(expires_at.timestamp())}:R>."
             ),
         )
