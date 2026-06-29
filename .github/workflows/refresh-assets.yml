@@ -4,9 +4,9 @@ name: Refresh assets
 # from Atlas Academy, re-extracts silhouettes to S3, and commits the updated
 # shadows.json. That commit triggers Deploy, which re-bakes the servant index
 # into the image -- so new NA servants flow into every game with no manual work.
+# Paused: this refresh is AWS/S3-coupled and will be reworked alongside the
+# self-hosted asset hosting. Manual-only for now so it does not fail on a schedule.
 on:
-  schedule:
-    - cron: "0 9 * * 1" # Mondays 09:00 UTC
   workflow_dispatch:
 
 permissions:
