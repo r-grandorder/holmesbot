@@ -20,7 +20,7 @@ RUN python scripts/sync_atlas.py
 
 # The SQLite database lives on a mounted volume so it survives container
 # replacement (watchtower pulls a new image and recreates the container).
-ENV DATABASE_URL=sqlite:/data/bunyanbot.sqlite3
+ENV DATABASE_URL=sqlite:/data/holmesbot.sqlite3
 VOLUME ["/data"]
 
 # Run migrations, then start the bot. `exec` makes python PID 1 so it receives

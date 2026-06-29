@@ -1,4 +1,4 @@
-# Bunyan Bot
+# Holmes Bot
 
 A Fate/Grand Order guessing-game Discord bot (clean rebuild) for the r/grandorder server.
 Games: `/guess_servant`, `/guess_shadow`, and an audio mode. Lifetime points + leaderboard,
@@ -40,7 +40,7 @@ The bot uses a local SQLite database (no separate DB server). `dbmate` applies t
 migrations in `database/migrations/` on startup. Inspect it with the `sqlite3` CLI:
 
 ```bash
-sqlite3 ./database/bunyanbot.sqlite3 ".tables"
+sqlite3 ./database/holmesbot.sqlite3 ".tables"
 ```
 
 ## Secrets

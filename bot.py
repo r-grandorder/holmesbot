@@ -19,7 +19,7 @@ from services.guild_config import GuildConfigService
 from services.restrictions import RestrictionService
 from services.scoring import ScoringService
 
-log = logging.getLogger("bunyanbot")
+log = logging.getLogger("holmesbot")
 
 COGS = (
     "cogs.guess_servant",
@@ -31,7 +31,7 @@ COGS = (
 )
 
 
-class BunyanBot(commands.Bot):
+class HolmesBot(commands.Bot):
     def __init__(self, config: Config) -> None:
         intents = discord.Intents.default()
         intents.message_content = True  # players guess by typing in chat
@@ -128,7 +128,7 @@ async def main() -> None:
         level=config.log_level,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-    bot = BunyanBot(config)
+    bot = HolmesBot(config)
     async with bot:
         await bot.start(config.discord_token)
 

@@ -1,4 +1,4 @@
-# Bunyan Bot
+# Holmes Bot
 
 A clean, from-scratch Fate/Grand Order guessing-game Discord bot for the r/grandorder server.
 This file is the durable project context. Read it first.
