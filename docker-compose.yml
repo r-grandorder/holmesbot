@@ -1,0 +1,40 @@
+# Self-hosted deployment for Holmes Bot.
+#
+# One bot container with a persistent volume for its SQLite database; watchtower
+# auto-updates it whenever CI pushes a new :latest image to GHCR.
+#
+#   cp .env.example .env   # fill in the Discord token + ASSETS_BASE_URL
+#   docker compose up -d
+#
+# See DEPLOY.md for details.
+services:
+  bot:
+    image: ghcr.io/r-grandorder/holmesbot:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Always keep the DB on the volume, regardless of what .env says.
+      DATABASE_URL: sqlite:/data/holmesbot.sqlite3
+    volumes:
+      - holmes-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  watchtower:
+    image: containrrr/watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Private GHCR package? Also mount a docker config holding a read:packages token:
+      #   - ~/.docker/config.json:/config.json:ro
+    # Only update containers labeled watchtower.enable=true (the bot), every 5 min.
+    command: --cleanup --label-enable --interval 300
+
+volumes:
+  holmes-data:
