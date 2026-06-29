@@ -131,6 +131,7 @@ class ChatRound:
         ascension: str,
         points: int,
         build_reveal: MediaBuilder,
+        prompt: Media | None = None,
         replay: "Callable[[discord.Interaction], Awaitable[None]] | None" = None,
     ) -> None:
         self.bot = bot
@@ -140,6 +141,9 @@ class ChatRound:
         self.ascension = ascension
         self.points = points
         self._build_reveal = build_reveal
+        # The prompt asset (cropped art / silhouette / mp3) is kept so we can leave it
+        # visible on the prompt after the round ends, for retrospect.
+        self.prompt = prompt
         self.replay = replay
         self.channel_id: int | None = None
         self.message: discord.Message | None = None
@@ -308,8 +312,16 @@ class ChatRound:
             log.exception("failed to post reveal for game %s", self.game_id)
 
     async def _slim_prompt(self, note: str) -> None:
+        """Edit the now-buried prompt to a terminal state but KEEP its cropped image /
+        audio clip, so players can scroll back and see what the round asked. The crop
+        or mp3 is re-uploaded (attachment://) so it stays inside the embed; a remote-URL
+        silhouette is just re-pointed and needs no attachment."""
         embed = discord.Embed(title=f"It was {self.servant.name}!", description=note)
-        await self._edit_prompt(embed=embed, attachments=[])
+        file = _attach(embed, self.prompt)
+        kwargs: dict = {"embed": embed}
+        if file is not None:
+            kwargs["attachments"] = [file]
+        await self._edit_prompt(**kwargs)
 
     async def _edit_prompt(self, **kwargs) -> None:
         """Edit the prompt via the CHANNEL (bot auth), not the interaction followup
@@ -513,6 +525,7 @@ async def launch_round(
             ascension=ascension,
             points=points,
             build_reveal=build_reveal,
+            prompt=prompt,
             # No Play Again in a non-game channel (a mod-triggered one-off): regular
             # players can't start rounds there, so the button would only reject them.
             replay=_replay if channel_is_game else None,
@@ -569,7 +582,13 @@ async def tidy_old_prompt(bot, channel_id: int, message_id, answer_name: str) ->
     try:
         msg = await channel.fetch_message(message_id)
         embed = discord.Embed(title=f"It was {answer_name}!", description="Round ended.")
-        await msg.edit(embed=embed, attachments=[])
+        # Keep the prompt's image / clip for retrospect. An uploaded crop or mp3 stays
+        # as long as we don't clear attachments; a remote-URL image (no attachment of
+        # its own) has to be re-set on the new embed.
+        old = msg.embeds[0] if msg.embeds else None
+        if old is not None and old.image.url and not msg.attachments:
+            embed.set_image(url=old.image.url)
+        await msg.edit(embed=embed)
     except discord.HTTPException:
         pass
 
