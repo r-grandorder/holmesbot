@@ -36,8 +36,8 @@ jobs:
           python scripts/precompute_silhouettes.py
       - name: Commit refreshed manifest if changed
         run: |
-          git config user.name "bunyanbot-refresh[bot]"
-          git config user.email "noreply@bunyanbot.com"
+          git config user.name "holmesbot-refresh[bot]"
+          git config user.email "noreply@holmesbot.com"
           git add data/shadows.json
           if git diff --cached --quiet; then
             echo "No manifest changes."

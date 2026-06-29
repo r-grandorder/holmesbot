@@ -1,7 +1,4 @@
-# Copy to terraform.tfvars (gitignored) and fill in real values.
-
-db_password = "CHANGE_ME_to_a_strong_random_password"
-
-discord_application_id = "000000000000000000"
-discord_bot_token      = "your-bot-token"
-discord_client_secret  = "your-oauth2-client-secret"
+# All variables have defaults, so terraform.tfvars is optional. Override here if needed:
+# aws_region   = "us-east-1"
+# project_name = "holmesbot"
+# github_repo  = "r-grandorder/holmesbot"

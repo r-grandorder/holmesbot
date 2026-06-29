@@ -10,19 +10,15 @@ terraform {
       source  = "hashicorp/tls"
       version = "~> 4.0"
     }
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.5"
-    }
   }
 
-  # Remote state. Uncomment after the one-time bootstrap of the S3 bucket +
-  # DynamoDB lock table (see README). Until then state is local.
+  # Remote state. Uncomment after a one-time bootstrap of the S3 bucket + DynamoDB
+  # lock table. Until then state is local.
   # backend "s3" {
-  #   bucket         = "bunyanbot-tfstate"
+  #   bucket         = "holmesbot-tfstate"
   #   key            = "infra/terraform.tfstate"
   #   region         = "us-east-1"
-  #   dynamodb_table = "bunyanbot-tflock"
+  #   dynamodb_table = "holmesbot-tflock"
   #   encrypt        = true
   # }
 }
