@@ -134,7 +134,7 @@ def main() -> int:
         "ON CONFLICT (servant_id, norm) DO NOTHING;\n\n"
         "-- migrate:down\n"
         "DELETE FROM servant_aliases\n"
-        f"WHERE (servant_id, norm) IN (\n{down_vals}\n);\n"
+        f"WHERE (servant_id, norm) IN (VALUES\n{down_vals}\n);\n"
     )
     MIGRATION.write_text(migration)
 

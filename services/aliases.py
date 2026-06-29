@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 from collections import defaultdict
-
-import asyncpg
+from typing import TYPE_CHECKING
 
 from data import matching
+
+if TYPE_CHECKING:
+    from db import Pool, Row
 
 
 class AliasService:
     """Admin-curated accepted names per servant. Global. Cached in memory and
     reloaded on change, so the hot path (a guess) is an in-memory set lookup."""
 
-    def __init__(self, pool: asyncpg.Pool) -> None:
+    def __init__(self, pool: "Pool") -> None:
         self.pool = pool
         self._by_servant: dict[int, frozenset[str]] = {}
         self._all_terms: frozenset[str] = frozenset()
@@ -53,7 +55,7 @@ class AliasService:
         await self.reload()
         return res == "DELETE 1"
 
-    async def list_for(self, servant_id: int) -> list[asyncpg.Record]:
+    async def list_for(self, servant_id: int) -> "list[Row]":
         return await self.pool.fetch(
             "SELECT * FROM servant_aliases WHERE servant_id = $1 ORDER BY id", servant_id
         )

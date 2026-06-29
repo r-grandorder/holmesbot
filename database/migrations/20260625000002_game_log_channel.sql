@@ -1,5 +1,5 @@
 -- migrate:up
-ALTER TABLE guild_config ADD COLUMN IF NOT EXISTS log_channel_id BIGINT;
+ALTER TABLE guild_config ADD COLUMN log_channel_id INTEGER;
 
 -- migrate:down
-ALTER TABLE guild_config DROP COLUMN IF EXISTS log_channel_id;
+ALTER TABLE guild_config DROP COLUMN log_channel_id;

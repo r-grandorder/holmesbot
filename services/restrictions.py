@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 from collections import defaultdict
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
-import asyncpg
+if TYPE_CHECKING:
+    from db import Pool
 
 
 class RestrictionService:
@@ -13,7 +15,7 @@ class RestrictionService:
     gate the eligible pool; the same rules also govern reveal art in the cogs.
     """
 
-    def __init__(self, pool: asyncpg.Pool) -> None:
+    def __init__(self, pool: "Pool") -> None:
         self.pool = pool
 
     async def build_allow(self) -> Callable[[int, str], bool]:
@@ -26,7 +28,7 @@ class RestrictionService:
             if r["scope"] == "full":
                 full.add(r["servant_id"])
             else:
-                per_ascension[r["servant_id"]].update(r["ascension_keys"])
+                per_ascension[r["servant_id"]].update(json.loads(r["ascension_keys"]))
 
         def allow(servant_id: int, ascension_key: str) -> bool:
             if servant_id in full:
@@ -50,7 +52,7 @@ class RestrictionService:
             """,
             servant_id,
             scope,
-            ascension_keys,
+            json.dumps(ascension_keys),
             reason,
             added_by,
         )
@@ -61,7 +63,13 @@ class RestrictionService:
         )
         return res == "DELETE 1"
 
-    async def list_all(self) -> list[asyncpg.Record]:
-        return await self.pool.fetch(
+    async def list_all(self) -> list[dict]:
+        rows = await self.pool.fetch(
             "SELECT * FROM restricted_servants ORDER BY servant_id, id"
         )
+        result: list[dict] = []
+        for r in rows:
+            d = {k: r[k] for k in r.keys()}
+            d["ascension_keys"] = json.loads(d["ascension_keys"])
+            result.append(d)
+        return result

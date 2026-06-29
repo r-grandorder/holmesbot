@@ -1,5 +1,5 @@
 aiohttp
-asyncpg
+aiosqlite
 discord.py
 pillow
 python-dotenv

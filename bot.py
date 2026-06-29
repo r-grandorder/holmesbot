@@ -98,8 +98,6 @@ class BunyanBot(commands.Bot):
             await self.tree.sync()
             log.info("synced commands globally")
 
-        await self._acquire_gateway_lock()
-
     async def _start_health_server(self) -> None:
         async def health(_request: web.Request) -> web.Response:
             return web.Response(text="ok")
@@ -111,14 +109,6 @@ class BunyanBot(commands.Bot):
         await web.TCPSite(runner, "0.0.0.0", self.config.health_port).start()
         self._health_runner = runner
         log.info("health server listening on :%d", self.config.health_port)
-
-    async def _acquire_gateway_lock(self) -> None:
-        # Blocks until we hold the single gateway lock. /health already returns 200,
-        # so ECS keeps this task alive while it waits for the old task to let go.
-        while not await self.db.try_acquire_gateway_lock():
-            log.info("waiting for gateway advisory lock...")
-            await asyncio.sleep(2)
-        log.info("acquired gateway advisory lock")
 
     async def on_ready(self) -> None:
         log.info("connected as %s", self.user)

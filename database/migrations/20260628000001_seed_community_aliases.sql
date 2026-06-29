@@ -1333,7 +1333,7 @@ ON CONFLICT (servant_id, norm) DO NOTHING;
 
 -- migrate:down
 DELETE FROM servant_aliases
-WHERE (servant_id, norm) IN (
+WHERE (servant_id, norm) IN (VALUES
   (100100, 'altria'),
   (100100, 'artoria'),
   (100100, 'bluenero'),

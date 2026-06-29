@@ -10,4 +10,4 @@ run:
 	python bot.py
 
 migrate:
-	dbmate -d ./database/migrations up
+	dbmate -d ./database/migrations --no-dump-schema up

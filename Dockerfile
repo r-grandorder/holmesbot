@@ -18,6 +18,11 @@ COPY . .
 # container does no cold-start fetch. (Generated file is gitignored.)
 RUN python scripts/sync_atlas.py
 
+# The SQLite database lives on a mounted volume so it survives container
+# replacement (watchtower pulls a new image and recreates the container).
+ENV DATABASE_URL=sqlite:/data/bunyanbot.sqlite3
+VOLUME ["/data"]
+
 # Run migrations, then start the bot. `exec` makes python PID 1 so it receives
-# SIGTERM from ECS directly -- needed to release the gateway advisory lock cleanly.
-CMD ["sh", "-c", "dbmate -d ./database/migrations up && exec python bot.py"]
+# SIGTERM directly for a clean shutdown.
+CMD ["sh", "-c", "dbmate -d ./database/migrations --no-dump-schema up && exec python bot.py"]

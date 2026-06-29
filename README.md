@@ -2,7 +2,7 @@
 
 A Fate/Grand Order guessing-game Discord bot (clean rebuild) for the r/grandorder server.
 Games: `/guess_servant`, `/guess_shadow`, and an audio mode. Lifetime points + leaderboard,
-no spendable currency. Hosted on AWS ECS Fargate with a Postgres backend.
+no spendable currency. SQLite backend; runs as a single self-hosted Docker container.
 
 ## Layout
 
@@ -34,17 +34,14 @@ terraform apply
 Remote state (S3 + DynamoDB lock) is stubbed in `versions.tf`; uncomment it after
 creating the bucket + lock table if you want shared state. Local state works until then.
 
-### Database access (bastion tunnel)
+### Database
 
-RDS has no public endpoint. After `apply`, terraform prints a ready-to-use tunnel command:
+The bot uses a local SQLite database (no separate DB server). `dbmate` applies the
+migrations in `database/migrations/` on startup. Inspect it with the `sqlite3` CLI:
 
 ```bash
-terraform output -raw db_tunnel_command   # opens an SSH tunnel to localhost:5432
-# in another shell:
-psql "host=localhost port=5432 dbname=bunyanbot user=bunyanbot sslmode=require"
+sqlite3 ./database/bunyanbot.sqlite3 ".tables"
 ```
-
-`~/.pgpass` and `~/.pg_service_info` get a `localhost:5432` entry so plain `psql` works.
 
 ## Secrets
 

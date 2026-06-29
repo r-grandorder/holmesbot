@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import datetime as dt
+from typing import TYPE_CHECKING
 
-import asyncpg
+if TYPE_CHECKING:
+    from db import Pool, Row
 
 
 class GameService:
     """Durable round state. Rounds live in `active_games`, not process memory, so a
     deploy or crash can't strand them; resolution is idempotent (status-guarded)."""
 
-    def __init__(self, pool: asyncpg.Pool) -> None:
+    def __init__(self, pool: "Pool") -> None:
         self.pool = pool
 
     async def open_round(
@@ -86,10 +88,10 @@ class GameService:
     async def sweep_expired(self) -> None:
         await self.pool.execute(
             "UPDATE active_games SET status = 'expired' "
-            "WHERE status = 'active' AND expires_at < now()"
+            "WHERE status = 'active' AND expires_at < CURRENT_TIMESTAMP"
         )
 
-    async def close_all_active(self) -> list[asyncpg.Record]:
+    async def close_all_active(self) -> "list[Row]":
         """Mark every still-active round superseded; return their rows. Used once on
         startup to tidy rounds orphaned by a restart (their in-memory handler/timer
         is gone, so the prompt would otherwise sit forever showing 'type the name')."""
