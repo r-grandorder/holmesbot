@@ -1,0 +1,4 @@
+# Offline precompute pipeline only (NOT shipped in the bot image).
+boto3
+numpy
+pillow

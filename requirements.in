@@ -1,0 +1,6 @@
+aiohttp
+asyncpg
+discord.py
+pillow
+python-dotenv
+rapidfuzz

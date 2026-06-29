@@ -1,0 +1,26 @@
+# Secrets — never commit
+terraform/terraform.tfvars
+terraform/.secrets/
+.env
+*.pem
+*.tfstate
+*.tfstate.*
+
+# Terraform
+**/.terraform/*
+*.tfplan
+crash.log
+
+# Python (bot app, later)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
+
+data/servants.json
+scripts/data/community_aliases_review.txt
+
+test_output/

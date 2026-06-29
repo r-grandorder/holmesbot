@@ -1,0 +1,47 @@
+name: Refresh assets
+
+# Fully automated servant refresh. Weekly (and on demand) it re-syncs the index
+# from Atlas Academy, re-extracts silhouettes to S3, and commits the updated
+# shadows.json. That commit triggers Deploy, which re-bakes the servant index
+# into the image -- so new NA servants flow into every game with no manual work.
+on:
+  schedule:
+    - cron: "0 9 * * 1" # Mondays 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  id-token: write # OIDC to AWS
+  contents: write # commit the refreshed manifest
+
+concurrency: refresh-assets
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+      - name: Sync index + precompute silhouettes
+        env:
+          ASSETS_BUCKET: bunyanbot-assets-327760835875
+        run: |
+          pip install -r scripts/requirements-precompute.txt
+          python scripts/sync_atlas.py
+          python scripts/precompute_silhouettes.py
+      - name: Commit refreshed manifest if changed
+        run: |
+          git config user.name "bunyanbot-refresh[bot]"
+          git config user.email "noreply@bunyanbot.com"
+          git add data/shadows.json
+          if git diff --cached --quiet; then
+            echo "No manifest changes."
+          else
+            git commit -m "chore: refresh shadow manifest (scheduled)"
+            git push
+          fi

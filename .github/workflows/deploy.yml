@@ -1,0 +1,73 @@
+name: Deploy
+
+# Build the bot image, push it to ECR, and roll the ECS Fargate service.
+#
+# Auth is keyless via GitHub OIDC (the github_ci IAM role trusts only pushes to
+# refs/heads/main of this repo). No long-lived AWS keys.
+#
+# Required GitHub repo variable
+# (Settings -> Secrets and variables -> Actions -> Variables tab):
+#   AWS_DEPLOY_ROLE_ARN = ARN of the github_ci IAM role (terraform output: github_ci_role_arn)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write # required to request the OIDC token
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: build
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          IMAGE_SHA="$ECR_REGISTRY/bunyanbot:${{ github.sha }}"
+          IMAGE_LATEST="$ECR_REGISTRY/bunyanbot:latest"
+          # Dockerfile lives at the repo root; build context is the repo root.
+          docker build -t "$IMAGE_SHA" -t "$IMAGE_LATEST" .
+          docker push "$IMAGE_SHA"
+          docker push "$IMAGE_LATEST"
+          echo "image=$IMAGE_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Download current task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition bunyanbot-bot \
+            --query 'taskDefinition' \
+            | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .deregisteredAt)' \
+            > task-definition.json
+
+      - name: Render task definition with new image
+        id: render
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: bot
+          image: ${{ steps.build.outputs.image }}
+
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          service: bunyanbot-bot
+          cluster: bunyanbot
+          wait-for-service-stability: true
