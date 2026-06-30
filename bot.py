@@ -29,6 +29,7 @@ COGS = (
     "cogs.chat_guess",
     "cogs.economy",
     "cogs.admin",
+    "cogs.guess_random",
 )
 
 

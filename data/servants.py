@@ -224,3 +224,14 @@ class ServantIndex:
         servant = random.choice(servants)
         safe = [k for k in servant.art if gate(servant.id, k)]
         return servant, (random.choice(safe) if safe else None)
+
+    def count_matching(
+        self, filt: "ServantFilter | None", include_jp: bool = False
+    ) -> int:
+        """How many art-bearing servants match `filt` in the given pool. Used by
+        /guessrandom to avoid rolling a filter combo with no servants."""
+        return sum(
+            1
+            for s in self._by_id.values()
+            if s.art and (include_jp or not s.jp) and (filt is None or filt.matches(s))
+        )
