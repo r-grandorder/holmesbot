@@ -154,6 +154,8 @@ class ChatRound:
         self.vote_message: discord.Message | None = None
         self.vote_reactors: set[int] = set()
         self._timeout_task: asyncio.Task | None = None
+        # EN rounds (include_jp False) ignore JP-only servant names typed in chat.
+        self.include_jp = False
         # Reposting the prompt so it doesn't scroll away (config REPOST_AFTER). The
         # built prompt embed is kept so a repost is a faithful copy.
         self.prompt_embed: discord.Embed | None = None
@@ -277,11 +279,11 @@ class ChatRound:
             message.content,
             self.servant.name,
             aliases=aliases,
-            all_names=self.bot.servants.spaced_names(),
+            all_names=self.bot.servants.spaced_names(self.include_jp),
         ):
             await self._win(message)
         elif self.bot.servants.resembles_servant(
-            message.content, extra=self.bot.aliases.all_terms()
+            message.content, extra=self.bot.aliases.all_terms(), include_jp=self.include_jp
         ):
             await self._react(message, WRONG_REACTION)
 
@@ -658,6 +660,7 @@ async def launch_round(
         prompt_file = _attach(embed, prompt)
         round_.prompt_embed = embed
         round_.repost_after = bot.config.repost_after
+        round_.include_jp = include_jp
         kwargs = {"file": prompt_file} if prompt_file else {}
         message = await interaction.followup.send(embed=embed, **kwargs)
         round_.start(interaction.channel_id, message)

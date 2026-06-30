@@ -68,8 +68,10 @@ class ServantFilter:
 class ServantIndex:
     def __init__(self, servants: Iterable[Servant]) -> None:
         self._by_id: dict[int, Servant] = {s.id: s for s in servants}
-        self._norm_name_set: frozenset[str] | None = None  # lazy cache for resembles_servant
-        self._spaced_names: tuple[str, ...] | None = None  # lazy cache for uniqueness checks
+        # Lazy caches keyed by include_jp: an EN round (include_jp False) excludes
+        # JP-only servants so a JP name typed mid-round is ignored, not flagged.
+        self._name_sets: dict[bool, frozenset[str]] = {}
+        self._spaced_name_sets: dict[bool, tuple[str, ...]] = {}
 
     @classmethod
     def load(
@@ -142,36 +144,51 @@ class ServantIndex:
         return [s for s in servants if q in s.name.lower()][:limit]
 
     def resembles_servant(
-        self, text: str, extra: "frozenset[str] | tuple[str, ...]" = ()
+        self,
+        text: str,
+        extra: "frozenset[str] | tuple[str, ...]" = (),
+        *,
+        include_jp: bool = True,
     ) -> bool:
         """True if `text`, ignoring case/whitespace/punctuation, is exactly a
         servant name or a curated alias. No fuzzy matching: the chat game reacts
         to a wrong message only when it's a real-but-wrong name, so ordinary
         chatter is ignored. `extra` is the alias pool (same normalization), which
         also covers romanization variants -- e.g. 'Artoria' vs Atlas's 'Altria'.
-        (Accepting the *correct* answer stays lenient; see matching.is_correct_guess.)"""
+        With include_jp False, JP-only servant names don't count (an EN round won't
+        react to a JP-only guess). (Accepting the *correct* answer stays lenient; see
+        matching.is_correct_guess.)"""
         from data import matching
 
         norm = matching.normalize(text)
         if not norm:
             return False
-        if self._norm_name_set is None:
-            self._norm_name_set = frozenset(
-                matching.normalize(s.name) for s in self._by_id.values()
+        names = self._name_sets.get(include_jp)
+        if names is None:
+            names = frozenset(
+                matching.normalize(s.name)
+                for s in self._by_id.values()
+                if include_jp or not s.jp
             )
-        return norm in self._norm_name_set or norm in extra
+            self._name_sets[include_jp] = names
+        return norm in names or norm in extra
 
-    def spaced_names(self) -> tuple[str, ...]:
+    def spaced_names(self, include_jp: bool = True) -> tuple[str, ...]:
         """All servant names normalized with spaces kept, for the token-subset
         uniqueness check in matching.is_correct_guess (so 'altria' won't win a
-        specific Altria variant)."""
-        if self._spaced_names is None:
+        specific Altria variant). include_jp False drops JP-only servants from the
+        corpus for EN rounds."""
+        cache = self._spaced_name_sets.get(include_jp)
+        if cache is None:
             from data import matching
 
-            self._spaced_names = tuple(
-                matching.normalize(s.name, keep_spaces=True) for s in self._by_id.values()
+            cache = tuple(
+                matching.normalize(s.name, keep_spaces=True)
+                for s in self._by_id.values()
+                if include_jp or not s.jp
             )
-        return self._spaced_names
+            self._spaced_name_sets[include_jp] = cache
+        return cache
 
     def pick(
         self,
