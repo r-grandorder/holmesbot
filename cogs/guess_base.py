@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import datetime as dt
 import io
 import logging
@@ -361,7 +362,10 @@ class ChatRound:
     def _render_prompt(self) -> "tuple[discord.Embed, discord.File | None]":
         """Current prompt embed (base + any revealed hints) with its media re-attached,
         for (re)posting or refreshing in place."""
-        embed = self.prompt_embed.copy() if self.prompt_embed else discord.Embed()
+        # deepcopy, not Embed.copy(): the latter shares the underlying fields list, so
+        # add_field below would accumulate on prompt_embed -- stacking a new "Hints"
+        # field on every hint/bump instead of replacing it.
+        embed = copy.deepcopy(self.prompt_embed) if self.prompt_embed else discord.Embed()
         revealed = self._hint_list()[: self.hints_given]
         if revealed:
             embed.add_field(
