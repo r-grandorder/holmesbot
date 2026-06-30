@@ -64,7 +64,17 @@ class ServantIndex:
             servants += [cls._from_item(it, npc=True) for it in json.loads(npc_p.read_text())]
         jp_p = Path(jp_path)
         if jp_p.exists():
-            servants += [cls._from_item(it, jp=True) for it in json.loads(jp_p.read_text())]
+            # NA (servants.json) is regenerated fresh at image build, but
+            # servants_jp.json is the reviewed/committed file -- so a servant that
+            # graduated to NA since the last JP refresh can appear in both. Let the
+            # NA entry win (drop the stale JP dup) so it stays in the regular pool
+            # rather than being gated behind the *jp commands.
+            known = {s.id for s in servants}
+            servants += [
+                cls._from_item(it, jp=True)
+                for it in json.loads(jp_p.read_text())
+                if it["id"] not in known
+            ]
         return cls(s for s in servants if s.art or s.figure)
 
     @staticmethod

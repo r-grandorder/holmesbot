@@ -33,9 +33,9 @@ jobs:
         with:
           branch: chore/refresh-servant-data
           base: main
-          add-paths: |
-            data/servants.json
-            data/servants_jp.json
+          # servants.json is gitignored (rebuilt fresh in the image); only the
+          # reviewed JP file is committed, so that is all the PR should carry.
+          add-paths: data/servants_jp.json
           author: "holmesbot-refresh[bot] <noreply@holmesbot.com>"
           committer: "holmesbot-refresh[bot] <noreply@holmesbot.com>"
           commit-message: "chore: refresh servant data (scheduled)"
