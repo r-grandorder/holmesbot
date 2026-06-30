@@ -628,8 +628,6 @@ async def launch_round(
         # Region tag so it's always clear which pool a round draws from: NA (default)
         # or JP (the *jp commands, which add JP-only servants on top of NA).
         title = f"{title} [{'JP' if include_jp else 'NA'}]"
-        if filters_label:
-            title = f"{title} · {filters_label}"
         if game_type == "guess_audio":
             # The host is itself a Servant, so be explicit that the clip is the
             # Servant to identify -- otherwise players read the host's portrait as
@@ -649,6 +647,8 @@ async def launch_round(
             ),
         )
         _host_author(embed, host_id)
+        if filters_label:
+            embed.add_field(name="Filters", value=filters_label, inline=False)
         prompt_file = _attach(embed, prompt)
         round_.prompt_embed = embed
         round_.repost_after = bot.config.repost_after
