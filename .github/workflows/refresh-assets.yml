@@ -1,11 +1,10 @@
 name: Refresh assets
 
-# Fully automated servant refresh. Weekly (and on demand) it re-syncs the index
-# from Atlas Academy, re-extracts silhouettes to S3, and commits the updated
-# shadows.json. That commit triggers Deploy, which re-bakes the servant index
-# into the image -- so new NA servants flow into every game with no manual work.
-# Paused: this refresh is AWS/S3-coupled and will be reworked alongside the
-# self-hosted asset hosting. Manual-only for now so it does not fail on a schedule.
+# Re-sync the servant index from Atlas (NA + JP-only), re-extract silhouettes to S3,
+# and commit the updated shadows.json. That commit triggers Build, which re-bakes the
+# manifest into the image, so new servants flow into /guessshadow and /guessshadowjp
+# with no manual work. Asset hosting stays on S3 (intentional). Manual-trigger for now;
+# add a `schedule:` block here to run it weekly.
 on:
   workflow_dispatch:
 
@@ -27,12 +26,13 @@ jobs:
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: us-east-1
-      - name: Sync index + precompute silhouettes
+      - name: Sync index (NA + JP) + precompute silhouettes
         env:
           ASSETS_BUCKET: bunyanbot-assets-327760835875
         run: |
           pip install -r scripts/requirements-precompute.txt
           python scripts/sync_atlas.py
+          python scripts/sync_atlas.py --jp
           python scripts/precompute_silhouettes.py
       - name: Commit refreshed manifest if changed
         run: |

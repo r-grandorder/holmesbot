@@ -30,6 +30,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 SERVANTS = ROOT / "data" / "servants.json"
+SERVANTS_JP = ROOT / "data" / "servants_jp.json"  # JP-only servants for /guessshadowjp
 MANIFEST = ROOT / "data" / "shadows.json"
 CONTACT = ROOT / "test_output" / "shadow_contact.png"
 ALPHA_THRESHOLD = 16
@@ -111,6 +112,8 @@ def main() -> int:
 
     s3 = boto3.client("s3")
     servants = json.loads(SERVANTS.read_text())
+    if SERVANTS_JP.exists():  # JP servants too, so /guessshadowjp has silhouettes
+        servants += json.loads(SERVANTS_JP.read_text())
     limit = int(os.environ.get("PRECOMPUTE_LIMIT", "0"))
     if limit:
         servants = servants[:limit]

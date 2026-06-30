@@ -16,28 +16,24 @@ DIFFICULTY = {
     "lunatic": (90, 80),
 }
 
+_DIFF_CHOICES = [
+    app_commands.Choice(name="Easy", value="easy"),
+    app_commands.Choice(name="Medium", value="medium"),
+    app_commands.Choice(name="Hard", value="hard"),
+    app_commands.Choice(name="Lunatic", value="lunatic"),
+]
+
 
 class GuessShadow(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    @app_commands.command(
-        name="guessshadow",
-        description="Guess the servant from their silhouette.",
-    )
-    @app_commands.describe(difficulty="Higher difficulties crop the silhouette for more QP")
-    @app_commands.choices(
-        difficulty=[
-            app_commands.Choice(name="Easy", value="easy"),
-            app_commands.Choice(name="Medium", value="medium"),
-            app_commands.Choice(name="Hard", value="hard"),
-            app_commands.Choice(name="Lunatic", value="lunatic"),
-        ]
-    )
-    async def guessshadow(
+    async def _play(
         self,
         interaction: discord.Interaction,
-        difficulty: app_commands.Choice[str] | None = None,
+        difficulty: "app_commands.Choice[str] | None",
+        *,
+        include_jp: bool,
     ) -> None:
         base = self.bot.config.assets_base_url
         if not base:
@@ -50,7 +46,16 @@ class GuessShadow(commands.Cog):
         host_id = host.host_for("guess_shadow")
 
         def picker(allow):
-            pick = self.bot.shadows.pick(allow)
+            # Compose the restriction gate with the region gate: JP-only servants are
+            # eligible only via /guessshadowjp (include_jp). NPCs are never in the
+            # silhouette manifest, so they never show up here.
+            def gate(sid: int, asc: str) -> bool:
+                if not allow(sid, asc):
+                    return False
+                s = self.bot.servants.get(sid)
+                return bool(s) and (include_jp or not s.jp)
+
+            pick = self.bot.shadows.pick(gate)
             if pick is None:
                 return None
             servant_id, ascension = pick
@@ -78,7 +83,34 @@ class GuessShadow(commands.Cog):
             build_prompt=build_prompt,
             build_reveal=build_reveal,
             difficulty=diff,
+            include_jp=include_jp,
         )
+
+    @app_commands.command(
+        name="guessshadow",
+        description="Guess the servant from their silhouette.",
+    )
+    @app_commands.describe(difficulty="Higher difficulties crop the silhouette for more QP")
+    @app_commands.choices(difficulty=_DIFF_CHOICES)
+    async def guessshadow(
+        self,
+        interaction: discord.Interaction,
+        difficulty: app_commands.Choice[str] | None = None,
+    ) -> None:
+        await self._play(interaction, difficulty, include_jp=False)
+
+    @app_commands.command(
+        name="guessshadowjp",
+        description="Like /guessshadow, but the pool also includes JP-only servants.",
+    )
+    @app_commands.describe(difficulty="Higher difficulties crop the silhouette for more QP")
+    @app_commands.choices(difficulty=_DIFF_CHOICES)
+    async def guessshadowjp(
+        self,
+        interaction: discord.Interaction,
+        difficulty: app_commands.Choice[str] | None = None,
+    ) -> None:
+        await self._play(interaction, difficulty, include_jp=True)
 
 
 async def setup(bot) -> None:
