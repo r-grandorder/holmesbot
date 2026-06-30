@@ -43,6 +43,7 @@ def fetch(servant_id: int) -> dict:
         "name": s["name"],
         "className": s.get("className", ""),  # prettify by hand, e.g. "Beast I"
         "rarity": s.get("rarity", 0),
+        "gender": s.get("gender", ""),
         "art": art,
         "figure": {},  # art game only
         "face": face,

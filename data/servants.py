@@ -26,6 +26,7 @@ class Servant:
     figure: dict[str, str]  # charaFigure ascension -> URL (guess_shadow)
     face: str | None = None  # Atlas face portrait (host avatars)
     cv: str | None = None    # seiyuu / voice actor (Atlas profile.cv)
+    gender: str = ""         # Atlas gender (male/female/unknown); drives a guess hint
     npc: bool = False        # hand-curated enemy/boss; art game only (npc_servants.json)
     jp: bool = False         # JP-only servant; included only via the *jp game commands
     aliases: tuple[str, ...] = ()  # extra accepted answers (NPCs + JP), normalized at match
@@ -88,6 +89,7 @@ class ServantIndex:
             figure={str(k): v for k, v in item.get("figure", {}).items() if v},
             face=item.get("face"),
             cv=item.get("cv"),
+            gender=item.get("gender", ""),
             npc=npc or bool(item.get("npc")),
             jp=jp or bool(item.get("jp")),
             aliases=tuple(item.get("aliases", ())),

@@ -31,7 +31,7 @@ WIN_REACTION = "\N{WHITE HEAVY CHECK MARK}"
 WRONG_REACTION = "\N{CROSS MARK}"
 FORFEIT_EMOTE = "\N{WAVING WHITE FLAG}\N{VARIATION SELECTOR-16}"  # vote-to-give-up react
 FORFEIT_VOTES = 3  # distinct humans whose reaction ends the round
-HINT_REWARD = (1.0, 0.6, 0.3)  # win multiplier by hints used (0, 1, 2): hints cost QP
+HINT_REWARD = (1.0, 0.7, 0.5, 0.3)  # win multiplier by hints used (0..3): hints cost QP
 
 _NO_PINGS = discord.AllowedMentions.none()
 _PING_USER = discord.AllowedMentions(everyone=False, roles=False, users=True)
@@ -167,12 +167,14 @@ class ChatRound:
             self.bot.forfeit_votes.pop(self.vote_message.id, None)
 
     async def give_hint(self, channel: discord.abc.Messageable) -> None:
-        """On '@bot hint': reveal rarity, then class, on successive asks."""
+        """On '@bot hint': reveal rarity, then gender, then class, on successive asks."""
         if self.claimed:
             return
         hints: list[tuple[str, str]] = []
         if self.servant.rarity:
             hints.append(("Rarity", f"{self.servant.rarity}-star"))
+        if self.servant.gender in ("male", "female"):
+            hints.append(("Gender", self.servant.gender.title()))
         if self.servant.class_name:
             hints.append(("Class", self.servant.class_name.title()))
         if self.hints_given >= len(hints):

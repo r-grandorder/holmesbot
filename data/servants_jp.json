@@ -4,6 +4,7 @@
     "name": "Ereshkigal",
     "className": "beastEresh",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/3300200/3300200a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/3300200/3300200a@2.png",
@@ -31,6 +32,7 @@
     "name": "Mysterious Executor C.I.E.L",
     "className": "moonCancer",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/2300900/2300900a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/2300900/2300900a@2.png",
@@ -54,6 +56,7 @@
     "name": "Dobrynya Nikitich",
     "className": "lancer",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/305500/305500a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/305500/305500a@2.png",
@@ -78,6 +81,7 @@
     "name": "Xu Fu",
     "className": "avenger",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/1101900/1101900a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/1101900/1101900a@2.png",
@@ -102,6 +106,7 @@
     "name": "BB Dubai",
     "className": "moonCancer",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/2300600/2300600a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/2300600/2300600a@2.png",
@@ -125,6 +130,7 @@
     "name": "Tenochtitlan",
     "className": "moonCancer",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/2301000/2301000a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/2301000/2301000a@2.png",
@@ -148,6 +154,7 @@
     "name": "Mysterious Heroine XX (Alter)",
     "className": "foreigner",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/2501600/2501600a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/2501600/2501600a@2.png",
@@ -172,6 +179,7 @@
     "name": "Kishinami Hakuno",
     "className": "moonCancer",
     "rarity": 4,
+    "gender": "male",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/2300700/2300700a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/2300700/2300700a@2.png",
@@ -195,6 +203,7 @@
     "name": "Kishinami Hakuno",
     "className": "moonCancer",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/2300800/2300800a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/2300800/2300800a@2.png",
@@ -218,6 +227,7 @@
     "name": "Kazuradrop",
     "className": "alterEgo",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/1001800/1001800a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/1001800/1001800a@2.png",
@@ -241,6 +251,7 @@
     "name": "Tutankhamun",
     "className": "archer",
     "rarity": 5,
+    "gender": "male",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/205300/205300a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/205300/205300a@2.png",
@@ -265,6 +276,7 @@
     "name": "Van Gogh (Miner)",
     "className": "lancer",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/305600/305600a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/305600/305600a@2.png",
@@ -292,6 +304,7 @@
     "name": "Louhi",
     "className": "berserker",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/705000/705000a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/705000/705000a@2.png",
@@ -313,6 +326,7 @@
     "name": "Abigail Williams (Santa)",
     "className": "pretender",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/2800800/2800800a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/2800800/2800800a@2.png",
@@ -339,6 +353,7 @@
     "name": "Phantasmoon",
     "className": "pretender",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/2800900/2800900a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/2800900/2800900a@2.png",
@@ -363,6 +378,7 @@
     "name": "Biscione",
     "className": "lancer",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/305700/305700a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/305700/305700a@2.png",
@@ -386,6 +402,7 @@
     "name": "Kurohime",
     "className": "saber",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/106200/106200a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/106200/106200a@2.png",
@@ -407,6 +424,7 @@
     "name": "Ono no Komachi",
     "className": "caster",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/505800/505800a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/505800/505800a@2.png",
@@ -430,6 +448,7 @@
     "name": "Dante Alighieri",
     "className": "pretender",
     "rarity": 5,
+    "gender": "male",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/2801000/2801000a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/2801000/2801000a@2.png",
@@ -454,6 +473,7 @@
     "name": "Metatron Jeanne",
     "className": "ruler",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/901900/901900a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/901900/901900a@2.png",
@@ -480,6 +500,7 @@
     "name": "King Ashoka",
     "className": "lancer",
     "rarity": 4,
+    "gender": "male",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/305800/305800a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/305800/305800a@2.png",
@@ -503,6 +524,7 @@
     "name": "Lilith",
     "className": "berserker",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/705100/705100a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/705100/705100a@2.png",
@@ -524,6 +546,7 @@
     "name": "Typhon Ephemeros",
     "className": "pretender",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/2801100/2801100a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/2801100/2801100a@2.png",
@@ -549,6 +572,7 @@
     "name": "Indra",
     "className": "lancer",
     "rarity": 5,
+    "gender": "unknown",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/305900/305900a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/305900/305900a@2.png",
@@ -570,6 +594,7 @@
     "name": "U-Olga Marie",
     "className": "unBeastOlgaMarie",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/4000100/4000100a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/4000100/4000100a@2.png",
@@ -596,6 +621,7 @@
     "name": "Passionlip",
     "className": "saber",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/106300/106300a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/106300/106300a@2.png",
@@ -622,6 +648,7 @@
     "name": "Kriemhild",
     "className": "rider",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/405800/405800a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/405800/405800a@2.png",
@@ -648,6 +675,7 @@
     "name": "Huyan Zhuo",
     "className": "berserker",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/705200/705200a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/705200/705200a@2.png",
@@ -674,6 +702,7 @@
     "name": "Jade Rabbit",
     "className": "moonCancer",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/2301100/2301100a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/2301100/2301100a@2.png",
@@ -698,6 +727,7 @@
     "name": "Miyu Edelfelt",
     "className": "lancer",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/306000/306000a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/306000/306000a@2.png",
@@ -725,6 +755,7 @@
     "name": "Larva/Tiamat",
     "className": "archer",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/205400/205400a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/205400/205400a@2.png",
@@ -752,6 +783,7 @@
     "name": "Jeunesse Crane",
     "className": "alterEgo",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/1001900/1001900a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/1001900/1001900a@2.png",
@@ -777,6 +809,7 @@
     "name": "Nemo/Noah",
     "className": "rider",
     "rarity": 5,
+    "gender": "male",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/405700/405700a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/405700/405700a@2.png",
@@ -800,6 +833,7 @@
     "name": "Kawakami Gensai",
     "className": "assassin",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/605100/605100a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/605100/605100a@2.png",
@@ -824,6 +858,7 @@
     "name": "Tōdō Heisuke",
     "className": "avenger",
     "rarity": 4,
+    "gender": "male",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/1102100/1102100a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/1102100/1102100a@2.png",
@@ -848,6 +883,7 @@
     "name": "Harada Sanosuke",
     "className": "lancer",
     "rarity": 4,
+    "gender": "male",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/306100/306100a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/306100/306100a@2.png",
@@ -872,6 +908,7 @@
     "name": "Kondo Isami",
     "className": "saber",
     "rarity": 5,
+    "gender": "male",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/106400/106400a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/106400/106400a@2.png",
@@ -897,6 +934,7 @@
     "name": "Elisabeth Báthory",
     "className": "lancer",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/306200/306200a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/306200/306200a@2.png",
@@ -922,6 +960,7 @@
     "name": "Elisabeth of the End",
     "className": "avenger",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/1102200/1102200a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/1102200/1102200a@2.png",
@@ -951,6 +990,7 @@
     "name": "Solomon",
     "className": "pretender",
     "rarity": 5,
+    "gender": "male",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/2801200/2801200a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/2801200/2801200a@2.png",
@@ -972,6 +1012,7 @@
     "name": "Lord Logres",
     "className": "saber",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/106500/106500a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/106500/106500a@2.png",
@@ -996,6 +1037,7 @@
     "name": "Hanasaka no Okina",
     "className": "caster",
     "rarity": 5,
+    "gender": "male",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/505900/505900a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/505900/505900a@2.png",
@@ -1021,6 +1063,7 @@
     "name": "Hebi Nyōbō",
     "className": "assassin",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/605200/605200a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/605200/605200a@2.png",
@@ -1045,6 +1088,7 @@
     "name": "Flora",
     "className": "alterEgo",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/1002000/1002000a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/1002000/1002000a@2.png",
@@ -1066,6 +1110,7 @@
     "name": "Demeter",
     "className": "lancer",
     "rarity": 5,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/306400/306400a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/306400/306400a@2.png",
@@ -1089,6 +1134,7 @@
     "name": "Jacques de Molay",
     "className": "saber",
     "rarity": 5,
+    "gender": "male",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/106600/106600a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/106600/106600a@2.png",
@@ -1113,6 +1159,7 @@
     "name": "François Prélat",
     "className": "caster",
     "rarity": 5,
+    "gender": "male",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/505600/505600a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/505600/505600a@2.png",
@@ -1137,6 +1184,7 @@
     "name": "Hippolyte",
     "className": "rider",
     "rarity": 4,
+    "gender": "female",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/405600/405600a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/405600/405600a@2.png",
@@ -1162,6 +1210,7 @@
     "name": "John Lackland",
     "className": "avenger",
     "rarity": 5,
+    "gender": "male",
     "art": {
       "1": "https://static.atlasacademy.io/JP/CharaGraph/1102000/1102000a@1.png",
       "2": "https://static.atlasacademy.io/JP/CharaGraph/1102000/1102000a@2.png",
