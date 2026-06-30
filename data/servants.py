@@ -27,12 +27,42 @@ class Servant:
     face: str | None = None  # Atlas face portrait (host avatars)
     cv: str | None = None    # seiyuu / voice actor (Atlas profile.cv)
     gender: str = ""         # Atlas gender (male/female/unknown); drives a guess hint
+    attribute: str = ""      # Atlas attribute (sky/earth/human/star/beast); category filter
     npc: bool = False        # hand-curated enemy/boss; art game only (npc_servants.json)
     jp: bool = False         # JP-only servant; included only via the *jp game commands
     aliases: tuple[str, ...] = ()  # extra accepted answers (NPCs + JP), normalized at match
+    traits: frozenset[str] = frozenset()  # Atlas trait names; category filter
 
     def assets(self, kind: str) -> dict[str, str]:
         return self.figure if kind == "figure" else self.art
+
+
+@dataclass(frozen=True)
+class ServantFilter:
+    """Optional pool narrowing from the /guess category params; conditions AND together."""
+
+    class_name: str | None = None  # lowercased Atlas className, e.g. "saber"
+    rarity: int | None = None
+    attribute: str | None = None   # lowercased Atlas attribute, e.g. "sky"
+    trait: str | None = None       # Atlas trait name, e.g. "dragon"
+
+    @property
+    def active(self) -> bool:
+        return any(
+            v is not None
+            for v in (self.class_name, self.rarity, self.attribute, self.trait)
+        )
+
+    def matches(self, s: "Servant") -> bool:
+        if self.class_name and s.class_name.lower() != self.class_name:
+            return False
+        if self.rarity is not None and s.rarity != self.rarity:
+            return False
+        if self.attribute and s.attribute.lower() != self.attribute:
+            return False
+        if self.trait and self.trait not in s.traits:
+            return False
+        return True
 
 
 class ServantIndex:
@@ -90,9 +120,11 @@ class ServantIndex:
             face=item.get("face"),
             cv=item.get("cv"),
             gender=item.get("gender", ""),
+            attribute=item.get("attribute", ""),
             npc=npc or bool(item.get("npc")),
             jp=jp or bool(item.get("jp")),
             aliases=tuple(item.get("aliases", ())),
+            traits=frozenset(item.get("traits", ())),
         )
 
     def __len__(self) -> int:
@@ -147,11 +179,17 @@ class ServantIndex:
         asset: str = "art",
         allow: Callable[[int, str], bool] | None = None,
         include_jp: bool = False,
+        filt: "ServantFilter | None" = None,
     ) -> tuple[Servant, str] | None:
-        """Pick a random (servant, ascension_key) for the given asset kind whose
-        art passes `allow`. JP-only servants are excluded unless include_jp."""
+        """Pick a random (servant, ascension_key) for the given asset kind whose art
+        passes `allow`. JP-only servants are excluded unless include_jp; `filt` narrows
+        the pool further (class/rarity/attribute/trait)."""
         gate = allow or (lambda _sid, _asc: True)
-        servants = [s for s in self._by_id.values() if include_jp or not s.jp]
+        servants = [
+            s
+            for s in self._by_id.values()
+            if (include_jp or not s.jp) and (filt is None or filt.matches(s))
+        ]
         random.shuffle(servants)
         for servant in servants:
             keys = [k for k in servant.assets(asset) if gate(servant.id, k)]
@@ -164,6 +202,7 @@ class ServantIndex:
         allow: Callable[[int, str], bool] | None = None,
         *,
         include_jp: bool = False,
+        filt: "ServantFilter | None" = None,
     ) -> "tuple[Servant, str | None] | None":
         """Pick any servant for the voice game: the audio challenge ignores the art
         restriction (a restricted servant can still be guessed by ear). Returns a
@@ -171,11 +210,14 @@ class ServantIndex:
         is restricted (the reveal then shows no image)."""
         gate = allow or (lambda _sid, _asc: True)
         # NPC/boss units are art-game only (no voice lines); JP-only servants appear
-        # only via /guessvoicejp (include_jp).
+        # only via /guessvoicejp (include_jp); `filt` narrows by category.
         servants = [
             s
             for s in self._by_id.values()
-            if s.art and not s.npc and (include_jp or not s.jp)
+            if s.art
+            and not s.npc
+            and (include_jp or not s.jp)
+            and (filt is None or filt.matches(s))
         ]
         if not servants:
             return None

@@ -6,6 +6,7 @@ from discord.ext import commands
 
 from data import audio, host, images
 
+from . import filters
 from .guess_base import Media, launch_round
 
 POINTS = 20
@@ -15,13 +16,23 @@ class GuessAudio(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    async def _play(self, interaction: discord.Interaction, *, include_jp: bool) -> None:
+    async def _play(
+        self,
+        interaction: discord.Interaction,
+        *,
+        include_jp: bool,
+        klass,
+        rarity,
+        attribute,
+        trait,
+    ) -> None:
         host_id = host.host_for("guess_audio")
+        filt, flabel = filters.from_params(klass, rarity, attribute, trait)
 
         def picker(allow):
             # Voice ignores the art restriction for inclusion (the challenge is
             # audio); the reveal still uses a non-restricted ascension, or no art.
-            return self.bot.servants.pick_for_voice(allow, include_jp=include_jp)
+            return self.bot.servants.pick_for_voice(allow, include_jp=include_jp, filt=filt)
 
         async def build_prompt(session, servant, ascension):
             # JP-only servants' voice lines live on the JP endpoint, not NA.
@@ -47,21 +58,58 @@ class GuessAudio(commands.Cog):
             build_prompt=build_prompt,
             build_reveal=build_reveal,
             include_jp=include_jp,
+            filters_label=flabel,
         )
 
     @app_commands.command(
         name="guessvoice",
         description="Guess the servant from one of their voice lines.",
     )
-    async def guessvoice(self, interaction: discord.Interaction) -> None:
-        await self._play(interaction, include_jp=False)
+    @app_commands.describe(**filters.DESCRIBE)
+    @app_commands.rename(klass="class")
+    @app_commands.choices(
+        klass=filters.CLASS_CHOICES,
+        rarity=filters.RARITY_CHOICES,
+        attribute=filters.ATTRIBUTE_CHOICES,
+        trait=filters.TRAIT_CHOICES,
+    )
+    async def guessvoice(
+        self,
+        interaction: discord.Interaction,
+        klass: app_commands.Choice[str] | None = None,
+        rarity: app_commands.Choice[int] | None = None,
+        attribute: app_commands.Choice[str] | None = None,
+        trait: app_commands.Choice[str] | None = None,
+    ) -> None:
+        await self._play(
+            interaction, include_jp=False,
+            klass=klass, rarity=rarity, attribute=attribute, trait=trait,
+        )
 
     @app_commands.command(
         name="guessvoicejp",
         description="Like /guessvoice, but the pool also includes JP-only servants.",
     )
-    async def guessvoicejp(self, interaction: discord.Interaction) -> None:
-        await self._play(interaction, include_jp=True)
+    @app_commands.describe(**filters.DESCRIBE)
+    @app_commands.rename(klass="class")
+    @app_commands.choices(
+        klass=filters.CLASS_CHOICES,
+        rarity=filters.RARITY_CHOICES,
+        attribute=filters.ATTRIBUTE_CHOICES,
+        trait=filters.TRAIT_CHOICES,
+    )
+    async def guessvoicejp(
+        self,
+        interaction: discord.Interaction,
+        klass: app_commands.Choice[str] | None = None,
+        rarity: app_commands.Choice[int] | None = None,
+        attribute: app_commands.Choice[str] | None = None,
+        trait: app_commands.Choice[str] | None = None,
+    ) -> None:
+        await self._play(
+            interaction, include_jp=True,
+            klass=klass, rarity=rarity, attribute=attribute, trait=trait,
+        )
 
 
 async def setup(bot) -> None:

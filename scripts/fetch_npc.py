@@ -44,6 +44,8 @@ def fetch(servant_id: int) -> dict:
         "className": s.get("className", ""),  # prettify by hand, e.g. "Beast I"
         "rarity": s.get("rarity", 0),
         "gender": s.get("gender", ""),
+        "attribute": s.get("attribute", ""),
+        "traits": [t["name"] for t in s.get("traits", []) if t.get("name")],
         "art": art,
         "figure": {},  # art game only
         "face": face,

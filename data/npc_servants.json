@@ -12,7 +12,19 @@
     "face": "https://static.atlasacademy.io/NA/Faces/f_99355000.png",
     "cv": "Tomokazu Sugita",
     "npc": true,
-    "aliases": ["beast i", "beast 1"]
+    "aliases": [
+      "beast i",
+      "beast 1"
+    ],
+    "attribute": "beast",
+    "traits": [
+      "classBeastI",
+      "attributeBeast",
+      "alignmentChaotic",
+      "alignmentGood",
+      "king",
+      "canBeInBattle"
+    ]
   },
   {
     "id": 9935400,
@@ -27,7 +39,24 @@
     "face": "https://static.atlasacademy.io/NA/Faces/f_99354000.png",
     "cv": "Aoi Yuki",
     "npc": true,
-    "aliases": ["beast ii", "beast 2"]
+    "aliases": [
+      "beast ii",
+      "beast 2"
+    ],
+    "attribute": "beast",
+    "traits": [
+      "genderFemale",
+      "classBeastII",
+      "attributeBeast",
+      "alignmentChaotic",
+      "alignmentEvil",
+      "fiveStarServant",
+      "divine",
+      "divineOrDemonOrUndead",
+      "divineSpirit",
+      "canBeInBattle",
+      "unknown"
+    ]
   },
   {
     "id": 9941730,
@@ -42,7 +71,30 @@
     "face": "https://static.atlasacademy.io/NA/Faces/f_99417300.png",
     "cv": "Noriko Shitaya",
     "npc": true,
-    "aliases": ["kama", "mara", "kama beast", "beast iii l", "beast 3 l"]
+    "aliases": [
+      "kama",
+      "mara",
+      "kama beast",
+      "beast iii l",
+      "beast 3 l"
+    ],
+    "attribute": "beast",
+    "traits": [
+      "genderFemale",
+      "classBeastIIIL",
+      "attributeBeast",
+      "alignmentChaotic",
+      "alignmentEvil",
+      "fiveStarServant",
+      "divine",
+      "humanoid",
+      "demonic",
+      "divineOrDemonOrUndead",
+      "king",
+      "immuneToPigify",
+      "canBeInBattle",
+      "unknown"
+    ]
   },
   {
     "id": 9939130,
@@ -57,7 +109,25 @@
     "face": "https://static.atlasacademy.io/NA/Faces/f_99391300.png",
     "cv": "Rie Tanaka",
     "npc": true,
-    "aliases": ["kiara", "sessyoin kiara", "kiara beast", "beast iii r", "beast 3 r"]
+    "aliases": [
+      "kiara",
+      "sessyoin kiara",
+      "kiara beast",
+      "beast iii r",
+      "beast 3 r"
+    ],
+    "attribute": "beast",
+    "traits": [
+      "genderFemale",
+      "classBeastIIIR",
+      "attributeBeast",
+      "alignmentChaotic",
+      "alignmentEvil",
+      "fiveStarServant",
+      "humanoid",
+      "canBeInBattle",
+      "unknown"
+    ]
   },
   {
     "id": 9943610,
@@ -72,7 +142,30 @@
     "face": "https://static.atlasacademy.io/NA/Faces/f_99436100.png",
     "cv": "Chiwa Saito",
     "npc": true,
-    "aliases": ["koyanskaya", "koyan", "tamamo vitch", "daji", "koyanskaya beast", "beast iv", "beast 4"]
+    "aliases": [
+      "koyanskaya",
+      "koyan",
+      "tamamo vitch",
+      "daji",
+      "koyanskaya beast",
+      "beast iv",
+      "beast 4"
+    ],
+    "attribute": "beast",
+    "traits": [
+      "genderFemale",
+      "classBeastIV",
+      "attributeBeast",
+      "alignmentChaotic",
+      "alignmentEvil",
+      "divine",
+      "wildbeast",
+      "demonic",
+      "divineOrDemonOrUndead",
+      "superGiant",
+      "canBeInBattle",
+      "notBasedOnServant"
+    ]
   },
   {
     "id": 9945590,
@@ -87,7 +180,26 @@
     "face": "https://static.atlasacademy.io/NA/Faces/f_99455900.png",
     "cv": "Madoka Yonezawa",
     "npc": true,
-    "aliases": ["olga marie", "olga", "flare", "e-flare marie", "u-olga marie"]
+    "aliases": [
+      "olga marie",
+      "olga",
+      "flare",
+      "e-flare marie",
+      "u-olga marie"
+    ],
+    "attribute": "human",
+    "traits": [
+      "genderFemale",
+      "classUOlgaMarieFlare",
+      "attributeHuman",
+      "alignmentLawful",
+      "alignmentGood",
+      "servant",
+      "humanoid",
+      "immuneToPigify",
+      "levitating",
+      "canBeInBattle"
+    ]
   },
   {
     "id": 9945600,
@@ -102,7 +214,26 @@
     "face": "https://static.atlasacademy.io/NA/Faces/f_99456000.png",
     "cv": "Madoka Yonezawa",
     "npc": true,
-    "aliases": ["olga marie", "olga", "aqua", "e-aqua marie", "u-olga marie"]
+    "aliases": [
+      "olga marie",
+      "olga",
+      "aqua",
+      "e-aqua marie",
+      "u-olga marie"
+    ],
+    "attribute": "human",
+    "traits": [
+      "genderFemale",
+      "unknown",
+      "attributeHuman",
+      "alignmentNeutral",
+      "alignmentGood",
+      "servant",
+      "humanoid",
+      "immuneToPigify",
+      "levitating",
+      "canBeInBattle"
+    ]
   },
   {
     "id": 1700100,
@@ -117,6 +248,24 @@
     "face": "https://static.atlasacademy.io/NA/Faces/f_17001000.png",
     "cv": null,
     "npc": true,
-    "aliases": ["king of magic", "king solomon"]
+    "aliases": [
+      "king of magic",
+      "king solomon"
+    ],
+    "attribute": "beast",
+    "traits": [
+      "genderMale",
+      "classLoreGrandCaster",
+      "attributeBeast",
+      "alignmentChaotic",
+      "alignmentGood",
+      "fiveStarServant",
+      "servant",
+      "humanoid",
+      "weakToEnumaElish",
+      "king",
+      "canBeInBattle",
+      "unknown"
+    ]
   }
 ]

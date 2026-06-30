@@ -171,10 +171,9 @@ class ChatRound:
         if self.vote_message is not None:
             self.bot.forfeit_votes.pop(self.vote_message.id, None)
 
-    async def give_hint(self, channel: discord.abc.Messageable) -> None:
-        """On '@bot hint': reveal rarity, then gender, then class, on successive asks."""
-        if self.claimed:
-            return
+    def _hint_list(self) -> list[tuple[str, str]]:
+        """Ordered hint sequence: rarity, gender, class (each only if known). Shared by
+        give_hint and the prompt's revealed-hints field."""
         hints: list[tuple[str, str]] = []
         if self.servant.rarity:
             hints.append(("Rarity", f"{self.servant.rarity}-star"))
@@ -182,6 +181,13 @@ class ChatRound:
             hints.append(("Gender", self.servant.gender.title()))
         if self.servant.class_name:
             hints.append(("Class", self.servant.class_name.title()))
+        return hints
+
+    async def give_hint(self, channel: discord.abc.Messageable) -> None:
+        """On '@bot hint': reveal rarity, then gender, then class, on successive asks."""
+        if self.claimed:
+            return
+        hints = self._hint_list()
         if self.hints_given >= len(hints):
             recap = "\n".join(
                 f"Hint {i + 1}: {lbl} is **{val}**." for i, (lbl, val) in enumerate(hints)
@@ -194,6 +200,7 @@ class ChatRound:
             f"Hint {self.hints_given}: {label} is **{value}**.  "
             f"Reward drops to **{qp(self._effective_points())}**."
         )
+        await self._refresh_prompt()  # surface the revealed hints on the prompt itself
 
     def _effective_points(self) -> int:
         """The win, reduced by how many hints were taken (HINT_REWARD); floored at 1."""
@@ -351,6 +358,29 @@ class ChatRound:
         except discord.HTTPException:
             log.exception("failed to edit prompt for game %s", self.game_id)
 
+    def _render_prompt(self) -> "tuple[discord.Embed, discord.File | None]":
+        """Current prompt embed (base + any revealed hints) with its media re-attached,
+        for (re)posting or refreshing in place."""
+        embed = self.prompt_embed.copy() if self.prompt_embed else discord.Embed()
+        revealed = self._hint_list()[: self.hints_given]
+        if revealed:
+            embed.add_field(
+                name="Hints",
+                value="\n".join(f"{lbl}: **{val}**" for lbl, val in revealed),
+                inline=False,
+            )
+        return embed, _attach(embed, self.prompt)
+
+    async def _refresh_prompt(self) -> None:
+        """Edit the live prompt in place so a freshly revealed hint shows on it."""
+        if self.prompt_embed is None:
+            return
+        embed, file = self._render_prompt()
+        kwargs: dict = {"embed": embed}
+        if file is not None:
+            kwargs["attachments"] = [file]
+        await self._edit_prompt(**kwargs)
+
     async def note_activity(self, channel: discord.abc.Messageable) -> None:
         """Count a channel message; once `repost_after` go by, repost the prompt at the
         bottom so players don't scroll up. No-op if disabled or the round is over."""
@@ -363,10 +393,9 @@ class ChatRound:
         await self._repost_prompt(channel)
 
     async def _repost_prompt(self, channel: discord.abc.Messageable) -> None:
-        # Re-send the prompt (embed + re-attached crop/clip) and drop the old copy so
-        # it "bumps" to the bottom rather than leaving duplicates.
-        embed = self.prompt_embed.copy()
-        file = _attach(embed, self.prompt)
+        # Re-send the prompt (embed + revealed hints + re-attached crop/clip) and drop
+        # the old copy so it "bumps" to the bottom rather than leaving duplicates.
+        embed, file = self._render_prompt()
         kwargs: dict = {"embed": embed}
         if file is not None:
             kwargs["file"] = file
@@ -466,6 +495,7 @@ async def launch_round(
     build_reveal: MediaBuilder,
     difficulty: str | None = None,
     include_jp: bool = False,
+    filters_label: str | None = None,
 ) -> bool:
     bot = cog.bot
     if interaction.guild_id is None:
@@ -537,7 +567,12 @@ async def launch_round(
                     attempt + 1,
                 )
         if prompt is None:
-            await interaction.followup.send("Couldn't start a round right now. Try again.")
+            msg = (
+                "No servants match those filters -- try removing one."
+                if filters_label
+                else "Couldn't start a round right now. Try again."
+            )
+            await interaction.followup.send(msg)
             return False
         recent.append(servant.id)
 
@@ -569,6 +604,7 @@ async def launch_round(
                 build_reveal=build_reveal,
                 difficulty=difficulty,
                 include_jp=include_jp,
+                filters_label=filters_label,
             )
 
         round_ = ChatRound(
@@ -592,6 +628,8 @@ async def launch_round(
         # Region tag so it's always clear which pool a round draws from: NA (default)
         # or JP (the *jp commands, which add JP-only servants on top of NA).
         title = f"{title} [{'JP' if include_jp else 'NA'}]"
+        if filters_label:
+            title = f"{title} · {filters_label}"
         if game_type == "guess_audio":
             # The host is itself a Servant, so be explicit that the clip is the
             # Servant to identify -- otherwise players read the host's portrait as
