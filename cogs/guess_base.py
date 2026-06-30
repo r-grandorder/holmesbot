@@ -511,7 +511,9 @@ async def launch_round(
         )
 
         async def _replay(again: discord.Interaction) -> bool:
-            # Re-run the same game (same difficulty/host) from the Play Again button.
+            # Re-run the same game (same difficulty/host/region) from Play Again. The
+            # picker closure already carries the JP choice; pass include_jp too so the
+            # replayed round's region tag matches the pool it actually draws from.
             return await launch_round(
                 cog,
                 again,
@@ -522,6 +524,7 @@ async def launch_round(
                 build_prompt=build_prompt,
                 build_reveal=build_reveal,
                 difficulty=difficulty,
+                include_jp=include_jp,
             )
 
         round_ = ChatRound(
@@ -542,8 +545,9 @@ async def launch_round(
         title = TITLES.get(game_type, "Guess the Servant")
         if difficulty:
             title = f"{title} - {difficulty.title()}"
-        if include_jp:
-            title = f"{title} (JP)"
+        # Region tag so it's always clear which pool a round draws from: NA (default)
+        # or JP (the *jp commands, which add JP-only servants on top of NA).
+        title = f"{title} [{'JP' if include_jp else 'NA'}]"
         if game_type == "guess_audio":
             # The host is itself a Servant, so be explicit that the clip is the
             # Servant to identify -- otherwise players read the host's portrait as
