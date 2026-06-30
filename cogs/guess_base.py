@@ -648,7 +648,7 @@ async def launch_round(
         )
         _host_author(embed, host_id)
         if filters_label:
-            embed.add_field(name="Filters", value=filters_label, inline=False)
+            embed.add_field(name="Pool", value=filters_label, inline=False)
         prompt_file = _attach(embed, prompt)
         round_.prompt_embed = embed
         round_.repost_after = bot.config.repost_after
