@@ -21,14 +21,19 @@ class GuessAudio(commands.Cog):
         interaction: discord.Interaction,
         *,
         include_jp: bool,
-        klass,
-        rarity,
-        attribute,
-        trait,
+        klass=None,
+        rarity=None,
+        attribute=None,
+        trait=None,
         replay_override=None,
+        filt_override=None,
+        flabel_override=None,
     ) -> bool:
         host_id = host.host_for("guess_audio")
-        filt, flabel = filters.from_params(klass, rarity, attribute, trait)
+        if filt_override is not None:
+            filt, flabel = filt_override, flabel_override
+        else:
+            filt, flabel = filters.from_params(klass, rarity, attribute, trait)
 
         def picker(allow):
             # Voice ignores the art restriction for inclusion (the challenge is

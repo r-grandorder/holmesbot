@@ -6,45 +6,50 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from data.servants import ServantFilter
+
 from . import filters
 
 # (cog class name, whether its _play takes a difficulty arg). Voice has none.
 _GAMES = (("GuessServant", True), ("GuessAudio", False), ("GuessShadow", True))
 _DIFFS = ("easy", "medium", "hard", "lunatic")
 _DIFF_CHOICES = [app_commands.Choice(name=d.title(), value=d) for d in _DIFFS]
-_FILTER_CHANCE = 0.5   # ~half of rounds are a straight game (no filters)
-_PER_DIM_CHANCE = 0.5  # within a filtered round, chance to roll each dimension
-_MIN_POOL = 4          # re-roll a combo that matches fewer than this many servants
+_FILTER_CHANCE = 0.5   # ~half of rounds are a straight game (no pool)
+_PER_DIM_CHANCE = 0.5  # within a pooled round, chance to roll each dimension
+_MIN_POOL = 4          # re-roll a pool that matches fewer than this many servants
 
 
 class GuessRandom(commands.Cog):
-    """A surprise round: a random game (art/shadow/voice), sometimes with random
-    category filters. Play Again re-rolls a fresh game each time. An optional
-    difficulty pins the art/shadow rounds it picks; otherwise difficulty is random."""
+    """A surprise round: a random game (art/shadow/voice), sometimes with a random
+    category pool. Play Again re-rolls a fresh game. An optional difficulty pins the
+    art/shadow rounds it picks. Class and rarity pools are rolled as multi-value sets
+    (e.g. "Saber/Archer", "4-star/5-star") so showing the pool never gives away the
+    single-value Class/Rarity hints; attribute/trait pools are single themed values."""
 
     def __init__(self, bot) -> None:
         self.bot = bot
 
     def _roll_filters(self, include_jp: bool):
-        """Maybe roll a random filter combo. Returns (klass, rarity, attribute, trait)
-        as Choice objects or None -- the shape the game _play methods expect."""
-        none = (None, None, None, None)
+        """Maybe roll a random pool. Returns (ServantFilter, label) or (None, None)."""
         if random.random() >= _FILTER_CHANCE:
-            return none
-        pick = lambda choices: random.choice(choices) if random.random() < _PER_DIM_CHANCE else None
-        for _ in range(8):  # keep rolling until the combo has a playable pool
-            combo = (
-                pick(filters.CLASS_CHOICES),
-                pick(filters.RARITY_CHOICES),
-                pick(filters.ATTRIBUTE_CHOICES),
-                pick(filters.TRAIT_CHOICES),
+            return None, None
+        roll = lambda: random.random() < _PER_DIM_CHANCE
+        for _ in range(8):  # keep rolling until the pool has enough servants
+            filt = ServantFilter(
+                class_names=frozenset(
+                    c.value for c in random.sample(filters.CLASS_CHOICES, random.randint(2, 4))
+                ) if roll() else frozenset(),
+                rarities=frozenset(
+                    c.value for c in random.sample(filters.RARITY_CHOICES, random.randint(2, 3))
+                ) if roll() else frozenset(),
+                attributes=frozenset([random.choice(filters.ATTRIBUTE_CHOICES).value]) if roll() else frozenset(),
+                traits=frozenset([random.choice(filters.TRAIT_CHOICES).value]) if roll() else frozenset(),
             )
-            filt, _label = filters.from_params(*combo)
-            if filt is None:  # rolled nothing this time -> straight game
-                return none
+            if not filt.active:
+                return None, None
             if self.bot.servants.count_matching(filt, include_jp) >= _MIN_POOL:
-                return combo
-        return none  # nothing playable rolled -> fall back to a straight game
+                return filt, filters.label_for(filt)
+        return None, None
 
     async def _play(
         self,
@@ -53,7 +58,6 @@ class GuessRandom(commands.Cog):
         include_jp: bool,
         difficulty=None,
     ) -> bool:
-        # Don't roll shadow unless its S3 assets are configured.
         games = [
             g for g in _GAMES
             if g[0] != "GuessShadow" or self.bot.config.assets_base_url
@@ -65,7 +69,7 @@ class GuessRandom(commands.Cog):
                 "Games aren't loaded right now.", ephemeral=True
             )
             return False
-        klass, rarity, attribute, trait = self._roll_filters(include_jp)
+        filt, flabel = self._roll_filters(include_jp)
 
         async def reroll(again: discord.Interaction) -> bool:
             # Play Again rolls a fresh game; the chosen difficulty (if any) carries over.
@@ -79,18 +83,16 @@ class GuessRandom(commands.Cog):
                 diff_choice = app_commands.Choice(name=d, value=d)
             return await cog._play(
                 interaction, diff_choice, include_jp=include_jp,
-                klass=klass, rarity=rarity, attribute=attribute, trait=trait,
-                replay_override=reroll,
+                filt_override=filt, flabel_override=flabel, replay_override=reroll,
             )
         return await cog._play(
             interaction, include_jp=include_jp,
-            klass=klass, rarity=rarity, attribute=attribute, trait=trait,
-            replay_override=reroll,
+            filt_override=filt, flabel_override=flabel, replay_override=reroll,
         )
 
     @app_commands.command(
         name="guessrandom",
-        description="Surprise round: a random game, sometimes with random filters.",
+        description="Surprise round: a random game, sometimes with a random pool.",
     )
     @app_commands.describe(difficulty="Difficulty for the art/shadow rounds it picks (random if unset)")
     @app_commands.choices(difficulty=_DIFF_CHOICES)

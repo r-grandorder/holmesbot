@@ -35,11 +35,13 @@ class GuessShadow(commands.Cog):
         difficulty,
         *,
         include_jp: bool,
-        klass,
-        rarity,
-        attribute,
-        trait,
+        klass=None,
+        rarity=None,
+        attribute=None,
+        trait=None,
         replay_override=None,
+        filt_override=None,
+        flabel_override=None,
     ) -> bool:
         base = self.bot.config.assets_base_url
         if not base:
@@ -50,7 +52,10 @@ class GuessShadow(commands.Cog):
         diff = difficulty.value if difficulty else "easy"
         crop_size, points = DIFFICULTY[diff]
         host_id = host.host_for("guess_shadow")
-        filt, flabel = filters.from_params(klass, rarity, attribute, trait)
+        if filt_override is not None:
+            filt, flabel = filt_override, flabel_override
+        else:
+            filt, flabel = filters.from_params(klass, rarity, attribute, trait)
 
         def picker(allow):
             # Compose the restriction gate with region (JP only via *jp) and the

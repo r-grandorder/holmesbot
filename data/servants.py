@@ -39,28 +39,28 @@ class Servant:
 
 @dataclass(frozen=True)
 class ServantFilter:
-    """Optional pool narrowing from the /guess category params; conditions AND together."""
+    """Optional pool narrowing from the /guess category params. Each dimension is a set
+    of accepted values (any-of within a dimension; dimensions AND together). A single
+    chosen value is just a one-element set; /guessrandom may set several so a shown pool
+    (e.g. "Saber/Archer", "4-star/5-star") doesn't give away the exact class/rarity."""
 
-    class_name: str | None = None  # lowercased Atlas className, e.g. "saber"
-    rarity: int | None = None
-    attribute: str | None = None   # lowercased Atlas attribute, e.g. "sky"
-    trait: str | None = None       # Atlas trait name, e.g. "dragon"
+    class_names: frozenset[str] = frozenset()  # lowercased Atlas classNames
+    rarities: frozenset[int] = frozenset()
+    attributes: frozenset[str] = frozenset()   # lowercased Atlas attributes
+    traits: frozenset[str] = frozenset()       # Atlas trait names
 
     @property
     def active(self) -> bool:
-        return any(
-            v is not None
-            for v in (self.class_name, self.rarity, self.attribute, self.trait)
-        )
+        return bool(self.class_names or self.rarities or self.attributes or self.traits)
 
     def matches(self, s: "Servant") -> bool:
-        if self.class_name and s.class_name.lower() != self.class_name:
+        if self.class_names and s.class_name.lower() not in self.class_names:
             return False
-        if self.rarity is not None and s.rarity != self.rarity:
+        if self.rarities and s.rarity not in self.rarities:
             return False
-        if self.attribute and s.attribute.lower() != self.attribute:
+        if self.attributes and s.attribute.lower() not in self.attributes:
             return False
-        if self.trait and self.trait not in s.traits:
+        if self.traits and self.traits.isdisjoint(s.traits):
             return False
         return True
 

@@ -35,17 +35,22 @@ class GuessServant(commands.Cog):
         difficulty,
         *,
         include_jp: bool,
-        klass,
-        rarity,
-        attribute,
-        trait,
+        klass=None,
+        rarity=None,
+        attribute=None,
+        trait=None,
         replay_override=None,
+        filt_override=None,
+        flabel_override=None,
     ) -> bool:
         diff = difficulty.value if difficulty else "easy"
         size, points = DIFFICULTY[diff]
         lunatic = diff == "lunatic"
         host_id = host.host_for("guess_servant", diff)
-        filt, flabel = filters.from_params(klass, rarity, attribute, trait)
+        if filt_override is not None:
+            filt, flabel = filt_override, flabel_override
+        else:
+            filt, flabel = filters.from_params(klass, rarity, attribute, trait)
 
         def picker(allow):
             return self.bot.servants.pick(

@@ -53,16 +53,38 @@ DESCRIBE = {
 }
 
 
+# filter dimension -> the choice list, for turning stored values back into labels.
+_LABEL_ORDER = (
+    ("class_names", CLASS_CHOICES),
+    ("rarities", RARITY_CHOICES),
+    ("attributes", ATTRIBUTE_CHOICES),
+    ("traits", TRAIT_CHOICES),
+)
+
+
+def label_for(filt: ServantFilter) -> str:
+    """Human label for the Pool field, e.g. 'Saber/Archer * 5-star * Dragon' (choice
+    order preserved; multiple values in a dimension joined with '/')."""
+    parts = []
+    for attr, choices in _LABEL_ORDER:
+        values = getattr(filt, attr)
+        if values:
+            parts.append("/".join(c.name for c in choices if c.value in values))
+    return " · ".join(parts)
+
+
 def from_params(klass, rarity, attribute, trait):
-    """(ServantFilter, title-label) from the optional Choice params; (None, None) if
+    """(ServantFilter, label) from the optional single-choice params; (None, None) if
     none are set."""
+    def one(choice):
+        return frozenset([choice.value]) if choice else frozenset()
+
     filt = ServantFilter(
-        class_name=klass.value if klass else None,
-        rarity=rarity.value if rarity else None,
-        attribute=attribute.value if attribute else None,
-        trait=trait.value if trait else None,
+        class_names=one(klass),
+        rarities=one(rarity),
+        attributes=one(attribute),
+        traits=one(trait),
     )
     if not filt.active:
         return None, None
-    parts = [c.name for c in (klass, rarity, attribute, trait) if c]
-    return filt, " · ".join(parts)
+    return filt, label_for(filt)
