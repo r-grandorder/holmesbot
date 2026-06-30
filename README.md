@@ -46,3 +46,7 @@ Then wire up the two outputs:
 The bot's Discord token and other config live in the host's `.env` (see `.env.example`),
 not in AWS. `terraform/terraform.tfvars` is optional now: no secrets are required to
 provision the asset bucket.
+
+## Privacy
+
+See the [Privacy Policy](PRIVACY.md) for what the bot does and does not collect.
