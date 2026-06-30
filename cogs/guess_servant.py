@@ -16,28 +16,24 @@ DIFFICULTY = {
     "lunatic": (70, 70),
 }
 
+_DIFF_CHOICES = [
+    app_commands.Choice(name="Easy", value="easy"),
+    app_commands.Choice(name="Medium", value="medium"),
+    app_commands.Choice(name="Hard", value="hard"),
+    app_commands.Choice(name="Lunatic", value="lunatic"),
+]
+
 
 class GuessServant(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    @app_commands.command(
-        name="guessservant",
-        description="Guess the servant from a cropped slice of their art.",
-    )
-    @app_commands.describe(difficulty="Smaller crop, bigger reward, tougher host")
-    @app_commands.choices(
-        difficulty=[
-            app_commands.Choice(name="Easy", value="easy"),
-            app_commands.Choice(name="Medium", value="medium"),
-            app_commands.Choice(name="Hard", value="hard"),
-            app_commands.Choice(name="Lunatic", value="lunatic"),
-        ]
-    )
-    async def guessservant(
+    async def _play(
         self,
         interaction: discord.Interaction,
-        difficulty: app_commands.Choice[str] | None = None,
+        difficulty: "app_commands.Choice[str] | None",
+        *,
+        include_jp: bool,
     ) -> None:
         diff = difficulty.value if difficulty else "easy"
         size, points = DIFFICULTY[diff]
@@ -45,7 +41,7 @@ class GuessServant(commands.Cog):
         host_id = host.host_for("guess_servant", diff)
 
         def picker(allow):
-            return self.bot.servants.pick(asset="art", allow=allow)
+            return self.bot.servants.pick(asset="art", allow=allow, include_jp=include_jp)
 
         async def build_prompt(session, servant, ascension):
             data = await images.fetch_bytes(session, servant.art[ascension])
@@ -66,7 +62,34 @@ class GuessServant(commands.Cog):
             build_prompt=build_prompt,
             build_reveal=build_reveal,
             difficulty=diff,
+            include_jp=include_jp,
         )
+
+    @app_commands.command(
+        name="guessservant",
+        description="Guess the servant from a cropped slice of their art.",
+    )
+    @app_commands.describe(difficulty="Smaller crop, bigger reward, tougher host")
+    @app_commands.choices(difficulty=_DIFF_CHOICES)
+    async def guessservant(
+        self,
+        interaction: discord.Interaction,
+        difficulty: app_commands.Choice[str] | None = None,
+    ) -> None:
+        await self._play(interaction, difficulty, include_jp=False)
+
+    @app_commands.command(
+        name="guessservantjp",
+        description="Like /guessservant, but the pool also includes JP-only servants.",
+    )
+    @app_commands.describe(difficulty="Smaller crop, bigger reward, tougher host")
+    @app_commands.choices(difficulty=_DIFF_CHOICES)
+    async def guessservantjp(
+        self,
+        interaction: discord.Interaction,
+        difficulty: app_commands.Choice[str] | None = None,
+    ) -> None:
+        await self._play(interaction, difficulty, include_jp=True)
 
 
 async def setup(bot) -> None:

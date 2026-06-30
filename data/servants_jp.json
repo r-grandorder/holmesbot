@@ -1,0 +1,1184 @@
+[
+  {
+    "id": 3300200,
+    "name": "Ereshkigal",
+    "className": "beastEresh",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/3300200/3300200a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/3300200/3300200a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/3300200/3300200b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/3300200/3300200b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/33002000/33002000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/33002001/33002001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/33002002/33002002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_33002000.png",
+    "cv": "Kana Ueda",
+    "jp": true,
+    "aliases": [
+      "seresh",
+      "spaceereshkigal",
+      "summerereshkigal",
+      "beasteresh",
+      "spishtarsidegrade4"
+    ]
+  },
+  {
+    "id": 2300900,
+    "name": "Mysterious Executor C.I.E.L",
+    "className": "moonCancer",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/2300900/2300900a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/2300900/2300900a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/2300900/2300900b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/2300900/2300900b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/23009000/23009000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/23009001/23009001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/23009002/23009002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_23009000.png",
+    "cv": "Hondo Kaede",
+    "jp": true,
+    "aliases": [
+      "ciel"
+    ]
+  },
+  {
+    "id": 305500,
+    "name": "Dobrynya Nikitich",
+    "className": "lancer",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/305500/305500a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/305500/305500a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/305500/305500b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/305500/305500b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/3055000/3055000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/3055001/3055001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/3055002/3055002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_3055000.png",
+    "cv": "Mayu Mineda",
+    "jp": true,
+    "aliases": [
+      "summerdobrynya",
+      "sdobrynya"
+    ]
+  },
+  {
+    "id": 1101900,
+    "name": "Xu Fu",
+    "className": "avenger",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/1101900/1101900a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/1101900/1101900a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/1101900/1101900b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/1101900/1101900b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/11019000/11019000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/11019001/11019001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/11019002/11019002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_11019000.png",
+    "cv": "Misaki Watada",
+    "jp": true,
+    "aliases": [
+      "summerxufu",
+      "sxufu"
+    ]
+  },
+  {
+    "id": 2300600,
+    "name": "BB Dubai",
+    "className": "moonCancer",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/2300600/2300600a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/2300600/2300600a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/2300600/2300600b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/2300600/2300600b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/23006000/23006000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/23006001/23006001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/23006002/23006002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_23006000.png",
+    "cv": "Noriko Shitaya",
+    "jp": true,
+    "aliases": [
+      "bbd"
+    ]
+  },
+  {
+    "id": 2301000,
+    "name": "Tenochtitlan",
+    "className": "moonCancer",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/2301000/2301000a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/2301000/2301000a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/2301000/2301000b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/2301000/2301000b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/23010000/23010000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/23010001/23010001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/23010002/23010002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_23010000.png",
+    "cv": "Mariko Honda",
+    "jp": true,
+    "aliases": [
+      "stlaloc"
+    ]
+  },
+  {
+    "id": 2501600,
+    "name": "Mysterious Heroine XX (Alter)",
+    "className": "foreigner",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/2501600/2501600a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/2501600/2501600a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/2501600/2501600b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/2501600/2501600b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/25016000/25016000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/25016001/25016001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/25016002/25016002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_25016000.png",
+    "cv": "Ayako Kawasumi",
+    "jp": true,
+    "aliases": [
+      "mhxxalter",
+      "mhxxa"
+    ]
+  },
+  {
+    "id": 2300700,
+    "name": "Kishinami Hakuno",
+    "className": "moonCancer",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/2300700/2300700a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/2300700/2300700a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/2300700/2300700b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/2300700/2300700b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/23007000/23007000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/23007001/23007001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/23007002/23007002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_23007000.png",
+    "cv": "Abe Atsushi",
+    "jp": true,
+    "aliases": [
+      "hakuno"
+    ]
+  },
+  {
+    "id": 2300800,
+    "name": "Kishinami Hakuno",
+    "className": "moonCancer",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/2300800/2300800a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/2300800/2300800a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/2300800/2300800b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/2300800/2300800b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/23008000/23008000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/23008001/23008001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/23008002/23008002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_23008000.png",
+    "cv": "Yui Ishikawa",
+    "jp": true,
+    "aliases": [
+      "hakunon"
+    ]
+  },
+  {
+    "id": 1001800,
+    "name": "Kazuradrop",
+    "className": "alterEgo",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/1001800/1001800a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/1001800/1001800a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/1001800/1001800b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/1001800/1001800b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/10018000/10018000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/10018001/10018001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/10018002/10018002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_10018000.png",
+    "cv": "Yamashita Nanami",
+    "jp": true,
+    "aliases": [
+      "smugloli"
+    ]
+  },
+  {
+    "id": 205300,
+    "name": "Tutankhamun",
+    "className": "archer",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/205300/205300a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/205300/205300a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/205300/205300b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/205300/205300b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/2053000/2053000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/2053001/2053001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/2053002/2053002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_2053000.png",
+    "cv": "Abe Rika",
+    "jp": true,
+    "aliases": [
+      "tutankhamon",
+      "tut"
+    ]
+  },
+  {
+    "id": 305600,
+    "name": "Van Gogh (Miner)",
+    "className": "lancer",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/305600/305600a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/305600/305600a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/305600/305600b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/305600/305600b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/3056000/3056000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/3056001/3056001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/3056002/3056002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_3056000.png",
+    "cv": "Karin Takahashi",
+    "jp": true,
+    "aliases": [
+      "vangoghminor",
+      "goghminer",
+      "goghminor",
+      "miner",
+      "minor"
+    ]
+  },
+  {
+    "id": 705000,
+    "name": "Louhi",
+    "className": "berserker",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/705000/705000a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/705000/705000a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/705000/705000b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/705000/705000b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/7050000/7050000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/7050001/7050001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/7050002/7050002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_7050000.png",
+    "cv": "Kohara Konomi",
+    "jp": true,
+    "aliases": []
+  },
+  {
+    "id": 2800800,
+    "name": "Abigail Williams (Santa)",
+    "className": "pretender",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/2800800/2800800a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/2800800/2800800a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/2800800/2800800b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/2800800/2800800b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/28008000/28008000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/28008001/28008001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/28008002/28008002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_28008000.png",
+    "cv": "Hitomi Ohwada",
+    "jp": true,
+    "aliases": [
+      "santaabigail",
+      "santaabby",
+      "abigailsanta",
+      "abbysanta"
+    ]
+  },
+  {
+    "id": 2800900,
+    "name": "Phantasmoon",
+    "className": "pretender",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/2800900/2800900a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/2800900/2800900a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/2800900/2800900b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/2800900/2800900b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/28009000/28009000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/28009001/28009001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/28009002/28009002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_28009000.png",
+    "cv": "Ikumi Hasegawa",
+    "jp": true,
+    "aliases": [
+      "egirlarc",
+      "egirl1"
+    ]
+  },
+  {
+    "id": 305700,
+    "name": "Biscione",
+    "className": "lancer",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/305700/305700a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/305700/305700a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/305700/305700b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/305700/305700b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/3057000/3057000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/3057001/3057001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/3057002/3057002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_3057000.png",
+    "cv": "Ichinose Kana",
+    "jp": true,
+    "aliases": [
+      "piscione"
+    ]
+  },
+  {
+    "id": 106200,
+    "name": "Kurohime",
+    "className": "saber",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/106200/106200a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/106200/106200a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/106200/106200b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/106200/106200b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/1062000/1062000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/1062001/1062001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/1062002/1062002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_1062000.png",
+    "cv": "Kuroki Honoka",
+    "jp": true,
+    "aliases": []
+  },
+  {
+    "id": 505800,
+    "name": "Ono no Komachi",
+    "className": "caster",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/505800/505800a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/505800/505800a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/505800/505800b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/505800/505800b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/5058000/5058000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/5058001/5058001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/5058002/5058002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_5058000.png",
+    "cv": "Kimura Juri & Yamanoi Jin",
+    "jp": true,
+    "aliases": [
+      "komachi"
+    ]
+  },
+  {
+    "id": 2801000,
+    "name": "Dante Alighieri",
+    "className": "pretender",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/2801000/2801000a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/2801000/2801000a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/2801000/2801000b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/2801000/2801000b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/28010000/28010000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/28010001/28010001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/28010002/28010002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_28010000.png",
+    "cv": "Chiba Shōya",
+    "jp": true,
+    "aliases": [
+      "dante",
+      "alighieri"
+    ]
+  },
+  {
+    "id": 901900,
+    "name": "Metatron Jeanne",
+    "className": "ruler",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/901900/901900a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/901900/901900a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/901900/901900b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/901900/901900b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/9019000/9019000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/9019001/9019001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/9019002/9019002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_9019000.png",
+    "cv": "Maaya Sakamoto",
+    "jp": true,
+    "aliases": [
+      "metatron",
+      "metajeanne",
+      "egirljeanne",
+      "egirl2"
+    ]
+  },
+  {
+    "id": 305800,
+    "name": "King Ashoka",
+    "className": "lancer",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/305800/305800a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/305800/305800a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/305800/305800b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/305800/305800b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/3058000/3058000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/3058001/3058001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/3058002/3058002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_3058000.png",
+    "cv": "Konishi Katsuyuki",
+    "jp": true,
+    "aliases": [
+      "ashoka"
+    ]
+  },
+  {
+    "id": 705100,
+    "name": "Lilith",
+    "className": "berserker",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/705100/705100a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/705100/705100a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/705100/705100b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/705100/705100b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/7051000/7051000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/7051001/7051001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/7051002/7051002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_7051000.png",
+    "cv": "Morohoshi Sumire",
+    "jp": true,
+    "aliases": []
+  },
+  {
+    "id": 2801100,
+    "name": "Typhon Ephemeros",
+    "className": "pretender",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/2801100/2801100a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/2801100/2801100a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/2801100/2801100b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/2801100/2801100b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/28011000/28011000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/28011001/28011001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/28011002/28011002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_28011000.png",
+    "cv": "Yamane Aya",
+    "jp": true,
+    "aliases": [
+      "typhon",
+      "ephemeros",
+      "cutie"
+    ]
+  },
+  {
+    "id": 305900,
+    "name": "Indra",
+    "className": "lancer",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/305900/305900a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/305900/305900a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/305900/305900b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/305900/305900b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/3059000/3059000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/3059001/3059001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/3059002/3059002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_3059000.png",
+    "cv": "Inoue Kazuhiko & Takayama Minami & Toki Shun'ichi",
+    "jp": true,
+    "aliases": []
+  },
+  {
+    "id": 4000100,
+    "name": "U-Olga Marie",
+    "className": "unBeastOlgaMarie",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/4000100/4000100a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/4000100/4000100a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/4000100/4000100b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/4000100/4000100b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/40001000/40001000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/40001001/40001001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/40001002/40001002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_40001000.png",
+    "cv": "Madoka Yonezawa",
+    "jp": true,
+    "aliases": [
+      "olga",
+      "uolga",
+      "uom",
+      "president"
+    ]
+  },
+  {
+    "id": 106300,
+    "name": "Passionlip",
+    "className": "saber",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/106300/106300a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/106300/106300a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/106300/106300b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/106300/106300b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/1063000/1063000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/1063001/1063001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/1063002/1063002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_1063000.png",
+    "cv": "Yui Ogura",
+    "jp": true,
+    "aliases": [
+      "summerpassionlip",
+      "spassionlip",
+      "summerlip",
+      "slip"
+    ]
+  },
+  {
+    "id": 405800,
+    "name": "Kriemhild",
+    "className": "rider",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/405800/405800a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/405800/405800a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/405800/405800b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/405800/405800b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/4058000/4058000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/4058001/4058001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/4058002/4058002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_4058000.png",
+    "cv": "Aoi Koga",
+    "jp": true,
+    "aliases": [
+      "summerkriemhild",
+      "skriemhild",
+      "summerkriem",
+      "skriem"
+    ]
+  },
+  {
+    "id": 705200,
+    "name": "Huyan Zhuo",
+    "className": "berserker",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/705200/705200a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/705200/705200a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/705200/705200b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/705200/705200b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/7052000/7052000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/7052001/7052001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/7052002/7052002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_7052000.png",
+    "cv": "Manaka Iwami",
+    "jp": true,
+    "aliases": [
+      "summerhuyanzhuo",
+      "shuyanzhuo",
+      "summerhuyan",
+      "shuyan"
+    ]
+  },
+  {
+    "id": 2301100,
+    "name": "Jade Rabbit",
+    "className": "moonCancer",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/2301100/2301100a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/2301100/2301100a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/2301100/2301100b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/2301100/2301100b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/23011000/23011000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/23011001/23011001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/23011002/23011002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_23011000.png",
+    "cv": "Maaya Sakamoto",
+    "jp": true,
+    "aliases": [
+      "summershiki",
+      "sshiki"
+    ]
+  },
+  {
+    "id": 306000,
+    "name": "Miyu Edelfelt",
+    "className": "lancer",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/306000/306000a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/306000/306000a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/306000/306000b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/306000/306000b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/3060000/3060000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/3060001/3060001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/3060002/3060002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_3060000.png",
+    "cv": "Kaori Nazuka & Yumi Kakazu",
+    "jp": true,
+    "aliases": [
+      "summermiyu",
+      "smiyu",
+      "miyumilk",
+      "milkyu",
+      "milk"
+    ]
+  },
+  {
+    "id": 205400,
+    "name": "Larva/Tiamat",
+    "className": "archer",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/205400/205400a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/205400/205400a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/205400/205400b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/205400/205400b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/2054000/2054000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/2054001/2054001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/2054002/2054002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_2054000.png",
+    "cv": "Aoi Yuki",
+    "jp": true,
+    "aliases": [
+      "summerlarva/tiamat",
+      "summerlarva",
+      "slarva",
+      "summertiamat",
+      "stiamat"
+    ]
+  },
+  {
+    "id": 1001900,
+    "name": "Jeunesse Crane",
+    "className": "alterEgo",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/1001900/1001900a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/1001900/1001900a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/1001900/1001900b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/1001900/1001900b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/10019000/10019000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/10019001/10019001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/10019002/10019002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_10019000.png",
+    "cv": "Kaori Mizuhashi",
+    "jp": true,
+    "aliases": [
+      "youngcrane",
+      "summercrane",
+      "scrane"
+    ]
+  },
+  {
+    "id": 405700,
+    "name": "Nemo/Noah",
+    "className": "rider",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/405700/405700a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/405700/405700a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/405700/405700b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/405700/405700b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/4057000/4057000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/4057001/4057001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/4057002/4057002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_4057000.png",
+    "cv": "Yumiri Hanamori",
+    "jp": true,
+    "aliases": [
+      "noah"
+    ]
+  },
+  {
+    "id": 605100,
+    "name": "Kawakami Gensai",
+    "className": "assassin",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/605100/605100a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/605100/605100a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/605100/605100b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/605100/605100b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/6051000/6051000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/6051001/6051001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/6051002/6051002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_6051000.png",
+    "cv": "白石晴香",
+    "jp": true,
+    "aliases": [
+      "kawakami",
+      "gensai"
+    ]
+  },
+  {
+    "id": 1102100,
+    "name": "Tōdō Heisuke",
+    "className": "avenger",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/1102100/1102100a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/1102100/1102100a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/1102100/1102100b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/1102100/1102100b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/11021000/11021000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/11021001/11021001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/11021002/11021002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_11021000.png",
+    "cv": "田丸篤志",
+    "jp": true,
+    "aliases": [
+      "todo",
+      "heisuke"
+    ]
+  },
+  {
+    "id": 306100,
+    "name": "Harada Sanosuke",
+    "className": "lancer",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/306100/306100a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/306100/306100a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/306100/306100b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/306100/306100b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/3061000/3061000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/3061001/3061001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/3061002/3061002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_3061000.png",
+    "cv": "斉藤壮馬",
+    "jp": true,
+    "aliases": [
+      "harada",
+      "sanosuke"
+    ]
+  },
+  {
+    "id": 106400,
+    "name": "Kondo Isami",
+    "className": "saber",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/106400/106400a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/106400/106400a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/106400/106400b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/106400/106400b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/1064000/1064000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/1064001/1064001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/1064002/1064002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_1064000.png",
+    "cv": "新垣樽助",
+    "jp": true,
+    "aliases": [
+      "kondo",
+      "isami",
+      "gorilla"
+    ]
+  },
+  {
+    "id": 306200,
+    "name": "Elisabeth Báthory",
+    "className": "lancer",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/306200/306200a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/306200/306200a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/306200/306200b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/306200/306200b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/3062000/3062000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/3062001/3062001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/3062002/3062002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_3062000.png",
+    "cv": "Rumi Okubo",
+    "jp": true,
+    "aliases": [
+      "ssrliz",
+      "spaceliz",
+      "coolerliz"
+    ]
+  },
+  {
+    "id": 1102200,
+    "name": "Elisabeth of the End",
+    "className": "avenger",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/1102200/1102200a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/1102200/1102200a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/1102200/1102200b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/1102200/1102200b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/11022000/11022000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/11022001/11022001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/11022002/11022002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_11022000.png",
+    "cv": "Rumi Okubo",
+    "jp": true,
+    "aliases": [
+      "elizabethoftheend",
+      "lizoftheend",
+      "endliz",
+      "owariliz",
+      "owaliz",
+      "dorimeliz",
+      "dorime"
+    ]
+  },
+  {
+    "id": 2801200,
+    "name": "Solomon",
+    "className": "pretender",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/2801200/2801200a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/2801200/2801200a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/2801200/2801200b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/2801200/2801200b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/28012000/28012000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/28012001/28012001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/28012002/28012002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_28012000.png",
+    "cv": "Tomokazu Sugita",
+    "jp": true,
+    "aliases": []
+  },
+  {
+    "id": 106500,
+    "name": "Lord Logres",
+    "className": "saber",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/106500/106500a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/106500/106500a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/106500/106500b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/106500/106500b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/1065000/1065000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/1065001/1065001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/1065002/1065002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_1065000.png",
+    "cv": "Ayako Kawasumi",
+    "jp": true,
+    "aliases": [
+      "logres",
+      "saberpowercreep"
+    ]
+  },
+  {
+    "id": 505900,
+    "name": "Hanasaka no Okina",
+    "className": "caster",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/505900/505900a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/505900/505900a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/505900/505900b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/505900/505900b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/5059000/5059000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/5059001/5059001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/5059002/5059002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_5059000.png",
+    "cv": "石田彰",
+    "jp": true,
+    "aliases": [
+      "hanasaka",
+      "okina",
+      "floweroldman"
+    ]
+  },
+  {
+    "id": 605200,
+    "name": "Hebi Nyōbō",
+    "className": "assassin",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/605200/605200a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/605200/605200a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/605200/605200b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/605200/605200b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/6052000/6052000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/6052001/6052001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/6052002/6052002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_6052000.png",
+    "cv": "内山夕実",
+    "jp": true,
+    "aliases": [
+      "snakewife",
+      "snakemommy"
+    ]
+  },
+  {
+    "id": 1002000,
+    "name": "Flora",
+    "className": "alterEgo",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/1002000/1002000a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/1002000/1002000a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/1002000/1002000b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/1002000/1002000b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/10020000/10020000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/10020001/10020001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/10020002/10020002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_10020000.png",
+    "cv": "井上ほの花",
+    "jp": true,
+    "aliases": []
+  },
+  {
+    "id": 306400,
+    "name": "Demeter",
+    "className": "lancer",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/306400/306400a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/306400/306400a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/306400/306400b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/306400/306400b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/3064000/3064000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/3064001/3064001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/3064002/3064002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_3064000.png",
+    "cv": "久川綾",
+    "jp": true,
+    "aliases": [
+      "greekmommy"
+    ]
+  },
+  {
+    "id": 106600,
+    "name": "Jacques de Molay",
+    "className": "saber",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/106600/106600a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/106600/106600a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/106600/106600b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/106600/106600b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/1066000/1066000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/1066001/1066001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/1066002/1066002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_1066000.png",
+    "cv": "中島ヨシキ",
+    "jp": true,
+    "aliases": [
+      "jacquesdemolay2",
+      "malemolay"
+    ]
+  },
+  {
+    "id": 505600,
+    "name": "François Prélat",
+    "className": "caster",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/505600/505600a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/505600/505600a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/505600/505600b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/505600/505600b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/5056000/5056000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/5056001/5056001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/5056002/5056002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_5056000.png",
+    "cv": "内田真礼",
+    "jp": true,
+    "aliases": [
+      "francois",
+      "francoisprelati"
+    ]
+  },
+  {
+    "id": 405600,
+    "name": "Hippolyte",
+    "className": "rider",
+    "rarity": 4,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/405600/405600a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/405600/405600a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/405600/405600b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/405600/405600b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/4056000/4056000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/4056001/4056001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/4056002/4056002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_4056000.png",
+    "cv": "関根明良",
+    "jp": true,
+    "aliases": [
+      "hippolyta",
+      "hippo",
+      "redhairsaber"
+    ]
+  },
+  {
+    "id": 1102000,
+    "name": "John Lackland",
+    "className": "avenger",
+    "rarity": 5,
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/1102000/1102000a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/1102000/1102000a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/1102000/1102000b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/1102000/1102000b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/11020000/11020000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/11020001/11020001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/11020002/11020002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_11020000.png",
+    "cv": "山崎岳彦＆小市眞琴",
+    "jp": true,
+    "aliases": [
+      "john",
+      "lackland"
+    ]
+  }
+]

@@ -1,0 +1,50 @@
+name: Refresh servant data
+
+# Weekly (and on demand): re-sync the servant index from Atlas Academy -- NA first,
+# then the JP-only remainder -- and open a PR if anything changed. Merging the PR
+# triggers Build, which re-bakes the data into the image (watchtower then deploys).
+#
+# Self-correcting: servants that have reached NA graduate into servants.json (and
+# out of the *jp pool); new JP-only servants land in servants_jp.json. No manual id
+# tracking. Stdlib-only sync, so no AWS/S3 -- unlike the paused refresh-assets.yml.
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency: refresh-servant-data
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Re-sync servant data (NA, then JP-only)
+        run: make sync-data
+      - name: Open a PR if the data changed
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/refresh-servant-data
+          base: main
+          add-paths: |
+            data/servants.json
+            data/servants_jp.json
+          author: "holmesbot-refresh[bot] <noreply@holmesbot.com>"
+          committer: "holmesbot-refresh[bot] <noreply@holmesbot.com>"
+          commit-message: "chore: refresh servant data (scheduled)"
+          title: "Refresh servant data (NA + JP)"
+          body: |
+            Scheduled re-sync from Atlas Academy.
+
+            - NA servants that have released graduate into `servants.json` (and out of the `*jp` pool).
+            - New JP-only servants are added to `servants_jp.json` (untranslated names are skipped).
+
+            Review the diff for new or odd-looking servants, then merge to build + deploy.
+          delete-branch: true

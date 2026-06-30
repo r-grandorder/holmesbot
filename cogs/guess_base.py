@@ -421,6 +421,7 @@ async def launch_round(
     build_prompt: MediaBuilder,
     build_reveal: MediaBuilder,
     difficulty: str | None = None,
+    include_jp: bool = False,
 ) -> bool:
     bot = cog.bot
     if interaction.guild_id is None:
@@ -541,6 +542,8 @@ async def launch_round(
         title = TITLES.get(game_type, "Guess the Servant")
         if difficulty:
             title = f"{title} - {difficulty.title()}"
+        if include_jp:
+            title = f"{title} (JP)"
         if game_type == "guess_audio":
             # The host is itself a Servant, so be explicit that the clip is the
             # Servant to identify -- otherwise players read the host's portrait as
