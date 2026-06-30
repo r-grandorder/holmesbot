@@ -283,7 +283,11 @@ class ChatRound:
         ):
             await self._win(message)
         elif self.bot.servants.resembles_servant(
-            message.content, extra=self.bot.aliases.all_terms(), include_jp=self.include_jp
+            message.content,
+            extra=self.bot.aliases.all_terms(
+                frozenset() if self.include_jp else self.bot.servants.jp_ids()
+            ),
+            include_jp=self.include_jp,
         ):
             await self._react(message, WRONG_REACTION)
 

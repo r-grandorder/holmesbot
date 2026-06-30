@@ -17,6 +17,7 @@ class AliasService:
         self.pool = pool
         self._by_servant: dict[int, frozenset[str]] = {}
         self._all_terms: frozenset[str] = frozenset()
+        self._terms_cache: dict[frozenset[int], frozenset[str]] = {}
 
     async def reload(self) -> None:
         rows = await self.pool.fetch("SELECT servant_id, norm FROM servant_aliases")
@@ -25,15 +26,29 @@ class AliasService:
             grouped[r["servant_id"]].add(r["norm"])
         self._by_servant = {sid: frozenset(s) for sid, s in grouped.items()}
         self._all_terms = frozenset(t for terms in grouped.values() for t in terms)
+        self._terms_cache = {}
 
     def for_servant(self, servant_id: int) -> frozenset[str]:
         return self._by_servant.get(servant_id, frozenset())
 
-    def all_terms(self) -> frozenset[str]:
+    def all_terms(self, exclude: "frozenset[int]" = frozenset()) -> frozenset[str]:
         """Every accepted alias across all servants (normalized). Used to decide
         whether a wrong message resembles a guess, so romanization variants like
-        'Artoria' (Atlas: 'Altria') still get acknowledged."""
-        return self._all_terms
+        'Artoria' (Atlas: 'Altria') still get acknowledged. `exclude` drops the aliases
+        of the given servant ids -- EN rounds pass the JP-only ids so a JP servant's
+        alias isn't acknowledged there. Cached per exclude set (cleared on reload)."""
+        if not exclude:
+            return self._all_terms
+        cached = self._terms_cache.get(exclude)
+        if cached is None:
+            cached = frozenset(
+                t
+                for sid, terms in self._by_servant.items()
+                if sid not in exclude
+                for t in terms
+            )
+            self._terms_cache[exclude] = cached
+        return cached
 
     async def add(self, servant_id: int, alias: str, added_by: int) -> bool:
         norm = matching.normalize(alias)

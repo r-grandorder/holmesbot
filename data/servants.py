@@ -72,6 +72,7 @@ class ServantIndex:
         # JP-only servants so a JP name typed mid-round is ignored, not flagged.
         self._name_sets: dict[bool, frozenset[str]] = {}
         self._spaced_name_sets: dict[bool, tuple[str, ...]] = {}
+        self._jp_ids: frozenset[int] | None = None
 
     @classmethod
     def load(
@@ -134,6 +135,12 @@ class ServantIndex:
 
     def get(self, servant_id: int) -> Servant | None:
         return self._by_id.get(servant_id)
+
+    def jp_ids(self) -> frozenset[int]:
+        """Ids of JP-only servants, for excluding their aliases on EN rounds."""
+        if self._jp_ids is None:
+            self._jp_ids = frozenset(s.id for s in self._by_id.values() if s.jp)
+        return self._jp_ids
 
     def search(self, query: str, limit: int = 25) -> list[Servant]:
         """Servants whose name contains the query (for admin autocomplete)."""
