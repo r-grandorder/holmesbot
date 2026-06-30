@@ -33,8 +33,10 @@ class ChatGuess(commands.Cog):
             return
         if self.bot.user is not None and self.bot.user in message.mentions:
             await self._handle_mention(message, round_)
-            return
-        await round_.handle_message(message)
+        else:
+            await round_.handle_message(message)
+        # Bump the prompt to the bottom after enough channel chatter (REPOST_AFTER).
+        await round_.note_activity(message.channel)
 
     async def _handle_mention(self, message: discord.Message, round_) -> None:
         # The Holmes @mention persona is disabled for now (kept dormant in

@@ -153,6 +153,11 @@ class ChatRound:
         self.vote_message: discord.Message | None = None
         self.vote_reactors: set[int] = set()
         self._timeout_task: asyncio.Task | None = None
+        # Reposting the prompt so it doesn't scroll away (config REPOST_AFTER). The
+        # built prompt embed is kept so a repost is a faithful copy.
+        self.prompt_embed: discord.Embed | None = None
+        self.repost_after = 0
+        self._msgs_since_prompt = 0
 
     def start(self, channel_id: int, message: discord.Message) -> None:
         self.channel_id = channel_id
@@ -345,6 +350,43 @@ class ChatRound:
             await get_partial(self.message.id).edit(**kwargs)
         except discord.HTTPException:
             log.exception("failed to edit prompt for game %s", self.game_id)
+
+    async def note_activity(self, channel: discord.abc.Messageable) -> None:
+        """Count a channel message; once `repost_after` go by, repost the prompt at the
+        bottom so players don't scroll up. No-op if disabled or the round is over."""
+        if self.claimed or self.repost_after <= 0 or self.prompt_embed is None:
+            return
+        self._msgs_since_prompt += 1
+        if self._msgs_since_prompt < self.repost_after:
+            return
+        self._msgs_since_prompt = 0
+        await self._repost_prompt(channel)
+
+    async def _repost_prompt(self, channel: discord.abc.Messageable) -> None:
+        # Re-send the prompt (embed + re-attached crop/clip) and drop the old copy so
+        # it "bumps" to the bottom rather than leaving duplicates.
+        embed = self.prompt_embed.copy()
+        file = _attach(embed, self.prompt)
+        kwargs: dict = {"embed": embed}
+        if file is not None:
+            kwargs["file"] = file
+        try:
+            new_msg = await channel.send(**kwargs)
+        except discord.HTTPException:
+            log.exception("failed to repost prompt for game %s", self.game_id)
+            return
+        old_id = self.message.id if self.message else None
+        self.message = new_msg
+        try:
+            await self.bot.games.attach_message(self.game_id, new_msg.id)
+        except Exception:
+            log.exception("failed to reattach message for game %s", self.game_id)
+        get_partial = getattr(channel, "get_partial_message", None)
+        if old_id is not None and get_partial is not None:
+            try:
+                await get_partial(old_id).delete()
+            except discord.HTTPException:
+                pass
 
     async def forfeit(self, channel: discord.abc.Messageable) -> None:
         """End the round early (mod/owner) and reveal the answer at the bottom."""
@@ -570,6 +612,8 @@ async def launch_round(
         )
         _host_author(embed, host_id)
         prompt_file = _attach(embed, prompt)
+        round_.prompt_embed = embed
+        round_.repost_after = bot.config.repost_after
         kwargs = {"file": prompt_file} if prompt_file else {}
         message = await interaction.followup.send(embed=embed, **kwargs)
         round_.start(interaction.channel_id, message)

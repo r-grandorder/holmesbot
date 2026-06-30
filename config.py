@@ -23,6 +23,7 @@ class Config:
     log_level: str
     assets_base_url: str | None
     qp_emote: str
+    repost_after: int
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -40,6 +41,7 @@ class Config:
             log_level=os.environ.get("LOG_LEVEL", "INFO").upper(),
             assets_base_url=(os.environ.get("ASSETS_BASE_URL") or "").rstrip("/") or None,
             qp_emote=os.environ.get("QP_EMOTE", "QP"),
+            repost_after=int(os.environ.get("REPOST_AFTER") or "0"),
         )
 
 
