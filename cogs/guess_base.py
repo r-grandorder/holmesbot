@@ -496,6 +496,7 @@ async def launch_round(
     difficulty: str | None = None,
     include_jp: bool = False,
     filters_label: str | None = None,
+    replay_override: "Callable[[discord.Interaction], Awaitable[bool]] | None" = None,
 ) -> bool:
     bot = cog.bot
     if interaction.guild_id is None:
@@ -618,7 +619,8 @@ async def launch_round(
             prompt=prompt,
             # No Play Again in a non-game channel (a mod-triggered one-off): regular
             # players can't start rounds there, so the button would only reject them.
-            replay=_replay if channel_is_game else None,
+            # replay_override lets /guessrandom re-roll a fresh game on Play Again.
+            replay=(replay_override or _replay) if channel_is_game else None,
         )
         round_.expires_at = expires_at
         intro = host.line(host_id, "start", player=interaction.user.display_name)

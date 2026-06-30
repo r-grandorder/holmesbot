@@ -39,7 +39,8 @@ class GuessServant(commands.Cog):
         rarity,
         attribute,
         trait,
-    ) -> None:
+        replay_override=None,
+    ) -> bool:
         diff = difficulty.value if difficulty else "easy"
         size, points = DIFFICULTY[diff]
         lunatic = diff == "lunatic"
@@ -60,7 +61,7 @@ class GuessServant(commands.Cog):
             data = await images.fetch_bytes(session, servant.art[ascension])
             return Media(is_image=True, data=images.trim_to_content(data), filename="reveal.png")
 
-        await launch_round(
+        return await launch_round(
             self,
             interaction,
             game_type="guess_servant",
@@ -72,6 +73,7 @@ class GuessServant(commands.Cog):
             difficulty=diff,
             include_jp=include_jp,
             filters_label=flabel,
+            replay_override=replay_override,
         )
 
     @app_commands.command(

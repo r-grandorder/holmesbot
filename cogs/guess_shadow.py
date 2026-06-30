@@ -39,13 +39,14 @@ class GuessShadow(commands.Cog):
         rarity,
         attribute,
         trait,
-    ) -> None:
+        replay_override=None,
+    ) -> bool:
         base = self.bot.config.assets_base_url
         if not base:
             await interaction.response.send_message(
                 "Shadow assets aren't set up yet.", ephemeral=True
             )
-            return
+            return False
         diff = difficulty.value if difficulty else "easy"
         crop_size, points = DIFFICULTY[diff]
         host_id = host.host_for("guess_shadow")
@@ -82,7 +83,7 @@ class GuessShadow(commands.Cog):
         async def build_reveal(_session, servant, ascension):
             return Media(is_image=True, url=f"{base}/figure/v3/{servant.id}/{ascension}.png")
 
-        await launch_round(
+        return await launch_round(
             self,
             interaction,
             game_type="guess_shadow",
@@ -94,6 +95,7 @@ class GuessShadow(commands.Cog):
             difficulty=diff,
             include_jp=include_jp,
             filters_label=flabel,
+            replay_override=replay_override,
         )
 
     @app_commands.command(

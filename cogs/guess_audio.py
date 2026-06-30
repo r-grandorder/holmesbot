@@ -25,7 +25,8 @@ class GuessAudio(commands.Cog):
         rarity,
         attribute,
         trait,
-    ) -> None:
+        replay_override=None,
+    ) -> bool:
         host_id = host.host_for("guess_audio")
         filt, flabel = filters.from_params(klass, rarity, attribute, trait)
 
@@ -48,7 +49,7 @@ class GuessAudio(commands.Cog):
             data = await images.fetch_bytes(session, servant.art[ascension])
             return Media(is_image=True, data=images.trim_to_content(data), filename="reveal.png")
 
-        await launch_round(
+        return await launch_round(
             self,
             interaction,
             game_type="guess_audio",
@@ -59,6 +60,7 @@ class GuessAudio(commands.Cog):
             build_reveal=build_reveal,
             include_jp=include_jp,
             filters_label=flabel,
+            replay_override=replay_override,
         )
 
     @app_commands.command(
