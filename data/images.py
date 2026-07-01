@@ -4,7 +4,7 @@ import io
 import random
 
 import aiohttp
-from PIL import Image
+from PIL import Image, ImageFilter
 
 # Runtime image work for guess_servant (random crops) and reveals. The
 # guess_shadow silhouettes are precomputed offline (scripts/precompute_silhouettes.py)
@@ -55,35 +55,36 @@ def crop_random(
 
 
 def crop_silhouette(data: bytes, size: int) -> bytes:
-    """A random size x size patch of a silhouette, taken from ON the FIGURE (the dark
-    shape) so it never lands on the blank card. The figure rarely fills its bounding
-    box (thin body, outstretched arms, gaps between legs), so a random crop inside the
-    bbox can be all background. We sample several candidates and keep the one covering
-    the most figure, early-accepting any crop that's already substantially figure.
-    Used for the harder guess_shadow difficulties."""
+    """A random size x size patch that STRADDLES the silhouette's outline, so it always
+    shows a recognizable edge -- never all card (blue) and never all figure (a solid
+    dark square, both unguessable). Anchors each candidate on an edge pixel and keeps
+    the most balanced figure/background mix. Used for the harder guess_shadow tiers."""
     img = _load_rgba(data).convert("RGB")
     w, h = img.size
     # the figure is near-black (~21) on the solid card (~120); threshold between.
     mask = img.convert("L").point(lambda p: 255 if p < 70 else 0)
     left, top, right, bottom = mask.getbbox() or (0, 0, w, h)
     size = max(1, min(size, right - left, bottom - top))
-    # Anchor each candidate crop on an actual figure pixel so it can never be all card
-    # (a random crop inside the bbox can miss a sparse figure entirely). Then keep the
-    # candidate covering the most figure, early-accepting one that's already substantial.
-    dark_px = [i for i, v in enumerate(mask.tobytes()) if v]
-    if not dark_px:  # no figure detected -- fall back to a bbox crop
+    # Anchor on the figure OUTLINE (edge pixels) so a crop spans figure + card, not the
+    # solid interior or the empty card. Fall back to any figure pixel if no edge found.
+    anchors = [i for i, v in enumerate(mask.filter(ImageFilter.FIND_EDGES).tobytes()) if v]
+    if not anchors:
+        anchors = [i for i, v in enumerate(mask.tobytes()) if v]
+    if not anchors:  # no figure at all -- fall back to a bbox crop
         return _to_png(img.crop((left, top, left + size, top + size)))
-    enough = size * size * 0.15  # ~15%+ figure reads clearly
-    best_box, best_dark = None, -1
-    for _ in range(8):
-        px, py = divmod(random.choice(dark_px), w)[::-1]
+    total = size * size
+    balanced = total * 0.25  # figure and card each >= ~25% reads as a clear outline
+    best_box, best_score = None, -1
+    for _ in range(10):
+        px, py = divmod(random.choice(anchors), w)[::-1]
         x = min(max(px - random.randint(0, size - 1), 0), w - size)
         y = min(max(py - random.randint(0, size - 1), 0), h - size)
         box = (x, y, x + size, y + size)
-        dark = mask.crop(box).histogram()[255]  # >= 1 by construction
-        if dark > best_dark:
-            best_dark, best_box = dark, box
-        if dark >= enough:
+        fig = mask.crop(box).histogram()[255]
+        score = min(fig, total - fig)  # 0 if all one colour, largest near a 50/50 mix
+        if score > best_score:
+            best_score, best_box = score, box
+        if score >= balanced:
             break
     return _to_png(img.crop(best_box))
 
