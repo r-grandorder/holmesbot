@@ -14,7 +14,7 @@ DIFFICULTY = {
     "easy": (None, 15),
     "medium": (220, 24),
     "hard": (150, 38),
-    "lunatic": (90, 80),
+    "lunatic": (90, 100),
 }
 
 _DIFF_CHOICES = [
