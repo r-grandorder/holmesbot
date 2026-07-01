@@ -5,6 +5,7 @@ import copy
 import datetime as dt
 import io
 import logging
+import time
 from collections import deque
 from dataclasses import dataclass
 from typing import Awaitable, Callable
@@ -30,6 +31,10 @@ TITLES = {
 
 WIN_REACTION = "\N{WHITE HEAVY CHECK MARK}"
 WRONG_REACTION = "\N{CROSS MARK}"
+# Cap wrong-but-real reactions to one per this many seconds per round, so a busy
+# channel doesn't build a Discord reaction rate-limit backlog (which makes reactions
+# and the reveal lag). Only bites under a flood; the winning reaction is unaffected.
+WRONG_REACT_COOLDOWN = 1.5
 FORFEIT_EMOTE = "\N{WAVING WHITE FLAG}\N{VARIATION SELECTOR-16}"  # vote-to-give-up react
 FORFEIT_VOTES = 3  # distinct humans whose reaction ends the round
 HINT_REWARD = (1.0, 0.7, 0.5, 0.3)  # win multiplier by hints used (0..3): hints cost QP
@@ -151,6 +156,7 @@ class ChatRound:
         self.expires_at: dt.datetime | None = None
         self.claimed = False
         self.hints_given = 0
+        self._last_wrong_react = 0.0  # monotonic time of the last wrong-guess react
         self.vote_message: discord.Message | None = None
         self.vote_reactors: set[int] = set()
         self._timeout_task: asyncio.Task | None = None
@@ -289,7 +295,12 @@ class ChatRound:
             ),
             include_jp=self.include_jp,
         ):
-            await self._react(message, WRONG_REACTION)
+            # Throttle wrong-guess reacts so a busy channel doesn't back up the reaction
+            # rate limit (which is what makes reactions and reveals lag).
+            now = time.monotonic()
+            if now - self._last_wrong_react >= WRONG_REACT_COOLDOWN:
+                self._last_wrong_react = now
+                await self._react(message, WRONG_REACTION)
 
     async def _win(self, message: discord.Message) -> None:
         self.claimed = True
@@ -298,10 +309,9 @@ class ChatRound:
         award = self._effective_points()
         total = await self.bot.scoring.award(message.guild.id, message.author.id, award)
         await self.bot.games.resolve(self.game_id, "win", message.author.id, award)
-        await self._react(message, WIN_REACTION)
-        await self._react(message, discord.PartialEmoji.from_str(qp_emote()))
-        # Post the FULL reveal at the bottom, where the action is -- nobody
-        # backscrolls to the prompt -- tagging the winner with their reward.
+        # Post the FULL reveal at the bottom FIRST, where the action is -- nobody
+        # backscrolls to the prompt -- tagging the winner with their reward. Before the
+        # win reactions, so a busy channel's reaction backlog can't delay the reveal.
         praise = host.line(self.host_id, "correct", player=message.author.display_name)
         embed, file = await self._build_reveal_embed(f"*{praise}*")
         embed.color = discord.Color.green()
@@ -312,6 +322,8 @@ class ChatRound:
         await self._post_reveal(message.channel, embed, file, ping=message.author.mention)
         # Slim the now-buried prompt so it isn't left showing "type the name".
         await self._slim_prompt(f"Solved by {message.author.display_name}.")
+        await self._react(message, WIN_REACTION)
+        await self._react(message, discord.PartialEmoji.from_str(qp_emote()))
 
     async def _post_reveal(
         self,
@@ -464,11 +476,14 @@ class ChatRound:
             self._timeout_task.cancel()
 
     @staticmethod
-    async def _react(message: discord.Message, emoji: str) -> None:
+    async def _react(message: discord.Message, emoji: "str | discord.PartialEmoji") -> None:
         try:
             await message.add_reaction(emoji)
-        except discord.HTTPException:
-            pass
+        except discord.HTTPException as e:
+            log.warning(
+                "reaction %r failed in channel %s: %s",
+                str(emoji), getattr(message.channel, "id", "?"), e,
+            )
 
     async def _build_reveal_embed(
         self, headline: str
