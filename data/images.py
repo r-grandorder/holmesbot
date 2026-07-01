@@ -55,18 +55,37 @@ def crop_random(
 
 
 def crop_silhouette(data: bytes, size: int) -> bytes:
-    """A random size x size patch of a silhouette, taken from within the FIGURE's
-    bounding box (the dark shape) -- the card is opaque so an alpha-bbox crop would
-    land on blank background. Used for the harder guess_shadow difficulties."""
+    """A random size x size patch of a silhouette, taken from ON the FIGURE (the dark
+    shape) so it never lands on the blank card. The figure rarely fills its bounding
+    box (thin body, outstretched arms, gaps between legs), so a random crop inside the
+    bbox can be all background. We sample several candidates and keep the one covering
+    the most figure, early-accepting any crop that's already substantially figure.
+    Used for the harder guess_shadow difficulties."""
     img = _load_rgba(data).convert("RGB")
-    # the figure is near-black (~21) on the solid card (~128); threshold between.
+    w, h = img.size
+    # the figure is near-black (~21) on the solid card (~120); threshold between.
     mask = img.convert("L").point(lambda p: 255 if p < 70 else 0)
-    left, top, right, bottom = mask.getbbox() or (0, 0, img.width, img.height)
-    fw, fh = right - left, bottom - top
-    size = max(1, min(size, fw, fh))
-    x = left + random.randint(0, max(0, fw - size))
-    y = top + random.randint(0, max(0, fh - size))
-    return _to_png(img.crop((x, y, x + size, y + size)))
+    left, top, right, bottom = mask.getbbox() or (0, 0, w, h)
+    size = max(1, min(size, right - left, bottom - top))
+    # Anchor each candidate crop on an actual figure pixel so it can never be all card
+    # (a random crop inside the bbox can miss a sparse figure entirely). Then keep the
+    # candidate covering the most figure, early-accepting one that's already substantial.
+    dark_px = [i for i, v in enumerate(mask.tobytes()) if v]
+    if not dark_px:  # no figure detected -- fall back to a bbox crop
+        return _to_png(img.crop((left, top, left + size, top + size)))
+    enough = size * size * 0.15  # ~15%+ figure reads clearly
+    best_box, best_dark = None, -1
+    for _ in range(8):
+        px, py = divmod(random.choice(dark_px), w)[::-1]
+        x = min(max(px - random.randint(0, size - 1), 0), w - size)
+        y = min(max(py - random.randint(0, size - 1), 0), h - size)
+        box = (x, y, x + size, y + size)
+        dark = mask.crop(box).histogram()[255]  # >= 1 by construction
+        if dark > best_dark:
+            best_dark, best_box = dark, box
+        if dark >= enough:
+            break
+    return _to_png(img.crop(best_box))
 
 
 def trim_to_content(data: bytes) -> bytes:
