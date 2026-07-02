@@ -81,6 +81,29 @@ def _host_author(embed: discord.Embed, host_id: str) -> None:
         embed.set_thumbnail(url=portrait)
 
 
+def _refile(file: "discord.File | None") -> "tuple[bytes | None, str | None]":
+    """Read a File's bytes up front so a fresh copy can be built for each send attempt:
+    a discord.File is single-use and is closed after a send, so it can't be re-sent."""
+    if file is None:
+        return None, None
+    return file.fp.read(), file.filename
+
+
+async def _retry(action, what: str, *, tries: int = 2, delay: float = 2.0):
+    """Await action() (a coroutine factory); retry on a transient Discord error (403 or
+    5xx) -- a properly-permissioned channel occasionally 403s during a brief gateway or
+    guild desync. Returns the result, or None on final failure (logged)."""
+    for attempt in range(tries):
+        try:
+            return await action()
+        except discord.HTTPException as e:
+            if attempt + 1 < tries and getattr(e, "status", None) in (403, 500, 502, 503, 504):
+                await asyncio.sleep(delay)
+                continue
+            log.warning("%s failed: %s", what, e)
+            return None
+
+
 class PlayAgainView(discord.ui.View):
     """A 'Play Again' button on a reveal that re-runs the same game in-channel."""
 
@@ -335,20 +358,23 @@ class ChatRound:
     ) -> None:
         """Send a reveal at the bottom of the channel, with a Play Again button."""
         view = PlayAgainView(self.replay) if self.replay is not None else None
-        kwargs: dict = {}
-        if file is not None:
-            kwargs["file"] = file
+        base: dict = {}
         if view is not None:
-            kwargs["view"] = view
+            base["view"] = view
         if ping is not None:
-            kwargs["content"] = ping
-            kwargs["allowed_mentions"] = _PING_USER
-        try:
-            sent = await channel.send(embed=embed, **kwargs)
-            if view is not None:
-                view.message = sent
-        except discord.HTTPException:
-            log.exception("failed to post reveal for game %s", self.game_id)
+            base["content"] = ping
+            base["allowed_mentions"] = _PING_USER
+        data, filename = _refile(file)
+
+        def send():
+            kwargs = dict(base, embed=embed)
+            if data is not None:
+                kwargs["file"] = discord.File(io.BytesIO(data), filename=filename)
+            return channel.send(**kwargs)
+
+        sent = await _retry(send, f"reveal for game {self.game_id}")
+        if sent is not None and view is not None:
+            view.message = sent
 
     async def _slim_prompt(self, note: str) -> None:
         """Edit the now-buried prompt to a terminal state but KEEP its cropped image /
@@ -372,10 +398,19 @@ class ChatRound:
         get_partial = getattr(channel, "get_partial_message", None)
         if get_partial is None:
             return
-        try:
-            await get_partial(self.message.id).edit(**kwargs)
-        except discord.HTTPException:
-            log.exception("failed to edit prompt for game %s", self.game_id)
+        message_id = self.message.id
+        atts = kwargs.pop("attachments", None)
+        refiled = [_refile(a) for a in atts] if atts is not None else None
+
+        def do():
+            k = dict(kwargs)
+            if refiled is not None:
+                k["attachments"] = [
+                    discord.File(io.BytesIO(d or b""), filename=fn) for d, fn in refiled
+                ]
+            return get_partial(message_id).edit(**k)
+
+        await _retry(do, f"edit prompt for game {self.game_id}")
 
     def _render_prompt(self) -> "tuple[discord.Embed, discord.File | None]":
         """Current prompt embed (base + any revealed hints) with its media re-attached,
@@ -418,13 +453,16 @@ class ChatRound:
         # Re-send the prompt (embed + revealed hints + re-attached crop/clip) and drop
         # the old copy so it "bumps" to the bottom rather than leaving duplicates.
         embed, file = self._render_prompt()
-        kwargs: dict = {"embed": embed}
-        if file is not None:
-            kwargs["file"] = file
-        try:
-            new_msg = await channel.send(**kwargs)
-        except discord.HTTPException:
-            log.exception("failed to repost prompt for game %s", self.game_id)
+        data, filename = _refile(file)
+
+        def send():
+            kwargs: dict = {"embed": embed}
+            if data is not None:
+                kwargs["file"] = discord.File(io.BytesIO(data), filename=filename)
+            return channel.send(**kwargs)
+
+        new_msg = await _retry(send, f"repost prompt for game {self.game_id}")
+        if new_msg is None:
             return
         old_id = self.message.id if self.message else None
         self.message = new_msg
@@ -477,13 +515,10 @@ class ChatRound:
 
     @staticmethod
     async def _react(message: discord.Message, emoji: "str | discord.PartialEmoji") -> None:
-        try:
-            await message.add_reaction(emoji)
-        except discord.HTTPException as e:
-            log.warning(
-                "reaction %r failed in channel %s: %s",
-                str(emoji), getattr(message.channel, "id", "?"), e,
-            )
+        await _retry(
+            lambda: message.add_reaction(emoji),
+            f"reaction {str(emoji)!r} in channel {getattr(message.channel, 'id', '?')}",
+        )
 
     async def _build_reveal_embed(
         self, headline: str
@@ -742,9 +777,12 @@ async def _post_audit_log(
     embed.add_field(
         name="Where", value=f"<#{interaction.channel_id}> ([jump]({message.jump_url}))"
     )
-    log_file = _attach(embed, prompt)
-    kwargs = {"file": log_file} if log_file else {}
-    try:
-        await channel.send(embed=embed, allowed_mentions=_NO_PINGS, **kwargs)
-    except discord.HTTPException:
-        log.exception("failed to post to audit-log channel %s", channel_id)
+    data, filename = _refile(_attach(embed, prompt))
+
+    def send():
+        kwargs = {"embed": embed, "allowed_mentions": _NO_PINGS}
+        if data is not None:
+            kwargs["file"] = discord.File(io.BytesIO(data), filename=filename)
+        return channel.send(**kwargs)
+
+    await _retry(send, f"audit-log post to channel {channel_id}")
