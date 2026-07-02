@@ -450,8 +450,9 @@ class ChatRound:
         await self._repost_prompt(channel)
 
     async def _repost_prompt(self, channel: discord.abc.Messageable) -> None:
-        # Re-send the prompt (embed + revealed hints + re-attached crop/clip) and drop
-        # the old copy so it "bumps" to the bottom rather than leaving duplicates.
+        # Re-post the prompt (embed + revealed hints + re-attached crop/clip) at the
+        # bottom. The old copy is left in place: deleting it spams servers' message-log
+        # bots with "deleted message" entries.
         embed, file = self._render_prompt()
         data, filename = _refile(file)
 
@@ -464,18 +465,11 @@ class ChatRound:
         new_msg = await _retry(send, f"repost prompt for game {self.game_id}")
         if new_msg is None:
             return
-        old_id = self.message.id if self.message else None
         self.message = new_msg
         try:
             await self.bot.games.attach_message(self.game_id, new_msg.id)
         except Exception:
             log.exception("failed to reattach message for game %s", self.game_id)
-        get_partial = getattr(channel, "get_partial_message", None)
-        if old_id is not None and get_partial is not None:
-            try:
-                await get_partial(old_id).delete()
-            except discord.HTTPException:
-                pass
 
     async def forfeit(self, channel: discord.abc.Messageable) -> None:
         """End the round early (mod/owner) and reveal the answer at the bottom."""
