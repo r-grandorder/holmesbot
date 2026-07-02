@@ -10,8 +10,13 @@ from data.servants import ServantFilter
 
 from . import filters
 
-# (cog class name, whether its _play takes a difficulty arg). Voice has none.
-_GAMES = (("GuessServant", True), ("GuessAudio", False), ("GuessShadow", True))
+# (cog class name, whether its _play takes a difficulty arg). Voice and skills have none.
+_GAMES = (
+    ("GuessServant", True),
+    ("GuessAudio", False),
+    ("GuessShadow", True),
+    ("GuessSkill", False),
+)
 _DIFFS = ("easy", "medium", "hard", "lunatic")
 _DIFF_CHOICES = [app_commands.Choice(name=d.title(), value=d) for d in _DIFFS]
 _FILTER_CHANCE = 0.5   # ~half of rounds are a straight game (no pool)
@@ -20,7 +25,7 @@ _MIN_POOL = 4          # re-roll a pool that matches fewer than this many servan
 
 
 class GuessRandom(commands.Cog):
-    """A surprise round: a random game (art/shadow/voice), sometimes with a random
+    """A surprise round: a random game (art/shadow/voice/skills), sometimes with a random
     category pool. Play Again re-rolls a fresh game. An optional difficulty pins the
     art/shadow rounds it picks. Class and rarity pools are rolled as multi-value sets
     (e.g. "Saber/Archer", "4-star/5-star") so showing the pool never gives away the

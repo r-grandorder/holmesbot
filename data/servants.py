@@ -32,6 +32,7 @@ class Servant:
     jp: bool = False         # JP-only servant; included only via the *jp game commands
     aliases: tuple[str, ...] = ()  # extra accepted answers (NPCs + JP), normalized at match
     traits: frozenset[str] = frozenset()  # Atlas trait names; category filter
+    skills: tuple[tuple[int, str, str], ...] = ()  # (slot num, name, icon URL); guess_skill
 
     def assets(self, kind: str) -> dict[str, str]:
         return self.figure if kind == "figure" else self.art
@@ -128,6 +129,11 @@ class ServantIndex:
             jp=jp or bool(item.get("jp")),
             aliases=tuple(item.get("aliases", ())),
             traits=frozenset(item.get("traits", ())),
+            skills=tuple(
+                (sk["num"], sk["name"], sk["icon"])
+                for sk in item.get("skills", ())
+                if sk.get("num") and sk.get("name") and sk.get("icon")
+            ),
         )
 
     def __len__(self) -> int:
@@ -204,15 +210,19 @@ class ServantIndex:
         allow: Callable[[int, str], bool] | None = None,
         include_jp: bool = False,
         filt: "ServantFilter | None" = None,
+        need_skills: bool = False,
     ) -> tuple[Servant, str] | None:
         """Pick a random (servant, ascension_key) for the given asset kind whose art
         passes `allow`. JP-only servants are excluded unless include_jp; `filt` narrows
-        the pool further (class/rarity/attribute/trait)."""
+        the pool further (class/rarity/attribute/trait). `need_skills` keeps only
+        servants with a full 3-skill kit (guess_skill), which also drops NPC bosses."""
         gate = allow or (lambda _sid, _asc: True)
         servants = [
             s
             for s in self._by_id.values()
-            if (include_jp or not s.jp) and (filt is None or filt.matches(s))
+            if (include_jp or not s.jp)
+            and (filt is None or filt.matches(s))
+            and (not need_skills or len(s.skills) >= 3)
         ]
         random.shuffle(servants)
         for servant in servants:

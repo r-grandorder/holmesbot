@@ -380,6 +380,108 @@ HOSTS: dict[str, dict] = {
             ],
         },
     },
+    "skadi": {
+        "name": "Scathach-Skadi",
+        "servant_id": 503900,
+        "lines": {
+            "start": [
+                "Um... a servant, shown only by their three skills. Wh-who do you think it is, Master?",
+                "I am not very clever with riddles myself, but... would you look at these skills and name them?",
+                "H-here are three skills. Someone as capable as you can surely tell whose they are. I could not.",
+                "These skills belong to a single servant. Please, do not mind me, just... name them?",
+                "A humble little puzzle, from a rather humble god. Three skills. Who could they be?",
+            ],
+            "correct": [
+                "Oh! You got it. Of course you did. I never doubted you, Master.",
+                "C-correct... amazing. I could never have named them so quickly.",
+                "Yes, that is right! Well done, {player}. I am glad I could help, even a little.",
+                "You saw it at once. You are far more dependable than I am, Master.",
+                "That is the one. Thank you for indulging my little game.",
+            ],
+            "wrong": [
+                "Ah, n-no... I am sorry, was my puzzle unclear? Please, look again.",
+                "Not quite. Perhaps I chose a difficult one. Take your time, Master.",
+                "That is not them, I think. Sh-shall I give you a hint? I truly do not mind.",
+                "Mm, no. Please do not feel bad. It is a hard one, honestly.",
+                "Not that name. B-but I believe in you, Master. Try once more?",
+            ],
+            "reveal": [
+                "Time is up. It was {answer}. I-I hope the puzzle was not too unfair.",
+                "No one? It was {answer}. My apologies. I will choose more gently next time.",
+                "The servant was {answer}. Please remember their skills, if you would.",
+                "It was {answer}. Do not be discouraged, Master. Even a god misses things. Often, in my case.",
+                "{answer}, it was. Thank you for playing along with me.",
+            ],
+        },
+    },
+    "altria_caster": {
+        "name": "Altria Caster",
+        "servant_id": 504500,
+        "lines": {
+            "start": [
+                "A new puzzle, Master! Three skills, one servant. Can you tell me who?",
+                "A servant hidden behind their own skills. I do love a hopeful challenge. Who is it?",
+                "Here are three skills. Have a little faith in your eyes, Master, and name their owner.",
+                "A small mystery to brighten the day. Read these skills and tell me the servant.",
+                "Someone stands behind these three skills. Shall we find them together?",
+            ],
+            "correct": [
+                "Wonderful! I just knew you could do it, Master.",
+                "That is right! See? A little hope and a sharp eye go a long way, {player}.",
+                "Correct! Splendidly done. I am proud of you.",
+                "Yes, exactly! You read them beautifully.",
+                "You found them. Nothing makes me happier than seeing you shine, Master.",
+            ],
+            "wrong": [
+                "Not this time, but do not lose heart. Look at the skills once more.",
+                "A different servant, I am afraid. Chin up, Master, and try again.",
+                "Not quite. Would a hint help? There is no shame in asking.",
+                "No, but you are close in spirit. I have faith you will get it.",
+                "Not them. Every guess brings you nearer. Once more, Master.",
+            ],
+            "reveal": [
+                "Time is up. It was {answer}. Keep them in your heart for next time, Master.",
+                "No one? It was {answer}. Ah well, hope always leaves room for a rematch.",
+                "The servant was {answer}. Now you will know them anywhere.",
+                "It was {answer}. Do not be downcast; the next one is yours, I am sure of it.",
+                "{answer}, it was. Let us dream up another puzzle soon.",
+            ],
+        },
+    },
+    "lady_avalon": {
+        "name": "Lady Avalon",
+        "servant_id": 2800300,
+        "lines": {
+            "start": [
+                "Ah, a delightful challenge! A servant concealed by three mere skills. Shall we unveil them, Master?",
+                "Come now, I do adore a good mystery. Three skills, one name. Who might it be?",
+                "Feast your eyes on these three skills, and name the servant. Dazzle me, won't you?",
+                "A servant hides behind their own arts. How dramatic! Who dares such a disguise?",
+                "Let us make a grand game of it, Master. Three skills. Name the beauty behind them.",
+            ],
+            "correct": [
+                "Magnificent! You unveiled them with true style, {player}.",
+                "Correct, and charmingly done. I knew you had an eye for the finer things.",
+                "Yes! A guess as sharp as it is elegant. I am delighted.",
+                "Precisely right. You quite dazzle me, Master.",
+                "Splendid! That is the one. What a performance.",
+            ],
+            "wrong": [
+                "Ah-ah, not quite, though a bold and dashing attempt. Look again, Master.",
+                "A different beauty, I am afraid. Do try once more, for me.",
+                "Not them. Shall I offer you a hint? I am feeling generous today.",
+                "No, though I adored your confidence. The game goes on.",
+                "Not this one. Keep at it, Master. Fortune favors the bold.",
+            ],
+            "reveal": [
+                "Time is up! It was {answer}. A shame to let such a beauty slip away.",
+                "No one? It was {answer}. Even the grandest mysteries go unsolved, on occasion.",
+                "The servant was {answer}. Remember them, Master, and dazzle me next time.",
+                "It was {answer}. Do not pout; I shall grant you a rematch, of course.",
+                "{answer}, it was. Until our next lovely little duel, Master.",
+            ],
+        },
+    },
 }
 
 # (game_type, difficulty) -> host. Servant difficulties map to four hosts; the
@@ -405,6 +507,10 @@ _AUDIO_HOSTS = [
     "gilgamesh_caster",
 ]
 
+# The skill game rotates among these support casters, each of whom reads a servant
+# by their arts.
+_SKILL_HOSTS = ["skadi", "altria_caster", "lady_avalon"]
+
 _PORTRAITS: dict[str, str] = {}
 
 
@@ -413,6 +519,8 @@ def host_for(game_type: str, difficulty: str | None = None) -> str:
         return random.choice(_AUDIO_HOSTS)
     if game_type == "guess_servant":
         return _SERVANT_HOSTS.get(difficulty or "", "hokusai")
+    if game_type == "guess_skill":
+        return random.choice(_SKILL_HOSTS)
     return "hokusai"
 
 

@@ -82,6 +82,24 @@ def _nick_aliases(raw: list[str], name: str) -> list[str]:
     return out
 
 
+def _active_skills(record: dict) -> list[dict]:
+    """The three base active skills (slots 1-3) as [{"num","name","icon"}] in slot
+    order. Atlas lists each slot's default kit at priority 1 and its interlude/rank-up
+    replacements at higher priority; keep the lowest-priority (default) skill per slot,
+    since that is the kit players associate with the servant."""
+    best: dict[int, dict] = {}
+    for sk in record.get("skills", []):
+        num = sk.get("num")
+        if not (isinstance(num, int) and 1 <= num <= 3):
+            continue
+        if not (sk.get("name") and sk.get("icon")):
+            continue
+        cur = best.get(num)
+        if cur is None or sk.get("priority", 1) < cur.get("priority", 1):
+            best[num] = sk
+    return [{"num": n, "name": best[n]["name"], "icon": best[n]["icon"]} for n in sorted(best)]
+
+
 def main_na() -> int:
     print(f"Fetching {EXPORT_URL} ...", flush=True)
     with urllib.request.urlopen(EXPORT_URL) as resp:
@@ -108,6 +126,7 @@ def main_na() -> int:
                 "figure": figure,
                 "face": face,
                 "cv": ((s.get("profile") or {}).get("cv") or "").strip() or None,
+                "skills": _active_skills(s),
             }
         )
 
@@ -166,6 +185,7 @@ def main_jp() -> int:
                 "aliases": _nick_aliases(
                     nicknames.get(str(s.get("collectionNo")), []), s["name"]
                 ),
+                "skills": _active_skills(nice),
             }
         )
         if i % 10 == 0:

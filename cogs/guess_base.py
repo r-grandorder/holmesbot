@@ -27,6 +27,7 @@ TITLES = {
     "guess_servant": "Guess the Servant",
     "guess_shadow": "Guess the Shadow",
     "guess_audio": "Guess the Voice",
+    "guess_skill": "Guess by Skills",
 }
 
 WIN_REACTION = "\N{WHITE HEAVY CHECK MARK}"
@@ -162,6 +163,7 @@ class ChatRound:
         build_reveal: MediaBuilder,
         prompt: Media | None = None,
         replay: "Callable[[discord.Interaction], Awaitable[None]] | None" = None,
+        hints: "list[tuple[str, str]] | None" = None,
     ) -> None:
         self.bot = bot
         self.game_id = game_id
@@ -174,6 +176,10 @@ class ChatRound:
         # visible on the prompt after the round ends, for retrospect.
         self.prompt = prompt
         self.replay = replay
+        # A per-round hint sequence override (guess_skill supplies the three skill
+        # names in a random order, then rarity, then class). None -> the default
+        # rarity/gender/class computed in _hint_list.
+        self._custom_hints = hints
         self.channel_id: int | None = None
         self.message: discord.Message | None = None
         self.expires_at: dt.datetime | None = None
@@ -204,8 +210,11 @@ class ChatRound:
             self.bot.forfeit_votes.pop(self.vote_message.id, None)
 
     def _hint_list(self) -> list[tuple[str, str]]:
-        """Ordered hint sequence: rarity, gender, class (each only if known). Shared by
-        give_hint and the prompt's revealed-hints field."""
+        """Ordered hint sequence. A round may supply its own (guess_skill: skill names,
+        then rarity, then class); otherwise the default rarity, gender, class (each only
+        if known). Shared by give_hint and the prompt's revealed-hints field."""
+        if self._custom_hints is not None:
+            return self._custom_hints
         hints: list[tuple[str, str]] = []
         if self.servant.rarity:
             hints.append(("Rarity", f"{self.servant.rarity}-star"))
@@ -551,6 +560,7 @@ async def launch_round(
     include_jp: bool = False,
     filters_label: str | None = None,
     replay_override: "Callable[[discord.Interaction], Awaitable[bool]] | None" = None,
+    build_hints: "Callable[[Servant], list[tuple[str, str]]] | None" = None,
 ) -> bool:
     bot = cog.bot
     if interaction.guild_id is None:
@@ -660,6 +670,7 @@ async def launch_round(
                 difficulty=difficulty,
                 include_jp=include_jp,
                 filters_label=filters_label,
+                build_hints=build_hints,
             )
 
         round_ = ChatRound(
@@ -675,6 +686,7 @@ async def launch_round(
             # players can't start rounds there, so the button would only reject them.
             # replay_override lets /guessrandom re-roll a fresh game on Play Again.
             replay=(replay_override or _replay) if channel_is_game else None,
+            hints=build_hints(servant) if build_hints else None,
         )
         round_.expires_at = expires_at
         intro = host.line(host_id, "start", player=interaction.user.display_name)
@@ -691,6 +703,12 @@ async def launch_round(
             how = (
                 "**Listen to the clip and type the servant's name in chat.** "
                 "The voice you hear is the mystery servant."
+            )
+        elif game_type == "guess_skill":
+            how = (
+                "**These are the servant's three skills.** Type the servant's name in "
+                f"chat. Tag {bot.user.mention} with **hint** to reveal a skill name "
+                "(then rarity, then class)."
             )
         else:
             how = "**Type the servant's name in chat** to answer."

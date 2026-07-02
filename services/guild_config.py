@@ -10,6 +10,7 @@ GAME_COLUMN = {
     "guess_servant": "guess_servant_enabled",
     "guess_shadow": "guess_shadow_enabled",
     "guess_audio": "guess_audio_enabled",
+    "guess_skill": "guess_skill_enabled",
 }
 
 

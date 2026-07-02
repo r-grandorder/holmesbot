@@ -93,3 +93,24 @@ def trim_to_content(data: bytes) -> bytes:
     """The artwork cropped to its content box (a reveal image)."""
     img = _load_rgba(data)
     return _to_png(img.crop(_content_bbox(img)))
+
+
+def skill_strip(
+    icons: list[bytes], *, side: int = 128, gap: int = 16, pad: int = 16
+) -> bytes:
+    """A horizontal strip of the servant's skill icons (the guess_skill prompt): each
+    icon scaled to `side` px and laid left-to-right in skill order on a transparent
+    background. The names are NOT drawn -- they're revealed one at a time as hints."""
+    tiles = [
+        Image.open(io.BytesIO(b)).convert("RGBA").resize((side, side), Image.LANCZOS)
+        for b in icons
+    ]
+    n = max(1, len(tiles))
+    canvas = Image.new(
+        "RGBA", (pad * 2 + n * side + (n - 1) * gap, pad * 2 + side), (0, 0, 0, 0)
+    )
+    x = pad
+    for tile in tiles:
+        canvas.alpha_composite(tile, (x, pad))
+        x += side + gap
+    return _to_png(canvas)

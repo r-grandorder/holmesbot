@@ -30,6 +30,7 @@ COGS = (
     "cogs.economy",
     "cogs.admin",
     "cogs.guess_random",
+    "cogs.guess_skill",
 )
 
 

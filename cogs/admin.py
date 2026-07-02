@@ -11,6 +11,7 @@ _GAME_CHOICES = [
     app_commands.Choice(name="guess_servant", value="guess_servant"),
     app_commands.Choice(name="guess_shadow", value="guess_shadow"),
     app_commands.Choice(name="guess_audio", value="guess_audio"),
+    app_commands.Choice(name="guess_skill", value="guess_skill"),
 ]
 
 
