@@ -83,10 +83,14 @@ def _nick_aliases(raw: list[str], name: str) -> list[str]:
 
 
 def _active_skills(record: dict) -> list[dict]:
-    """The three base active skills (slots 1-3) as [{"num","name","icon"}] in slot
-    order. Atlas lists each slot's default kit at priority 1 and its interlude/rank-up
-    replacements at higher priority; keep the lowest-priority (default) skill per slot,
-    since that is the kit players associate with the servant."""
+    """The three active skills (slots 1-3) as [{"num","name","icon"}] in slot order.
+    A slot can list several versions: the base kit (priority 1) plus interlude/rank-up
+    strengthenings (higher priority) and ascension swaps (higher condLimitCount). Keep
+    the LATEST per slot -- max (priority, condLimitCount) -- so we show the strengthened,
+    final-ascension skill the servant actually has in-game, not the pre-buff version
+    (e.g. Santa Alter's slot 2 is Reindeer Drive, not the base Intuition). In the NA
+    export a strengthening only appears once its rank-up quest is released, so this
+    stays in step with NA rather than leaking JP-ahead skills."""
     best: dict[int, dict] = {}
     for sk in record.get("skills", []):
         num = sk.get("num")
@@ -94,8 +98,9 @@ def _active_skills(record: dict) -> list[dict]:
             continue
         if not (sk.get("name") and sk.get("icon")):
             continue
+        key = (sk.get("priority", 1), sk.get("condLimitCount", 0))
         cur = best.get(num)
-        if cur is None or sk.get("priority", 1) < cur.get("priority", 1):
+        if cur is None or key > (cur.get("priority", 1), cur.get("condLimitCount", 0)):
             best[num] = sk
     return [{"num": n, "name": best[n]["name"], "icon": best[n]["icon"]} for n in sorted(best)]
 

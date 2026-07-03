@@ -732,7 +732,7 @@
       },
       {
         "num": 3,
-        "name": "ダウジング B",
+        "name": "太陽との決別 EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00402.png"
       }
     ]
@@ -1527,17 +1527,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "空前絶後 EX",
+        "name": "Ultra Manifest EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00609.png"
       },
       {
         "num": 2,
-        "name": "驚天動地 B",
+        "name": "アトミックプラント B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       },
       {
         "num": 3,
-        "name": "天衣無縫 EX",
+        "name": "アルテミット・Ｕ EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00306.png"
       }
     ]
@@ -2732,7 +2732,7 @@
       },
       {
         "num": 3,
-        "name": "花園作成 EX",
+        "name": "プロセルピナの開花 EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00313.png"
       }
     ]
