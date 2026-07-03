@@ -39,6 +39,10 @@ WRONG_REACT_COOLDOWN = 1.5
 FORFEIT_EMOTE = "\N{WAVING WHITE FLAG}\N{VARIATION SELECTOR-16}"  # vote-to-give-up react
 FORFEIT_VOTES = 3  # distinct humans whose reaction ends the round
 HINT_REWARD = (1.0, 0.7, 0.5, 0.3)  # win multiplier by hints used (0..3): hints cost QP
+# Extra QP when the winner nails it on their FIRST guess -- i.e. made no earlier
+# wrong-but-real guess of their own this round. A fraction of the (post-hint) award, so
+# it scales with difficulty and rewards a clean no-hint solve the most.
+FIRST_GUESS_BONUS = 0.5
 
 _NO_PINGS = discord.AllowedMentions.none()
 _PING_USER = discord.AllowedMentions(everyone=False, roles=False, users=True)
@@ -186,6 +190,7 @@ class ChatRound:
         self.claimed = False
         self.hints_given = 0
         self._last_wrong_react = 0.0  # monotonic time of the last wrong-guess react
+        self.wrong_guessers: set[int] = set()  # users who made a wrong-but-real guess
         self.vote_message: discord.Message | None = None
         self.vote_reactors: set[int] = set()
         self._timeout_task: asyncio.Task | None = None
@@ -327,6 +332,10 @@ class ChatRound:
             ),
             include_jp=self.include_jp,
         ):
+            # This player has now spent a guess, so they no longer qualify for the
+            # first-guess bonus if they later get it right (recorded even when the react
+            # below is throttled -- the guess still happened).
+            self.wrong_guessers.add(message.author.id)
             # Throttle wrong-guess reacts so a busy channel doesn't back up the reaction
             # rate limit (which is what makes reactions and reveals lag).
             now = time.monotonic()
@@ -338,7 +347,12 @@ class ChatRound:
         self.claimed = True
         self._cancel_timeout()
         self._unregister()
-        award = self._effective_points()
+        base = self._effective_points()
+        # First-guess bonus: the winner made no wrong-but-real guess of their own before
+        # nailing it. Scales with the (post-hint) award, floored at 1.
+        first_try = message.author.id not in self.wrong_guessers
+        bonus = max(1, round(base * FIRST_GUESS_BONUS)) if first_try else 0
+        award = base + bonus
         total = await self.bot.scoring.award(message.guild.id, message.author.id, award)
         await self.bot.games.resolve(self.game_id, "win", message.author.id, award)
         # Post the FULL reveal at the bottom FIRST, where the action is -- nobody
@@ -348,8 +362,13 @@ class ChatRound:
         embed, file = await self._build_reveal_embed(f"*{praise}*")
         embed.color = discord.Color.green()
         reward = f"+{qp(award)} (QP {qp(total)})"
+        extras = []
+        if bonus:
+            extras.append(f"first guess +{qp(bonus)}")
         if self.hints_given:
-            reward += f"  ·  {self.hints_given} hint{'s' if self.hints_given > 1 else ''} used"
+            extras.append(f"{self.hints_given} hint{'s' if self.hints_given > 1 else ''} used")
+        if extras:
+            reward += "  ·  " + "  ·  ".join(extras)
         embed.add_field(name="Reward", value=reward, inline=False)
         await self._post_reveal(message.channel, embed, file, ping=message.author.mention)
         # Slim the now-buried prompt so it isn't left showing "type the name".
