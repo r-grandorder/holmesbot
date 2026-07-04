@@ -16,20 +16,32 @@ class AliasService:
     def __init__(self, pool: "Pool") -> None:
         self.pool = pool
         self._by_servant: dict[int, frozenset[str]] = {}
+        # servant_id -> display forms ("as typed"), one per normalized term, for the
+        # reveal's "Also accepted" line so players learn the shortcuts.
+        self._display_by_servant: dict[int, tuple[str, ...]] = {}
         self._all_terms: frozenset[str] = frozenset()
         self._terms_cache: dict[frozenset[int], frozenset[str]] = {}
 
     async def reload(self) -> None:
-        rows = await self.pool.fetch("SELECT servant_id, norm FROM servant_aliases")
+        rows = await self.pool.fetch(
+            "SELECT servant_id, alias, norm FROM servant_aliases ORDER BY id"
+        )
         grouped: dict[int, set[str]] = defaultdict(set)
+        display: dict[int, dict[str, str]] = defaultdict(dict)  # norm -> first display seen
         for r in rows:
             grouped[r["servant_id"]].add(r["norm"])
+            display[r["servant_id"]].setdefault(r["norm"], r["alias"])
         self._by_servant = {sid: frozenset(s) for sid, s in grouped.items()}
+        self._display_by_servant = {sid: tuple(d.values()) for sid, d in display.items()}
         self._all_terms = frozenset(t for terms in grouped.values() for t in terms)
         self._terms_cache = {}
 
     def for_servant(self, servant_id: int) -> frozenset[str]:
         return self._by_servant.get(servant_id, frozenset())
+
+    def display_for(self, servant_id: int) -> tuple[str, ...]:
+        """The human-typed alias forms for a servant (for the reveal)."""
+        return self._display_by_servant.get(servant_id, ())
 
     def all_terms(self, exclude: "frozenset[int]" = frozenset()) -> frozenset[str]:
         """Every accepted alias across all servants (normalized). Used to decide

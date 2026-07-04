@@ -542,6 +542,28 @@ class ChatRound:
             f"reaction {str(emoji)!r} in channel {getattr(message.channel, 'id', '?')}",
         )
 
+    def _also_accepted(self, limit: int = 12) -> str:
+        """A short, readable list of the servant's OTHER accepted answers (curated +
+        community aliases, plus any static NPC/JP ones), shown on the reveal so newcomers
+        pick up the shortcuts the regulars already know. Shortest first, so the handy ones
+        (dvr, cat, sono-g) surface; capped, with a '+N more' beyond the limit."""
+        pool = list(self.bot.aliases.display_for(self.servant.id)) + list(self.servant.aliases)
+        seen = {matching.normalize(self.servant.name)}
+        out: list[str] = []
+        for a in pool:
+            norm = matching.normalize(a)
+            if not norm or norm in seen:
+                continue
+            seen.add(norm)
+            out.append(a.strip())
+        if not out:
+            return ""
+        out.sort(key=lambda a: (len(a), a.lower()))
+        text = ", ".join(out[:limit])
+        if len(out) > limit:
+            text += f", (+{len(out) - limit} more)"
+        return text
+
     async def _build_reveal_embed(
         self, headline: str
     ) -> tuple[discord.Embed, discord.File | None]:
@@ -561,6 +583,9 @@ class ChatRound:
             embed.add_field(name="Rarity", value=f"{s.rarity}-star")
         if s.cv:
             embed.add_field(name="CV", value=s.cv)
+        also = self._also_accepted()
+        if also:
+            embed.add_field(name="Also accepted", value=also, inline=False)
         file = _attach(embed, media)
         return embed, file
 
