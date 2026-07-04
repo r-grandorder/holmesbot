@@ -16,7 +16,7 @@ from discord import app_commands
 
 from branding import qp, qp_emote
 from data import host, matching
-from data.servants import Servant
+from data.servants import Servant, class_display
 from permissions import is_mod
 
 log = logging.getLogger(__name__)
@@ -452,7 +452,7 @@ class ChatRound:
         if self.servant.gender in ("male", "female"):
             hints.append(("Gender", self.servant.gender.title()))
         if self.servant.class_name:
-            hints.append(("Class", self.servant.class_name.title()))
+            hints.append(("Class", class_display(self.servant.class_name)))
         return hints
 
     async def give_hint(self, channel: discord.abc.Messageable) -> None:
@@ -844,7 +844,7 @@ class ChatRound:
         embed = discord.Embed(title=f"It was {s.name}!", description=headline)
         _host_author(embed, self.host_id)
         if s.class_name:
-            embed.add_field(name="Class", value=s.class_name.title())
+            embed.add_field(name="Class", value=class_display(s.class_name))
         if s.rarity:
             embed.add_field(name="Rarity", value=f"{s.rarity}-star")
         if s.cv:
@@ -1094,7 +1094,7 @@ async def _post_audit_log(
     embed.add_field(name="Servant ID", value=str(servant.id))
     embed.add_field(name="Ascension", value=str(ascension))
     if servant.class_name:
-        embed.add_field(name="Class", value=servant.class_name.title())
+        embed.add_field(name="Class", value=class_display(servant.class_name))
     if servant.rarity:
         embed.add_field(name="Rarity", value=f"{servant.rarity}-star")
     embed.add_field(name="Started by", value=interaction.user.mention)

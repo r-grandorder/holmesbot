@@ -7,6 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from data import host, images
+from data.servants import class_display
 
 from . import filters
 from .guess_base import Media, launch_round
@@ -29,7 +30,7 @@ def _skill_hints(servant) -> list[tuple[str, str]]:
     if servant.rarity:
         hints.append(("Rarity", f"{servant.rarity}-star"))
     if servant.class_name:
-        hints.append(("Class", servant.class_name.title()))
+        hints.append(("Class", class_display(servant.class_name)))
     return hints
 
 

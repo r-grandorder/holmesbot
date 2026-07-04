@@ -38,6 +38,17 @@ class Servant:
         return self.figure if kind == "figure" else self.art
 
 
+def class_display(class_name: str) -> str:
+    """Human-facing class label. Atlas gives Beast-class bosses internal class names like
+    'unBeastOlgaMarie' or 'beastEresh'; collapse anything Beast-flavored to plain 'Beast'.
+    Everything else is title-cased as before."""
+    if not class_name:
+        return ""
+    if "beast" in class_name.lower():
+        return "Beast"
+    return class_name.title()
+
+
 @dataclass(frozen=True)
 class ServantFilter:
     """Optional pool narrowing from the /guess category params. Each dimension is a set
