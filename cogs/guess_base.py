@@ -12,6 +12,7 @@ from typing import Awaitable, Callable
 
 import aiohttp
 import discord
+from discord import app_commands
 
 from branding import qp, qp_emote
 from data import host, matching
@@ -43,6 +44,24 @@ HINT_REWARD = (1.0, 0.7, 0.5, 0.3)  # win multiplier by hints used (0..3): hints
 # wrong-but-real guess of their own this round. A fraction of the (post-hint) award, so
 # it scales with difficulty and rewards a clean no-hint solve the most.
 FIRST_GUESS_BONUS = 0.5
+
+# Post-reveal "next round" vote (config.next_vote_seconds > 0). Type-only for now.
+NEXT_VOTE_TYPES = [
+    ("guess_servant", "Servant"),
+    ("guess_shadow", "Shadow"),
+    ("guess_audio", "Voice"),
+    ("guess_skill", "Skill"),
+    ("random", "Random"),
+]
+# type value -> (cog class, whether its _play takes a positional difficulty). "random"
+# is special-cased (GuessRandom._play takes difficulty as a keyword).
+_VOTE_DISPATCH = {
+    "guess_servant": ("GuessServant", True),
+    "guess_shadow": ("GuessShadow", True),
+    "guess_audio": ("GuessAudio", False),
+    "guess_skill": ("GuessSkill", False),
+}
+NEXT_VOTE_TALLY_REFRESH = 2.0  # coalesce tally edits to this cadence, to spare the rate limit
 
 _NO_PINGS = discord.AllowedMentions.none()
 _PING_USER = discord.AllowedMentions(everyone=False, roles=False, users=True)
@@ -146,6 +165,207 @@ class PlayAgainView(discord.ui.View):
                 pass
 
 
+class _ChannelStart:
+    """A minimal stand-in for a discord.Interaction, so launch_round can start a round
+    from a channel (the next-round vote) with no slash command behind it. It exposes only
+    the surface launch_round touches; a vote-triggered start has nowhere to put an
+    ephemeral reply, so rejections (game off, a round already running) are swallowed."""
+
+    def __init__(self, bot, channel: discord.abc.Messageable) -> None:
+        self.channel = channel
+        self.channel_id = channel.id
+        self.guild_id = channel.guild.id
+        self.user = bot.user  # "started by" the bot, via the vote
+        self.response = self._Response()
+        self.followup = self._Followup(channel)
+
+    class _Response:
+        async def defer(self, *a, **k) -> None:
+            return None
+
+        async def send_message(self, *a, **k) -> None:
+            return None  # nowhere to send an ephemeral rejection; abort quietly
+
+    class _Followup:
+        def __init__(self, channel: discord.abc.Messageable) -> None:
+            self._channel = channel
+
+        async def send(self, content=None, *, embed=None, file=None, **_k):
+            kwargs: dict = {}
+            if content is not None:
+                kwargs["content"] = content
+            if embed is not None:
+                kwargs["embed"] = embed
+            if file is not None:
+                kwargs["file"] = file
+            return await self._channel.send(**kwargs)
+
+
+class NextRoundView(discord.ui.View):
+    """A type-only vote for the next round, shown on a reveal. A dropdown casts each
+    player's vote; the running tally lives in the embed, edited on a coalesced timer to
+    stay off the edit rate limit. At timeout the leader launches in the same channel
+    (carrying region + difficulty from the round that just ended), or Start now launches
+    it early. If nobody engages at all, the channel is left to rest rather than
+    auto-spawning rounds forever."""
+
+    def __init__(self, *, bot, channel, game_type, difficulty, include_jp, options, seconds) -> None:
+        # timeout=None: discord.py's View timeout resets on each interaction, which would
+        # let a busy vote run forever. We drive a FIXED window via _deadline instead.
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.channel = channel
+        self.current_type = game_type
+        self.difficulty = difficulty
+        self.include_jp = include_jp
+        self.seconds = seconds
+        self._options = options  # list of (value, label); includes the current type
+        self.message: discord.Message | None = None
+        self._base_embed: discord.Embed | None = None
+        self.votes: dict[int, str] = {}
+        self._resolved = False
+        self._dirty = False
+        self._refresher: asyncio.Task | None = None
+        self._deadline_task: asyncio.Task | None = None
+
+        select = discord.ui.Select(
+            placeholder="Vote for the next game...",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(label=lbl, value=val, default=(val == game_type))
+                for val, lbl in options
+            ],
+        )
+        select.callback = self._on_vote
+        self._select = select
+        self.add_item(select)
+        start = discord.ui.Button(label="Start now", style=discord.ButtonStyle.primary)
+        start.callback = self._on_start_now
+        self.add_item(start)
+
+    def _label(self, value: str) -> str:
+        return dict(self._options).get(value, value)
+
+    def _tally(self) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for v in self.votes.values():
+            counts[v] = counts.get(v, 0) + 1
+        return counts
+
+    def _winner(self) -> str:
+        counts = self._tally()
+        if not counts:
+            return self.current_type
+        top = max(counts.values())
+        leaders = [val for val, _ in self._options if counts.get(val, 0) == top]
+        # Continuity breaks ties: the game you were just playing wins a tie.
+        return self.current_type if self.current_type in leaders else leaders[0]
+
+    async def attach(self, message: discord.Message, base_embed: discord.Embed) -> None:
+        self.message = message
+        self._base_embed = base_embed
+        await self._render()
+        self._refresher = asyncio.create_task(self._refresh_loop())
+        self._deadline_task = asyncio.create_task(self._deadline())
+
+    async def _refresh_loop(self) -> None:
+        try:
+            while not self._resolved:
+                await asyncio.sleep(NEXT_VOTE_TALLY_REFRESH)
+                if self._dirty and not self._resolved:
+                    self._dirty = False
+                    await self._render()
+        except asyncio.CancelledError:
+            return
+
+    async def _deadline(self) -> None:
+        try:
+            await asyncio.sleep(self.seconds)
+        except asyncio.CancelledError:
+            return
+        await self._resolve()
+
+    async def _on_vote(self, interaction: discord.Interaction) -> None:
+        try:
+            await interaction.response.defer()
+        except discord.HTTPException:
+            pass
+        self.votes[interaction.user.id] = self._select.values[0]
+        self._dirty = True
+
+    async def _on_start_now(self, interaction: discord.Interaction) -> None:
+        try:
+            await interaction.response.defer()
+        except discord.HTTPException:
+            pass
+        await self._resolve(forced=True)
+
+    async def _render(self, *, launching: str | None = None, idle: bool = False) -> None:
+        if self.message is None or self._base_embed is None:
+            return
+        embed = copy.deepcopy(self._base_embed)
+        if idle:
+            body = "Quiet channel -- start another round any time with a /guess command."
+        elif launching is not None:
+            body = f"Starting **{self._label(launching)}**."
+        else:
+            counts = self._tally()
+            tally = "   ".join(f"{lbl} {counts.get(val, 0)}" for val, lbl in self._options)
+            body = f"Vote for the next round. Leading: **{self._label(self._winner())}**.\n{tally}"
+        embed.add_field(name="Next round", value=body, inline=False)
+        try:
+            await self.message.edit(embed=embed, view=self)
+        except discord.HTTPException:
+            pass
+
+    async def _resolve(self, *, forced: bool = False) -> None:
+        if self._resolved:
+            return
+        self._resolved = True
+        for task in (self._refresher, self._deadline_task):
+            if task is not None:
+                task.cancel()
+        for child in self.children:
+            child.disabled = True  # type: ignore[attr-defined]
+        self.stop()
+        # A pure timeout with nobody engaging leaves the channel to rest; Start now (or
+        # any vote) launches the leader.
+        if not forced and not self.votes:
+            await self._render(idle=True)
+            return
+        winner = self._winner()
+        await self._render(launching=winner)
+        await self._launch(winner)
+
+    async def _launch(self, type_value: str) -> None:
+        ctx = _ChannelStart(self.bot, self.channel)
+        diff = (
+            app_commands.Choice(name=self.difficulty.title(), value=self.difficulty)
+            if self.difficulty
+            else None
+        )
+        try:
+            if type_value == "random":
+                cog = self.bot.get_cog("GuessRandom")
+                if cog is not None:
+                    await cog._play(ctx, include_jp=self.include_jp, difficulty=diff)
+                return
+            name, has_difficulty = _VOTE_DISPATCH[type_value]
+            cog = self.bot.get_cog(name)
+            if cog is None:
+                return
+            if has_difficulty:
+                await cog._play(
+                    ctx, diff or app_commands.Choice(name="Easy", value="easy"),
+                    include_jp=self.include_jp,
+                )
+            else:
+                await cog._play(ctx, include_jp=self.include_jp)
+        except Exception:
+            log.exception("next-round vote launch failed (%s)", type_value)
+
+
 class ChatRound:
     """One in-flight round. Players answer by typing the servant's name in the
     channel; the on_message listener in cogs/chat_guess.py routes messages here.
@@ -168,6 +388,8 @@ class ChatRound:
         prompt: Media | None = None,
         replay: "Callable[[discord.Interaction], Awaitable[None]] | None" = None,
         hints: "list[tuple[str, str]] | None" = None,
+        game_type: str = "",
+        difficulty: "str | None" = None,
     ) -> None:
         self.bot = bot
         self.game_id = game_id
@@ -184,6 +406,10 @@ class ChatRound:
         # names in a random order, then rarity, then class). None -> the default
         # rarity/gender/class computed in _hint_list.
         self._custom_hints = hints
+        # This round's type + difficulty, so the reveal's next-round vote can pre-seed
+        # "continue the same game" and re-launch it.
+        self.game_type = game_type
+        self.difficulty = difficulty
         self.channel_id: int | None = None
         self.message: discord.Message | None = None
         self.expires_at: dt.datetime | None = None
@@ -384,8 +610,12 @@ class ChatRound:
         *,
         ping: str | None = None,
     ) -> None:
-        """Send a reveal at the bottom of the channel, with a Play Again button."""
-        view = PlayAgainView(self.replay) if self.replay is not None else None
+        """Send a reveal at the bottom of the channel. Carries a next-round vote when
+        that's enabled (config.next_vote_seconds), else the plain Play Again button."""
+        vote = None
+        if self.replay is not None and self.bot.config.next_vote_seconds > 0:
+            vote = await self._build_next_vote(channel)
+        view = vote or (PlayAgainView(self.replay) if self.replay is not None else None)
         base: dict = {}
         if view is not None:
             base["view"] = view
@@ -401,8 +631,44 @@ class ChatRound:
             return channel.send(**kwargs)
 
         sent = await _retry(send, f"reveal for game {self.game_id}")
-        if sent is not None and view is not None:
+        if sent is None:
+            return
+        if vote is not None:
+            await vote.attach(sent, embed)
+        elif view is not None:
             view.message = sent
+
+    async def _build_next_vote(self, channel: discord.abc.Messageable) -> "NextRoundView | None":
+        """The type-only next-round vote for this reveal, or None if fewer than two games
+        are eligible. Offers games enabled in this guild (Shadow only with an asset host
+        configured), plus Random."""
+        guild = getattr(channel, "guild", None)
+        if guild is None:
+            return None
+        try:
+            cfg = await self.bot.guild_config.get(guild.id)
+        except Exception:
+            log.exception("next-vote: guild config load failed")
+            return None
+        options: list[tuple[str, str]] = []
+        for value, label in NEXT_VOTE_TYPES:
+            if value == "random":
+                options.append((value, label))
+            elif value == "guess_shadow" and not self.bot.config.assets_base_url:
+                continue
+            elif self.bot.guild_config.game_enabled(cfg, value):
+                options.append((value, label))
+        if len(options) < 2:
+            return None
+        return NextRoundView(
+            bot=self.bot,
+            channel=channel,
+            game_type=self.game_type or "random",
+            difficulty=self.difficulty,
+            include_jp=self.include_jp,
+            options=options,
+            seconds=self.bot.config.next_vote_seconds,
+        )
 
     async def _slim_prompt(self, note: str) -> None:
         """Edit the now-buried prompt to a terminal state but KEEP its cropped image /
@@ -731,6 +997,8 @@ async def launch_round(
             # replay_override lets /guessrandom re-roll a fresh game on Play Again.
             replay=(replay_override or _replay) if channel_is_game else None,
             hints=build_hints(servant) if build_hints else None,
+            game_type=game_type,
+            difficulty=difficulty,
         )
         round_.expires_at = expires_at
         intro = host.line(host_id, "start", player=interaction.user.display_name)
