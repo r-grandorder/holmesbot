@@ -130,3 +130,17 @@ class GuildConfigService:
             "WHERE guild_id = $1",
             guild_id,
         )
+
+    # --- contract announcement channel (broadcasts; NULL = post in-context) ---
+    async def announce_channel(self, guild_id: int) -> "int | None":
+        cfg = await self.get(guild_id)
+        return cfg["contract_announce_channel_id"]
+
+    async def set_announce_channel(self, guild_id: int, channel_id: "int | None") -> None:
+        await self.get(guild_id)
+        await self.pool.execute(
+            "UPDATE guild_config SET contract_announce_channel_id = $2, "
+            "updated_at = CURRENT_TIMESTAMP WHERE guild_id = $1",
+            guild_id,
+            channel_id,
+        )

@@ -109,6 +109,40 @@ class ContractsCog(commands.Cog):
         await self.bot.contracts.set_pity(guild_id, user_id, pity_after)
         return servant, pity_after
 
+    async def _announce_channel(self, guild_id: int):
+        """The configured contract-announcement channel, or None to post in-context."""
+        cid = await self.bot.guild_config.announce_channel(guild_id)
+        if not cid:
+            return None
+        ch = self.bot.get_channel(cid)
+        return ch if isinstance(ch, (discord.TextChannel, discord.Thread)) else None
+
+    async def _broadcast(
+        self, interaction: discord.Interaction, servant, *, title: str, action: str
+    ) -> None:
+        """Post a public celebration (a contract or a shared summon) to the announce channel,
+        falling back to the channel the summon happened in."""
+        channel = await self._announce_channel(interaction.guild_id) or interaction.channel
+        if channel is None:
+            return
+        embed = discord.Embed(
+            title=title,
+            description=(
+                f"{interaction.user.mention} {action} **{servant.name}** "
+                f"({_stars(servant.rarity)})!"
+            ),
+            color=_RARITY_COLOR.get(servant.rarity, discord.Color.blurple()),
+        )
+        if servant.face:
+            embed.set_thumbnail(url=servant.face)
+        art = contract_game.display_art(servant)
+        if art:
+            embed.set_image(url=art)
+        try:
+            await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
+        except discord.HTTPException:
+            pass
+
     # ---- commands ----
     @app_commands.command(name="summon", description="Spend QP to summon a servant to contract.")
     @app_commands.guild_only()
@@ -325,10 +359,12 @@ class ContractsCog(commands.Cog):
         servant = self.bot.servants.get(servant_id)
         name = servant.name if servant else "Your servant"
         tail = "  (at cap -- /grail to raise it)" if new_level >= cap else ""
+        announce = await self._announce_channel(message.guild.id)
+        target = announce or message.channel
         try:
-            await message.channel.send(
+            await target.send(
                 f"{message.author.display_name}'s **{name}** reached level **{new_level}**!{tail}",
-                delete_after=12,
+                delete_after=None if announce else 12,  # persist in the feed; self-clean in-context
                 allowed_mentions=discord.AllowedMentions.none(),
             )
         except discord.HTTPException:
@@ -429,6 +465,9 @@ class SummonView(discord.ui.View):
             ),
             view=self,
         )
+        await self.cog._broadcast(
+            interaction, self.servant, title="New Contract", action="formed a contract with"
+        )
 
     @discord.ui.button(label="Roll again", style=discord.ButtonStyle.secondary)
     async def reroll(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
@@ -451,6 +490,13 @@ class SummonView(discord.ui.View):
             ),
             view=self,
         )
+
+    @discord.ui.button(label="Share", style=discord.ButtonStyle.secondary)
+    async def share(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        await self.cog._broadcast(
+            interaction, self.servant, title="Summon", action="summoned"
+        )
+        await interaction.response.send_message("Shared to the channel.", ephemeral=True)
 
     @discord.ui.button(label="Dismiss", style=discord.ButtonStyle.danger)
     async def dismiss(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:

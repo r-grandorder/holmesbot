@@ -319,6 +319,34 @@ class Admin(commands.Cog):
                 f"Grail drops removed from {channel.mention}.", ephemeral=True
             )
 
+    @contractconfig.command(
+        name="announcechannel",
+        description="Channel for contract announcements, shares, and level-ups (omit to clear).",
+    )
+    @app_commands.describe(channel="Where contract broadcasts post (omit to post in-context)")
+    async def contractconfig_announcechannel(
+        self, interaction: discord.Interaction, channel: discord.TextChannel | None = None
+    ) -> None:
+        if channel is None:
+            await self.bot.guild_config.set_announce_channel(interaction.guild_id, None)
+            await interaction.response.send_message(
+                "Contract announcements will post in-context now.", ephemeral=True
+            )
+            return
+        try:
+            await channel.send("Contract announcements (summons, level-ups) will post here.")
+        except discord.Forbidden:
+            await interaction.response.send_message(
+                f"I can't post in {channel.mention}. Give my role View Channel + Send Messages "
+                "+ Embed Links there, then run this again.",
+                ephemeral=True,
+            )
+            return
+        await self.bot.guild_config.set_announce_channel(interaction.guild_id, channel.id)
+        await interaction.response.send_message(
+            f"Contract announcements will post to {channel.mention}.", ephemeral=True
+        )
+
     # --- aliases (extra accepted names per servant; handles Atlas naming quirks) ---
     @alias.command(name="add", description="Add an accepted name for a servant.")
     @app_commands.describe(servant="Search by name", alias="The accepted name to add")
