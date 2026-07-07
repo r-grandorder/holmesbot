@@ -91,14 +91,14 @@ class GuildConfigService:
             channel_id,
         )
 
-    # --- grail-drop channel allowlist (contracted-servant feature; empty = any channel) ---
+    # --- grail-drop channels (contracted-servant feature; opt-in -- empty = drops disabled) ---
     async def grail_channels(self, guild_id: int) -> "list[int]":
         cfg = await self.get(guild_id)
         return json.loads(cfg["grail_drop_channel_ids"])
 
     async def is_grail_channel_allowed(self, guild_id: int, channel_id: int) -> bool:
-        chans = await self.grail_channels(guild_id)
-        return not chans or channel_id in chans
+        # Opt-in: drops fire ONLY in explicitly-added channels (empty list = disabled).
+        return channel_id in await self.grail_channels(guild_id)
 
     async def add_grail_channel(self, guild_id: int, channel_id: int) -> None:
         chans = await self.grail_channels(guild_id)

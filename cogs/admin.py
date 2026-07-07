@@ -287,7 +287,7 @@ class Admin(commands.Cog):
 
     # --- contracted-servant feature config ---
     @summonconfig.command(
-        name="grailchannel", description="Restrict grail drops to specific channels."
+        name="grailchannel", description="Choose which channels grail drops can spawn in (none by default)."
     )
     @app_commands.describe(channel="Channel to add or remove (not needed for clear/list)")
     @app_commands.choices(
@@ -307,15 +307,15 @@ class Admin(commands.Cog):
         if action.value == "clear":
             await self.bot.guild_config.clear_grail_channels(interaction.guild_id)
             await interaction.response.send_message(
-                "Grail drops can spawn in any channel now.", ephemeral=True
+                "Grail drops are now disabled -- add a channel to enable them.", ephemeral=True
             )
             return
         if action.value == "list":
             chans = await self.bot.guild_config.grail_channels(interaction.guild_id)
             msg = (
-                "Grail drops are limited to: " + ", ".join(f"<#{c}>" for c in chans)
+                "Grail drops spawn in: " + ", ".join(f"<#{c}>" for c in chans)
                 if chans
-                else "Grail drops can spawn in any channel."
+                else "No grail channels set -- drops are disabled. Add one to enable them."
             )
             await interaction.response.send_message(msg, ephemeral=True)
             return
