@@ -73,16 +73,17 @@ class ContractsCog(commands.Cog):
     def _summon_title(servant, is_new: bool) -> str:
         return f"Summoned: {servant.name}" + (" (NEW!)" if is_new else "")
 
-    def _servant_embed(self, servant, level: int, *, title=None, note=None, qp_line=None, pity=None) -> discord.Embed:
+    def _servant_embed(self, servant, level: int, *, title=None, note=None, qp_line=None, pity=None, allow=None) -> discord.Embed:
         embed = discord.Embed(
             title=title or servant.name,
             description=note,
             color=_RARITY_COLOR.get(servant.rarity, discord.Color.blurple()),
         )
-        if servant.face:
-            embed.set_thumbnail(url=servant.face)
-        art = contract_game.display_art(servant)
+        art = contract_game.display_art(servant, allow)
+        # No safe art (fully restricted) -> show neither the figure nor the face portrait.
         if art:
+            if servant.face:
+                embed.set_thumbnail(url=servant.face)
             embed.set_image(url=art)
         embed.add_field(name="Class", value=class_display(servant.class_name) or "?")
         embed.add_field(name="Rarity", value=_stars(servant.rarity))
@@ -98,13 +99,16 @@ class ContractsCog(commands.Cog):
             )
         return embed
 
-    async def _do_roll(self, guild_id: int, user_id: int):
+    async def _do_roll(self, guild_id: int, user_id: int, allow=None):
         """Roll a servant with pity applied; returns (servant, pity_after) and persists the
-        updated counter. Forces a 5-star when the streak would hit PITY_5STAR."""
+        updated counter. Forces a 5-star when the streak would hit PITY_5STAR. `allow` is the
+        content-policy gate (restricted servants are excluded from the pool)."""
         pity = await self.bot.contracts.pity_count(guild_id, user_id)
         wish = await self.bot.contracts.get_wish(guild_id, user_id)
         force = pity + 1 >= contract_game.PITY_5STAR
-        servant = contract_game.roll_servant(self.bot.servants, force_5star=force, wish=wish)
+        servant = contract_game.roll_servant(
+            self.bot.servants, force_5star=force, wish=wish, allow=allow
+        )
         pity_after = 0 if contract_game.resets_pity(servant) else pity + 1
         await self.bot.contracts.set_pity(guild_id, user_id, pity_after)
         return servant, pity_after
@@ -118,10 +122,10 @@ class ContractsCog(commands.Cog):
         return ch if isinstance(ch, (discord.TextChannel, discord.Thread)) else None
 
     async def _broadcast(
-        self, interaction: discord.Interaction, servant, *, title: str, action: str
+        self, interaction: discord.Interaction, servant, *, title: str, action: str, allow=None
     ) -> None:
         """Post a public celebration (a contract or a shared summon) to the announce channel,
-        falling back to the channel the summon happened in."""
+        falling back to the channel the summon happened in. Respects the art restriction gate."""
         channel = await self._announce_channel(interaction.guild_id) or interaction.channel
         if channel is None:
             return
@@ -133,10 +137,10 @@ class ContractsCog(commands.Cog):
             ),
             color=_RARITY_COLOR.get(servant.rarity, discord.Color.blurple()),
         )
-        if servant.face:
-            embed.set_thumbnail(url=servant.face)
-        art = contract_game.display_art(servant)
+        art = contract_game.display_art(servant, allow)
         if art:
+            if servant.face:
+                embed.set_thumbnail(url=servant.face)
             embed.set_image(url=art)
         try:
             await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
@@ -156,7 +160,8 @@ class ContractsCog(commands.Cog):
                 f"You need {qp(cost)} to summon; you have {qp(bal)}.", ephemeral=True
             )
         new_bal = await self.bot.scoring.sub_qp(interaction.guild_id, interaction.user.id, cost)
-        servant, pity_after = await self._do_roll(interaction.guild_id, interaction.user.id)
+        allow = await self.bot.restrictions.build_allow()
+        servant, pity_after = await self._do_roll(interaction.guild_id, interaction.user.id, allow)
         is_new = not await self.bot.contracts.has_contract(
             interaction.guild_id, interaction.user.id, servant.id
         )
@@ -166,6 +171,7 @@ class ContractsCog(commands.Cog):
             embed=self._servant_embed(
                 servant, 1, title=self._summon_title(servant, is_new),
                 qp_line=f"{qp(new_bal + cost)} \N{RIGHTWARDS ARROW} {qp(new_bal)}", pity=pity_after,
+                allow=allow,
             ),
             view=view,
             ephemeral=True,
@@ -196,7 +202,10 @@ class ContractsCog(commands.Cog):
             )
         cap = contract_game.level_cap(row["grails_used"])
         grails = await self.bot.contracts.grail_balance(interaction.guild_id, target.id)
-        embed = self._servant_embed(servant, row["level"], title=f"{target.display_name}'s Servant")
+        allow = await self.bot.restrictions.build_allow()
+        embed = self._servant_embed(
+            servant, row["level"], title=f"{target.display_name}'s Servant", allow=allow
+        )
         embed.add_field(name="Level", value=f"{row['level']} / {cap}")
         embed.add_field(name="Grails", value=str(grails))
         wish_id = await self.bot.contracts.get_wish(interaction.guild_id, target.id)
@@ -459,14 +468,17 @@ class SummonView(discord.ui.View):
         for child in self.children:
             child.disabled = True
         self.stop()
+        allow = await self.cog.bot.restrictions.build_allow()
         await interaction.response.edit_message(
             embed=self.cog._servant_embed(
-                self.servant, level, title=f"Contracted: {self.servant.name}", note=note
+                self.servant, level, title=f"Contracted: {self.servant.name}", note=note,
+                allow=allow,
             ),
             view=self,
         )
         await self.cog._broadcast(
-            interaction, self.servant, title="New Contract", action="formed a contract with"
+            interaction, self.servant, title="New Contract",
+            action="formed a contract with", allow=allow,
         )
 
     @discord.ui.button(label="Roll again", style=discord.ButtonStyle.secondary)
@@ -478,7 +490,8 @@ class SummonView(discord.ui.View):
                 f"Not enough QP to roll again (need {qp(cost)}).", ephemeral=True
             )
         new_bal = await self.cog.bot.scoring.sub_qp(interaction.guild_id, self.user_id, cost)
-        self.servant, pity_after = await self.cog._do_roll(interaction.guild_id, self.user_id)
+        allow = await self.cog.bot.restrictions.build_allow()
+        self.servant, pity_after = await self.cog._do_roll(interaction.guild_id, self.user_id, allow)
         is_new = not await self.cog.bot.contracts.has_contract(
             interaction.guild_id, self.user_id, self.servant.id
         )
@@ -487,14 +500,16 @@ class SummonView(discord.ui.View):
             embed=self.cog._servant_embed(
                 self.servant, 1, title=self.cog._summon_title(self.servant, is_new),
                 qp_line=f"{qp(new_bal + cost)} \N{RIGHTWARDS ARROW} {qp(new_bal)}", pity=pity_after,
+                allow=allow,
             ),
             view=self,
         )
 
     @discord.ui.button(label="Share", style=discord.ButtonStyle.secondary)
     async def share(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        allow = await self.cog.bot.restrictions.build_allow()
         await self.cog._broadcast(
-            interaction, self.servant, title="Summon", action="summoned"
+            interaction, self.servant, title="Summon", action="summoned", allow=allow
         )
         await interaction.response.send_message("Shared to the channel.", ephemeral=True)
 

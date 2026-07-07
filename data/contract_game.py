@@ -74,13 +74,19 @@ def power(servant, level: int) -> int:
     return round(base * (1 + level * POWER_PER_LEVEL))
 
 
-def display_art(servant) -> "str | None":
-    """The servant's highest-ascension art URL (the coolest reveal), or None."""
+def display_art(servant, allow=None) -> "str | None":
+    """The servant's highest-ascension art URL that passes the restriction gate (the coolest
+    safe reveal), or None if it has no art or every ascension is restricted. `allow` is the
+    content-policy predicate allow(servant_id, ascension_key)."""
     art = getattr(servant, "art", None)
     if not art:
         return None
-    keys = sorted(art.keys(), key=lambda k: int(k) if str(k).isdigit() else -1)
-    return art[keys[-1]]
+    gate = allow or (lambda _sid, _k: True)
+    keys = sorted(
+        (k for k in art if gate(servant.id, k)),
+        key=lambda k: int(k) if str(k).isdigit() else -1,
+    )
+    return art[keys[-1]] if keys else None
 
 
 def resets_pity(servant) -> bool:
@@ -94,15 +100,22 @@ def is_wishable(servant) -> bool:
     return bool(servant) and not servant.jp and bool(servant.art) and not servant.npc
 
 
-def roll_servant(index, *, force_5star: bool = False, wish: "int | None" = None):
+def roll_servant(index, *, force_5star: bool = False, wish: "int | None" = None, allow=None):
     """Weighted FGO-like roll from the NA + NPC pool (exclude JP-only). With force_5star,
     return a random 5-star (the pity guarantee, never the wished one). `wish` is a servant
     id the roller is chasing: a summonable non-NPC gets its own personal tier at
-    WISH_WEIGHT (~1%). Returns a Servant."""
-    pool = [s for s in index._by_id.values() if not s.jp and s.art]
+    WISH_WEIGHT (~1%). `allow(servant_id, ascension_key)` is the content-policy gate:
+    servants with no allowed art are excluded entirely (fail-safe), so a fully-restricted
+    servant is never summoned. Returns a Servant."""
+    gate = allow or (lambda _sid, _k: True)
+
+    def _has_safe_art(s) -> bool:
+        return any(gate(s.id, k) for k in s.art)
+
+    pool = [s for s in index._by_id.values() if not s.jp and s.art and _has_safe_art(s)]
     npcs = [s for s in pool if s.npc]
     wished = index.get(wish) if wish is not None else None
-    if not (wished is not None and is_wishable(wished)):
+    if not (wished is not None and is_wishable(wished) and _has_safe_art(wished)):
         wished = None
     wid = wished.id if wished is not None else None
     special = [s for s in pool if s.id in SPECIAL_SERVANTS and not s.npc and s.id != wid]
