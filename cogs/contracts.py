@@ -242,7 +242,7 @@ class ContractsCog(commands.Cog):
         grails = await self.bot.contracts.grail_balance(interaction.guild_id, target.id)
         allow = await self.bot.restrictions.build_allow()
         embed = self._servant_embed(
-            servant, row["level"], title=f"{target.display_name}'s Servant", allow=allow,
+            servant, row["level"], title=f"{target.display_name}'s {servant.name}", allow=allow,
             show_line=False,
         )
         level = row["level"]
