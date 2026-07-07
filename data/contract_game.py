@@ -20,17 +20,14 @@ POWER_PER_LEVEL = 0.05
 TIER_WEIGHTS = {5: 1.0, 4: 5.0, 3: 40.0, 2: 25.0, 1: 20.0, 0: 8.8}
 NPC_WEIGHT = 0.2       # the NPC-boss tier (ultra-rare flex)
 
-# --- grail events: two flavored random drops, each independently tunable ---
-# Single grail (host: Draco): first to claim takes it, then it self-deletes.
+# --- grail events: two flavored random drops (random host each), independently tunable ---
+# Single grail: the first to claim takes exactly ONE grail, then it self-deletes.
 GRAIL_SINGLE_COOLDOWN = 40 * 60   # seconds; at most one single drop per guild per window
 GRAIL_SINGLE_CHANCE = 0.05        # chance per qualifying message once off cooldown
-GRAIL_SINGLE_MIN, GRAIL_SINGLE_MAX = 1, 5
-# Grail present box (host: Gilgamesh Caster): several people grab from it (one each) until
-# it's empty, then it self-deletes.
+# Grail present box: USES people each grab one grail until it's empty, then it self-deletes.
 GRAIL_BOX_COOLDOWN = 90 * 60
 GRAIL_BOX_CHANCE = 0.03
-GRAIL_BOX_TOTAL_MIN, GRAIL_BOX_TOTAL_MAX = 6, 15         # grails the box holds
-GRAIL_BOX_PER_CLAIM_MIN, GRAIL_BOX_PER_CLAIM_MAX = 1, 3  # per person, capped at remaining
+GRAIL_BOX_USES_MIN, GRAIL_BOX_USES_MAX = 3, 8   # how many one-grail claims the box holds
 GRAIL_EVENT_TTL = 120.0           # seconds an unfinished event lingers before self-deleting
 
 # --- pity: guarantee a (random) 5-star by this many rolls without one ---
