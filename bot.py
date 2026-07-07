@@ -19,6 +19,7 @@ from services.contracts import ContractService
 from services.games import GameService
 from services.guild_config import GuildConfigService
 from services.restrictions import RestrictionService
+from services.wars import WarService
 from services.scoring import ScoringService
 
 log = logging.getLogger("holmesbot")
@@ -82,6 +83,7 @@ class HolmesBot(commands.Bot):
         self.games = GameService(self.db.pool)
         self.aliases = AliasService(self.db.pool)
         self.contracts = ContractService(self.db.pool)
+        self.wars = WarService(self.db.pool)
         await self.aliases.reload()
         await self.games.sweep_expired()
 

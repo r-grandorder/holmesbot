@@ -171,6 +171,9 @@ DUEL_COOLDOWN = 20        # seconds between a challenger's duels (anti-flood)
 DUEL_PAIR_COOLDOWN = 180  # seconds before the same two players can duel again (anti-targeting)
 CLASS_ADVANTAGE = 1.5     # effective-power multiplier when your class beats the opponent's
 
+# --- faction war ---
+WAR_REWARD = 500          # QP to each member of the winning faction when a season ends
+
 # The two clean FGO triangles (attacker class -> the class it beats). Extra classes
 # (Berserker, Ruler, Avenger, Moon Cancer, Alter Ego, Foreigner, Pretender, Beast) stay
 # neutral here and lean on Power; their real matchups can drop in later without touching duels.

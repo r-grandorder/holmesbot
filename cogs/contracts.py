@@ -99,6 +99,12 @@ def _daily_reset_ts() -> int:
     return int(nxt.timestamp())
 
 
+def _war_bar(score: int, leader: int, length: int = 10) -> str:
+    """A leader-relative bar (no percentage): the leader is full, the rest proportional."""
+    filled = 0 if leader <= 0 else max(0, min(length, round(length * score / leader)))
+    return f"[{'█' * filled}{'░' * (length - filled)}]"
+
+
 class ContractsCog(commands.Cog):
     """The contracted-servant QP sink. Gated by config.contract_whitelist: bot.py only loads
     this cog when the whitelist is non-empty, and every entrypoint re-checks membership so
@@ -529,6 +535,109 @@ class ContractsCog(commands.Cog):
             return None
         return discord.File(io.BytesIO(png), filename="duel.png")
 
+    # ---- faction war ----
+    @app_commands.command(name="warstart", description="(Mods) Start a faction war (2-4 factions).")
+    @app_commands.guild_only()
+    @app_commands.describe(
+        faction_a="First faction name",
+        faction_b="Second faction name",
+        faction_c="Third faction (optional)",
+        faction_d="Fourth faction (optional)",
+    )
+    async def warstart(
+        self,
+        interaction: discord.Interaction,
+        faction_a: str,
+        faction_b: str,
+        faction_c: str | None = None,
+        faction_d: str | None = None,
+    ) -> None:
+        if not (is_mod(interaction.user) or await self.bot.is_owner(interaction.user)):
+            return await interaction.response.send_message(
+                "You need moderator permissions to start a war.", ephemeral=True
+            )
+        names = [n.strip()[:40] for n in (faction_a, faction_b, faction_c, faction_d) if n and n.strip()]
+        if len(names) < 2:
+            return await interaction.response.send_message(
+                "A war needs at least 2 factions.", ephemeral=True
+            )
+        await self.bot.wars.start(interaction.guild_id, names)
+        await interaction.response.send_message(
+            "The war has begun! Factions: " + ", ".join(f"**{n}**" for n in names)
+            + ". Players, /warjoin a side -- every level you gain scores for your faction."
+        )
+
+    @app_commands.command(name="warjoin", description="Join the faction war (placed on the smallest side).")
+    @app_commands.guild_only()
+    async def warjoin(self, interaction: discord.Interaction) -> None:
+        if not self._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        if not await self.bot.wars.active(interaction.guild_id):
+            return await interaction.response.send_message("No war is running right now.", ephemeral=True)
+        name, already = await self.bot.wars.join(interaction.guild_id, interaction.user.id)
+        if name is None:
+            return await interaction.response.send_message("No war is running right now.", ephemeral=True)
+        if already:
+            return await interaction.response.send_message(
+                f"You're already fighting for **{name}** this season.", ephemeral=True
+            )
+        await interaction.response.send_message(
+            f"You've joined **{name}**! Your level-ups now score for them.", ephemeral=True
+        )
+
+    @app_commands.command(name="warstatus", description="Show the faction war standings.")
+    @app_commands.guild_only()
+    async def warstatus(self, interaction: discord.Interaction) -> None:
+        if not self._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        if not await self.bot.wars.active(interaction.guild_id):
+            return await interaction.response.send_message("No war is running right now.", ephemeral=True)
+        standings = await self.bot.wars.standings(interaction.guild_id)
+        leader = standings[0]["score"] if standings else 0
+        lines = []
+        for i, f in enumerate(standings, 1):
+            bar = _war_bar(f["score"], leader)
+            lines.append(
+                f"**{i}.** {f['name']}  {bar}  {f['score']:,} pts \N{MIDDLE DOT} {f['members']} members"
+            )
+        mine = await self.bot.wars.member(interaction.guild_id, interaction.user.id)
+        if mine is not None:
+            lines.append(f"\nYour faction: **{mine['name']}** -- you've scored {mine['score']:,} pts")
+        else:
+            lines.append("\nYou haven't joined -- use /warjoin.")
+        await interaction.response.send_message(
+            embed=discord.Embed(title="Faction War", description="\n".join(lines)), ephemeral=True
+        )
+
+    @app_commands.command(name="warend", description="(Mods) End the faction war and reward the winner.")
+    @app_commands.guild_only()
+    async def warend(self, interaction: discord.Interaction) -> None:
+        if not (is_mod(interaction.user) or await self.bot.is_owner(interaction.user)):
+            return await interaction.response.send_message(
+                "You need moderator permissions to end a war.", ephemeral=True
+            )
+        if not await self.bot.wars.active(interaction.guild_id):
+            return await interaction.response.send_message("No war is running.", ephemeral=True)
+        standings = await self.bot.wars.standings(interaction.guild_id)
+        await self.bot.wars.end(interaction.guild_id)
+        if not standings or standings[0]["score"] == 0:
+            return await interaction.response.send_message("The war ends with no points scored -- no winner.")
+        top = standings[0]["score"]
+        winners = [f for f in standings if f["score"] == top]
+        if len(winners) > 1:
+            names = " and ".join(f"**{w['name']}**" for w in winners)
+            return await interaction.response.send_message(
+                f"The war ends in a tie between {names} at {top:,} pts! No payout."
+            )
+        win = winners[0]
+        members = await self.bot.wars.faction_members(interaction.guild_id, win["slot"])
+        for uid in members:
+            await self.bot.scoring.add_qp(interaction.guild_id, uid, contract_game.WAR_REWARD)
+        await interaction.response.send_message(
+            f"**{win['name']}** wins the war with **{top:,} pts**! "
+            f"{len(members)} member(s) each earn {qp(contract_game.WAR_REWARD)}."
+        )
+
     @app_commands.command(name="setservantlevel", description="(Mods) Set a member's contracted servant level.")
     @app_commands.guild_only()
     @app_commands.describe(member="Whose servant to adjust", level="The level to set")
@@ -610,6 +719,8 @@ class ContractsCog(commands.Cog):
         servant_id, old_level, new_level, cap = result
         if new_level <= old_level:
             return
+        # faction war: each level gained scores for the player's faction (no-op if no war)
+        await self.bot.wars.add_points(message.guild.id, message.author.id, new_level - old_level)
         mode = self.bot.config.levelup_announce
         if mode == "off":
             return
