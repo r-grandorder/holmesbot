@@ -706,13 +706,19 @@ class ContractsCog(commands.Cog):
             )
         win = winners[0]
         members = await self.bot.wars.faction_members(interaction.guild_id, win["slot"])
+        avg_size = sum(f["members"] for f in standings) / len(standings)
+        factor = contract_game.underdog_factor(win["members"], avg_size)
+        tickets_each = round(factor)
+        qp_each = round(contract_game.WAR_REWARD * factor)
         for uid in members:
-            await self.bot.scoring.add_qp(interaction.guild_id, uid, contract_game.WAR_REWARD)
-            await self.bot.contracts.grant_tickets(interaction.guild_id, uid, 1)
+            await self.bot.scoring.add_qp(interaction.guild_id, uid, qp_each)
+            await self.bot.contracts.grant_tickets(interaction.guild_id, uid, tickets_each)
         te = self.bot.config.summon_ticket_emote
+        ticket_word = f"{tickets_each} Summon Ticket{'s' if tickets_each != 1 else ''}"
+        bonus = " (outnumbered-win bonus!)" if factor > 1.0 else ""
         await interaction.response.send_message(
-            f"**{win['name']}** wins the war with **{top:,} pts**! Each of the {len(members)} "
-            f"member(s) earns a **Summon Ticket**{' ' + te if te else ''} + {qp(contract_game.WAR_REWARD)}."
+            f"**{win['name']}** wins the war with **{top:,} pts**!{bonus} Each of the "
+            f"{len(members)} member(s) earns **{ticket_word}**{' ' + te if te else ''} + {qp(qp_each)}."
         )
 
     @app_commands.command(name="setservantlevel", description="(Mods) Set a member's contracted servant level.")

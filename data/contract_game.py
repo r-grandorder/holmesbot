@@ -127,6 +127,17 @@ def qp_reward_amount(tier: "tuple[int, int, int]") -> int:
     return round(random.triangular(lo, hi, mode))
 
 
+def underdog_factor(winner_size: int, avg_size: float, cap: "float | None" = None) -> float:
+    """War-reward multiplier for winning while outnumbered: avg_size / winner_size, clamped to
+    [1.0, cap] (cap defaults to WAR_UNDERDOG_CAP). 1.0 for an average-or-larger winner (no
+    bonus); up to cap for a heavy upset."""
+    if cap is None:
+        cap = WAR_UNDERDOG_CAP
+    if winner_size <= 0 or avg_size <= 0:
+        return 1.0
+    return min(cap, max(1.0, avg_size / winner_size))
+
+
 def is_wishable(servant) -> bool:
     """Whether a servant may be set as a /wish: a summonable, non-NPC servant (NPC bosses
     are exempt)."""
@@ -191,7 +202,8 @@ DUEL_PAIR_COOLDOWN = 180  # seconds before the same two players can duel again (
 CLASS_ADVANTAGE = 1.5     # effective-power multiplier when your class beats the opponent's
 
 # --- faction war ---
-WAR_REWARD = 500          # QP to each member of the winning faction when a season ends
+WAR_REWARD = 500          # base QP to each member of the winning faction when a season ends
+WAR_UNDERDOG_CAP = 2.0    # max reward multiplier for winning while outnumbered (avg/size, clamped)
 
 # The two clean FGO triangles (attacker class -> the class it beats). Extra classes
 # (Berserker, Ruler, Avenger, Moon Cancer, Alter Ego, Foreigner, Pretender, Beast) stay
