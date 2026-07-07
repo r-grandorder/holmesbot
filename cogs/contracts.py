@@ -11,6 +11,7 @@ from discord.ext import commands
 from branding import qp
 from data import contract_game
 from data.servants import class_display
+from permissions import is_mod
 
 from . import filters
 
@@ -29,6 +30,31 @@ _DENY = "The servant contract feature isn't open to you yet."
 # keep deciding, then grey out. Capped in practice by Discord's ~15min ephemeral token.
 SUMMON_VIEW_TIMEOUT = 780
 
+# Grail-event hosts: (display name, servant_id for the portrait thumbnail).
+_DRACO = ("Draco", 3300100)
+_GIL_CASTER = ("Gilgamesh", 501800)
+_DRACO_LINES = [
+    "Draco tires of it and flicks a Holy Grail your way. Snatch it, quickly.",
+    "A Holy Grail tumbles from Draco's shadow. First to grab it keeps it.",
+    "Draco leaves a Holy Grail on a whim. Take it before she wants it back.",
+]
+_GIL_LINES = [
+    "Gilgamesh flings open his vault. Take a grail, mongrels -- one each, and be grateful.",
+    "The King scatters grails from his treasury. Help yourselves. Do not be greedy.",
+    "Gilgamesh permits you a share of his hoard. A single grail apiece, no more.",
+]
+
+# Registered spawnable events for /triggerevent. Add a (value, label, spawner-method) row
+# to extend it -- the command's choices AND its dispatch both derive from this list, and
+# the passive on_message drops reuse the same spawner methods.
+_EVENTS = [
+    ("grail_single", "Single grail (Draco)", "_spawn_single"),
+    ("grail_box", "Grail present box (Gilgamesh)", "_spawn_box"),
+]
+_EVENT_CHOICES = [app_commands.Choice(name=lbl, value=val) for val, lbl, _ in _EVENTS]
+_EVENT_SPAWN = {val: method for val, _lbl, method in _EVENTS}
+_EVENT_LABEL = {val: lbl for val, lbl, _ in _EVENTS}
+
 
 def _stars(rarity: int) -> str:
     return f"{rarity}\N{BLACK STAR}"
@@ -42,7 +68,8 @@ class ContractsCog(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
         self._xp_cd: dict[tuple[int, int], float] = {}  # (guild,user) -> last xp monotonic
-        self._drop_cd: dict[int, float] = {}            # guild -> last grail-drop monotonic
+        self._single_cd: dict[int, float] = {}          # guild -> last single-grail monotonic
+        self._box_cd: dict[int, float] = {}             # guild -> last grail-box monotonic
 
     def _allowed(self, user_id: int) -> bool:
         return user_id in self.bot.config.contract_whitelist
@@ -190,6 +217,30 @@ class ContractsCog(commands.Cog):
             allowed_mentions=discord.AllowedMentions.none(),
         )
 
+    @app_commands.command(name="triggerevent", description="(Mods) Spawn a server event now.")
+    @app_commands.guild_only()
+    @app_commands.describe(
+        event="Which event (random if unset)",
+        channel="Where to spawn it (this channel if unset)",
+    )
+    @app_commands.choices(event=_EVENT_CHOICES)
+    async def triggerevent(
+        self,
+        interaction: discord.Interaction,
+        event: app_commands.Choice[str] | None = None,
+        channel: discord.TextChannel | None = None,
+    ) -> None:
+        if not (is_mod(interaction.user) or await self.bot.is_owner(interaction.user)):
+            return await interaction.response.send_message(
+                "You need moderator permissions to spawn an event.", ephemeral=True
+            )
+        value = event.value if event else random.choice(list(_EVENT_SPAWN))
+        target = channel or interaction.channel
+        await getattr(self, _EVENT_SPAWN[value])(target)
+        await interaction.response.send_message(
+            f"Spawned **{_EVENT_LABEL[value]}** in {target.mention}.", ephemeral=True
+        )
+
     # ---- passive: XP + grail drops from chatting ----
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
@@ -229,18 +280,45 @@ class ContractsCog(commands.Cog):
     async def _maybe_drop_grail(self, message: discord.Message) -> None:
         gid = message.guild.id
         now = time.monotonic()
-        if now - self._drop_cd.get(gid, 0.0) < contract_game.GRAIL_DROP_COOLDOWN:
+        cg = contract_game
+        if (now - self._single_cd.get(gid, 0.0) >= cg.GRAIL_SINGLE_COOLDOWN
+                and random.random() < cg.GRAIL_SINGLE_CHANCE):
+            self._single_cd[gid] = now
+            await self._spawn_single(message.channel)
             return
-        if random.random() >= contract_game.GRAIL_DROP_CHANCE:
-            return
-        self._drop_cd[gid] = now
-        n = random.randint(contract_game.GRAIL_MIN, contract_game.GRAIL_MAX)
+        if (now - self._box_cd.get(gid, 0.0) >= cg.GRAIL_BOX_COOLDOWN
+                and random.random() < cg.GRAIL_BOX_CHANCE):
+            self._box_cd[gid] = now
+            await self._spawn_box(message.channel)
+
+    def _event_author(self, embed: discord.Embed, name: str, servant_id: int) -> None:
+        embed.set_author(name=name)
+        s = self.bot.servants.get(servant_id)
+        if s and s.face:
+            embed.set_thumbnail(url=s.face)
+
+    async def _spawn_single(self, channel: discord.abc.Messageable) -> None:
+        n = random.randint(contract_game.GRAIL_SINGLE_MIN, contract_game.GRAIL_SINGLE_MAX)
+        embed = discord.Embed(
+            title="A Holy Grail!",
+            description=random.choice(_DRACO_LINES),
+            color=discord.Color.dark_red(),
+        )
+        self._event_author(embed, *_DRACO)
+        embed.add_field(name="Reward", value=f"{n} grail{'s' if n != 1 else ''}")
+        view = SingleGrailView(self, n)
         try:
-            await message.channel.send(
-                "A **Holy Grail** shimmers into being... first to claim it wins.",
-                view=GrailClaimView(self, n),
-                delete_after=contract_game.CLAIM_TTL,
-            )
+            view.message = await channel.send(embed=embed, view=view)
+        except discord.HTTPException:
+            pass
+
+    async def _spawn_box(self, channel: discord.abc.Messageable) -> None:
+        total = random.randint(
+            contract_game.GRAIL_BOX_TOTAL_MIN, contract_game.GRAIL_BOX_TOTAL_MAX
+        )
+        view = BoxGrailView(self, total)
+        try:
+            view.message = await channel.send(embed=view.render(), view=view)
         except discord.HTTPException:
             pass
 
@@ -318,33 +396,110 @@ class SummonView(discord.ui.View):
         await interaction.response.edit_message(content="Summon dismissed.", embed=None, view=self)
 
 
-class GrailClaimView(discord.ui.View):
-    """A public grail drop: the first whitelisted user to click Claim takes 1-5 grails."""
+class SingleGrailView(discord.ui.View):
+    """A single grail (Draco). The first whitelisted user to claim takes it, then it
+    self-deletes; an unclaimed one self-deletes on timeout."""
 
     def __init__(self, cog: ContractsCog, n: int) -> None:
-        super().__init__(timeout=contract_game.CLAIM_TTL)
+        super().__init__(timeout=contract_game.GRAIL_EVENT_TTL)
         self.cog = cog
         self.n = n
         self.claimed = False
+        self.message: discord.Message | None = None
+
+    async def on_timeout(self) -> None:
+        if not self.claimed and self.message is not None:
+            try:
+                await self.message.delete()
+            except discord.HTTPException:
+                pass
 
     @discord.ui.button(label="Claim", style=discord.ButtonStyle.success, emoji="\N{SPARKLES}")
     async def claim(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not self.cog._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
         if self.claimed:
-            return await interaction.response.send_message("Already claimed.", ephemeral=True)
-        self.claimed = True  # set before any await: view callbacks run serially, so first wins
+            return await interaction.response.send_message("Someone already took it.", ephemeral=True)
+        self.claimed = True  # set before any await: callbacks run serially, so first wins
         button.disabled = True
         self.stop()
         total = await self.cog.bot.contracts.grant_grails(
             interaction.guild_id, interaction.user.id, self.n
         )
-        plural = "s" if self.n != 1 else ""
-        await interaction.response.edit_message(
-            content=f"{interaction.user.mention} claimed **{self.n}** grail{plural}! "
-            f"(you now have {total})",
-            view=self,
+        embed = discord.Embed(
+            description=f"{interaction.user.mention} claimed **{self.n}** "
+            f"grail{'s' if self.n != 1 else ''}. (now {total})",
+            color=discord.Color.dark_red(),
         )
+        self.cog._event_author(embed, *_DRACO)
+        await interaction.response.edit_message(embed=embed, view=self)
+        try:
+            await interaction.message.delete(delay=6)
+        except discord.HTTPException:
+            pass
+
+
+class BoxGrailView(discord.ui.View):
+    """A grail present box (Gilgamesh Caster). Whitelisted users grab from it, one each,
+    until it's empty, then it self-deletes; leftovers self-delete on timeout."""
+
+    def __init__(self, cog: ContractsCog, total: int) -> None:
+        super().__init__(timeout=contract_game.GRAIL_EVENT_TTL)
+        self.cog = cog
+        self.total = total
+        self.remaining = total
+        self.claimers: dict[int, int] = {}  # user_id -> amount taken
+        self.line = random.choice(_GIL_LINES)
+        self.message: discord.Message | None = None
+
+    def render(self, *, empty: bool = False) -> discord.Embed:
+        embed = discord.Embed(
+            title="Grail Present Box" + (" (empty)" if empty else ""),
+            description=self.line,
+            color=discord.Color.gold(),
+        )
+        self.cog._event_author(embed, *_GIL_CASTER)
+        embed.add_field(name="Grails left", value=f"{self.remaining} / {self.total}", inline=False)
+        if self.claimers:
+            taken = "  ".join(f"<@{uid}> +{amt}" for uid, amt in self.claimers.items())
+            embed.add_field(name="Claimed by", value=taken[:1024], inline=False)
+        return embed
+
+    async def on_timeout(self) -> None:
+        if self.message is not None:
+            try:
+                await self.message.delete()
+            except discord.HTTPException:
+                pass
+
+    @discord.ui.button(label="Take a grail", style=discord.ButtonStyle.success, emoji="\N{SPARKLES}")
+    async def claim(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not self.cog._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        if interaction.user.id in self.claimers:
+            return await interaction.response.send_message("You already took one.", ephemeral=True)
+        if self.remaining <= 0:
+            return await interaction.response.send_message("The box is empty.", ephemeral=True)
+        amt = min(
+            random.randint(
+                contract_game.GRAIL_BOX_PER_CLAIM_MIN, contract_game.GRAIL_BOX_PER_CLAIM_MAX
+            ),
+            self.remaining,
+        )
+        self.remaining -= amt
+        self.claimers[interaction.user.id] = amt
+        await self.cog.bot.contracts.grant_grails(interaction.guild_id, interaction.user.id, amt)
+        if self.remaining <= 0:
+            for child in self.children:
+                child.disabled = True
+            self.stop()
+            await interaction.response.edit_message(embed=self.render(empty=True), view=self)
+            try:
+                await interaction.message.delete(delay=6)
+            except discord.HTTPException:
+                pass
+        else:
+            await interaction.response.edit_message(embed=self.render(), view=self)
 
 
 async def setup(bot) -> None:

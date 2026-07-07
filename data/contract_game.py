@@ -20,11 +20,18 @@ POWER_PER_LEVEL = 0.05
 TIER_WEIGHTS = {5: 1.0, 4: 5.0, 3: 40.0, 2: 25.0, 1: 20.0, 0: 8.8}
 NPC_WEIGHT = 0.2       # the NPC-boss tier (ultra-rare flex)
 
-# --- grail drops ---
-GRAIL_DROP_COOLDOWN = 45 * 60  # seconds; at most one drop per guild per this window
-GRAIL_DROP_CHANCE = 0.05       # chance per qualifying message once off cooldown
-GRAIL_MIN, GRAIL_MAX = 1, 5
-CLAIM_TTL = 60.0               # seconds a drop stays claimable before self-deleting
+# --- grail events: two flavored random drops, each independently tunable ---
+# Single grail (host: Draco): first to claim takes it, then it self-deletes.
+GRAIL_SINGLE_COOLDOWN = 40 * 60   # seconds; at most one single drop per guild per window
+GRAIL_SINGLE_CHANCE = 0.05        # chance per qualifying message once off cooldown
+GRAIL_SINGLE_MIN, GRAIL_SINGLE_MAX = 1, 5
+# Grail present box (host: Gilgamesh Caster): several people grab from it (one each) until
+# it's empty, then it self-deletes.
+GRAIL_BOX_COOLDOWN = 90 * 60
+GRAIL_BOX_CHANCE = 0.03
+GRAIL_BOX_TOTAL_MIN, GRAIL_BOX_TOTAL_MAX = 6, 15         # grails the box holds
+GRAIL_BOX_PER_CLAIM_MIN, GRAIL_BOX_PER_CLAIM_MAX = 1, 3  # per person, capped at remaining
+GRAIL_EVENT_TTL = 120.0           # seconds an unfinished event lingers before self-deleting
 
 # --- pity: guarantee a (random) 5-star by this many rolls without one ---
 # 100 = ~3x more generous than FGO's spark distance (FGO: 900 SQ / 30 SQ per multi = 300
