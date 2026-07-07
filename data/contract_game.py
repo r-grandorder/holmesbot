@@ -42,6 +42,17 @@ GRAIL_BOX_CHANCE = 0.01
 GRAIL_BOX_USES_MIN, GRAIL_BOX_USES_MAX = 3, 8   # how many one-grail claims the box holds
 GRAIL_EVENT_TTL = 120.0           # seconds an unfinished event lingers before self-deleting
 
+# --- QP reward event (ported from Bunyan's qp_reward: a chatter randomly finds QP and is
+# auto-awarded it, random wealth-servant host as flavor). Exponential-decay amount so most
+# drops are small and big ones are rare; rescaled hard from Bunyan's inflated economy (their
+# mean was ~20k) to ours (mean ~a couple summons, jackpot near ~10 summons). Self-deletes. ---
+QP_REWARD_COOLDOWN = 40 * 60      # seconds; at most one QP drop per guild per window
+QP_REWARD_CHANCE = 0.02           # chance per qualifying message once off cooldown
+QP_REWARD_MEAN = 150              # exponential mean before clamping
+QP_REWARD_MIN = 25               # floor
+QP_REWARD_MAX = 1000             # ~10 summons -- the rare jackpot
+QP_REWARD_TTL = 45               # seconds the notification lingers before self-deleting
+
 # --- pity: guarantee a (random) 5-star by this many rolls without one ---
 # 100 = ~3x more generous than FGO's spark distance (FGO: 900 SQ / 30 SQ per multi = 300
 # rolls). Natural pulls stay the majority, but pity is actually reachable here (~25k QP), so
@@ -92,6 +103,13 @@ def display_art(servant, allow=None) -> "str | None":
 def resets_pity(servant) -> bool:
     """A 5-star (NPC bosses are also rarity 5) ends a pity streak."""
     return servant.rarity == 5
+
+
+def qp_reward_amount() -> int:
+    """A random QP-drop amount: exponential decay (most small, big ones rare), clamped to
+    [QP_REWARD_MIN, QP_REWARD_MAX]. Mirrors Bunyan's expovariate curve, rescaled to our economy."""
+    raw = random.expovariate(1 / QP_REWARD_MEAN)
+    return int(min(max(raw + QP_REWARD_MIN, QP_REWARD_MIN), QP_REWARD_MAX))
 
 
 def is_wishable(servant) -> bool:

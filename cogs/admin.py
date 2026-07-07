@@ -287,7 +287,7 @@ class Admin(commands.Cog):
 
     # --- contracted-servant feature config ---
     @summonconfig.command(
-        name="grailchannel", description="Choose which channels grail drops can spawn in (none by default)."
+        name="eventchannel", description="Choose which channels random events (grail & QP drops) can spawn in (none by default)."
     )
     @app_commands.describe(channel="Channel to add or remove (not needed for clear/list)")
     @app_commands.choices(
@@ -298,24 +298,24 @@ class Admin(commands.Cog):
             app_commands.Choice(name="list", value="list"),
         ]
     )
-    async def summonconfig_grailchannel(
+    async def summonconfig_eventchannel(
         self,
         interaction: discord.Interaction,
         action: app_commands.Choice[str],
         channel: discord.TextChannel | None = None,
     ) -> None:
         if action.value == "clear":
-            await self.bot.guild_config.clear_grail_channels(interaction.guild_id)
+            await self.bot.guild_config.clear_event_channels(interaction.guild_id)
             await interaction.response.send_message(
-                "Grail drops are now disabled -- add a channel to enable them.", ephemeral=True
+                "Event drops are now disabled -- add a channel to enable them.", ephemeral=True
             )
             return
         if action.value == "list":
-            chans = await self.bot.guild_config.grail_channels(interaction.guild_id)
+            chans = await self.bot.guild_config.event_channels(interaction.guild_id)
             msg = (
-                "Grail drops spawn in: " + ", ".join(f"<#{c}>" for c in chans)
+                "Events spawn in: " + ", ".join(f"<#{c}>" for c in chans)
                 if chans
-                else "No grail channels set -- drops are disabled. Add one to enable them."
+                else "No event channels set -- drops are disabled. Add one to enable them."
             )
             await interaction.response.send_message(msg, ephemeral=True)
             return
@@ -323,14 +323,14 @@ class Admin(commands.Cog):
             await interaction.response.send_message("Pick a channel.", ephemeral=True)
             return
         if action.value == "add":
-            await self.bot.guild_config.add_grail_channel(interaction.guild_id, channel.id)
+            await self.bot.guild_config.add_event_channel(interaction.guild_id, channel.id)
             await interaction.response.send_message(
-                f"Grail drops can spawn in {channel.mention}.", ephemeral=True
+                f"Events can spawn in {channel.mention}.", ephemeral=True
             )
         else:
-            await self.bot.guild_config.remove_grail_channel(interaction.guild_id, channel.id)
+            await self.bot.guild_config.remove_event_channel(interaction.guild_id, channel.id)
             await interaction.response.send_message(
-                f"Grail drops removed from {channel.mention}.", ephemeral=True
+                f"Events removed from {channel.mention}.", ephemeral=True
             )
 
     @summonconfig.command(

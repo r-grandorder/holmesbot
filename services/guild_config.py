@@ -91,42 +91,42 @@ class GuildConfigService:
             channel_id,
         )
 
-    # --- grail-drop channels (contracted-servant feature; opt-in -- empty = drops disabled) ---
-    async def grail_channels(self, guild_id: int) -> "list[int]":
+    # --- event channels (grail & QP drops; opt-in -- empty list = drops disabled) ---
+    async def event_channels(self, guild_id: int) -> "list[int]":
         cfg = await self.get(guild_id)
-        return json.loads(cfg["grail_drop_channel_ids"])
+        return json.loads(cfg["event_channel_ids"])
 
-    async def is_grail_channel_allowed(self, guild_id: int, channel_id: int) -> bool:
+    async def is_event_channel_allowed(self, guild_id: int, channel_id: int) -> bool:
         # Opt-in: drops fire ONLY in explicitly-added channels (empty list = disabled).
-        return channel_id in await self.grail_channels(guild_id)
+        return channel_id in await self.event_channels(guild_id)
 
-    async def add_grail_channel(self, guild_id: int, channel_id: int) -> None:
-        chans = await self.grail_channels(guild_id)
+    async def add_event_channel(self, guild_id: int, channel_id: int) -> None:
+        chans = await self.event_channels(guild_id)
         if channel_id in chans:
             return
         chans.append(channel_id)
         await self.pool.execute(
-            "UPDATE guild_config SET grail_drop_channel_ids = $2, updated_at = CURRENT_TIMESTAMP "
+            "UPDATE guild_config SET event_channel_ids = $2, updated_at = CURRENT_TIMESTAMP "
             "WHERE guild_id = $1",
             guild_id,
             json.dumps(chans),
         )
 
-    async def remove_grail_channel(self, guild_id: int, channel_id: int) -> None:
-        chans = await self.grail_channels(guild_id)
+    async def remove_event_channel(self, guild_id: int, channel_id: int) -> None:
+        chans = await self.event_channels(guild_id)
         if channel_id not in chans:
             return
         chans = [c for c in chans if c != channel_id]
         await self.pool.execute(
-            "UPDATE guild_config SET grail_drop_channel_ids = $2, updated_at = CURRENT_TIMESTAMP "
+            "UPDATE guild_config SET event_channel_ids = $2, updated_at = CURRENT_TIMESTAMP "
             "WHERE guild_id = $1",
             guild_id,
             json.dumps(chans),
         )
 
-    async def clear_grail_channels(self, guild_id: int) -> None:
+    async def clear_event_channels(self, guild_id: int) -> None:
         await self.pool.execute(
-            "UPDATE guild_config SET grail_drop_channel_ids = '[]', updated_at = CURRENT_TIMESTAMP "
+            "UPDATE guild_config SET event_channel_ids = '[]', updated_at = CURRENT_TIMESTAMP "
             "WHERE guild_id = $1",
             guild_id,
         )

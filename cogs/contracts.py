@@ -16,6 +16,7 @@ from data import contract_game
 from data import images
 from data.grail_hosts import GRAIL_HOSTS
 from data.servants import class_display
+from data.stimmy_hosts import STIMMY_HOSTS
 from permissions import is_mod
 
 from . import filters
@@ -42,16 +43,26 @@ def _grail_file(image: str) -> discord.File:
     """A fresh (single-use) File for a grail host's transparent portrait."""
     return discord.File(str(_GRAIL_DIR / image), filename="grail.png")
 
+
+_STIMMY_DIR = pathlib.Path(__file__).resolve().parent.parent / "assets" / "stimmy"
+
+
+def _stimmy_file(image: str) -> discord.File:
+    """A fresh (single-use) File for a QP-reward host's transparent portrait."""
+    return discord.File(str(_STIMMY_DIR / image), filename="stimmy.png")
+
 # Registered spawnable events for /triggerevent. Add a (value, label, spawner-method) row
 # to extend it -- the command's choices AND its dispatch both derive from this list, and
 # the passive on_message drops reuse the same spawner methods.
 _EVENTS = [
-    ("grail_single", "Single grail (Draco)", "_spawn_single"),
-    ("grail_box", "Grail present box (Gilgamesh)", "_spawn_box"),
+    ("qp_reward", "QP reward (a chatter finds QP)"),
+    ("grail_single", "Single grail (Draco)"),
+    ("grail_box", "Grail present box (Gilgamesh)"),
 ]
-_EVENT_CHOICES = [app_commands.Choice(name=lbl, value=val) for val, lbl, _ in _EVENTS]
-_EVENT_SPAWN = {val: method for val, _lbl, method in _EVENTS}
-_EVENT_LABEL = {val: lbl for val, lbl, _ in _EVENTS}
+_EVENT_CHOICES = [app_commands.Choice(name=lbl, value=val) for val, lbl in _EVENTS]
+_EVENT_LABEL = {val: lbl for val, lbl in _EVENTS}
+# Claim-style spawns take just a channel; qp_reward is an auto-award, dispatched separately.
+_EVENT_SPAWN = {"grail_single": "_spawn_single", "grail_box": "_spawn_box"}
 
 
 def _stars(rarity: int) -> str:
@@ -98,6 +109,7 @@ class ContractsCog(commands.Cog):
         self._xp_cd: dict[tuple[int, int], float] = {}  # (guild,user) -> last xp monotonic
         self._single_cd: dict[int, float] = {}          # guild -> last single-grail monotonic
         self._box_cd: dict[int, float] = {}             # guild -> last grail-box monotonic
+        self._qp_cd: dict[int, float] = {}              # guild -> last QP-reward monotonic
         self._duel_cd: dict[tuple[int, int], float] = {}  # (guild,challenger) -> last duel
         self._duel_pair_cd: dict = {}                     # (guild, frozenset{a,b}) -> last duel
 
@@ -564,14 +576,17 @@ class ContractsCog(commands.Cog):
             return await interaction.response.send_message(
                 "You need moderator permissions to spawn an event.", ephemeral=True
             )
-        value = event.value if event else random.choice(list(_EVENT_SPAWN))
+        value = event.value if event else random.choice([v for v, _ in _EVENTS])
         target = channel or interaction.channel
-        await getattr(self, _EVENT_SPAWN[value])(target)
+        if value == "qp_reward":
+            await self._award_qp(target, interaction.user)
+        else:
+            await getattr(self, _EVENT_SPAWN[value])(target)
         await interaction.response.send_message(
             f"Spawned **{_EVENT_LABEL[value]}** in {target.mention}.", ephemeral=True
         )
 
-    # ---- passive: XP + grail drops from chatting ----
+    # ---- passive: XP + event drops from chatting ----
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
         if message.author.bot or message.guild is None or not message.content:
@@ -579,7 +594,7 @@ class ContractsCog(commands.Cog):
         if not self._allowed(message.author.id):
             return
         await self._grant_xp(message)
-        await self._maybe_drop_grail(message)
+        await self._maybe_drop_event(message)
 
     async def _grant_xp(self, message: discord.Message) -> None:
         key = (message.guild.id, message.author.id)
@@ -617,14 +632,19 @@ class ContractsCog(commands.Cog):
         except discord.HTTPException:
             pass
 
-    async def _maybe_drop_grail(self, message: discord.Message) -> None:
-        if not await self.bot.guild_config.is_grail_channel_allowed(
+    async def _maybe_drop_event(self, message: discord.Message) -> None:
+        if not await self.bot.guild_config.is_event_channel_allowed(
             message.guild.id, message.channel.id
         ):
             return
         gid = message.guild.id
         now = time.monotonic()
         cg = contract_game
+        if (now - self._qp_cd.get(gid, 0.0) >= cg.QP_REWARD_COOLDOWN
+                and random.random() < cg.QP_REWARD_CHANCE):
+            self._qp_cd[gid] = now
+            await self._award_qp(message.channel, message.author)
+            return
         if (now - self._single_cd.get(gid, 0.0) >= cg.GRAIL_SINGLE_COOLDOWN
                 and random.random() < cg.GRAIL_SINGLE_CHANCE):
             self._single_cd[gid] = now
@@ -634,6 +654,30 @@ class ContractsCog(commands.Cog):
                 and random.random() < cg.GRAIL_BOX_CHANCE):
             self._box_cd[gid] = now
             await self._spawn_box(message.channel)
+
+    async def _award_qp(self, channel: discord.abc.Messageable, user) -> None:
+        """Bunyan-style QP reward: auto-award `user` a random (exponential) QP amount with a
+        random wealth-servant host, in a self-deleting notification."""
+        host = random.choice(list(STIMMY_HOSTS.values()))
+        amount = contract_game.qp_reward_amount()
+        new_bal = await self.bot.scoring.add_qp(channel.guild.id, user.id, amount)
+        embed = discord.Embed(
+            title="Random Encounter!",
+            description=(
+                f"**{host['name']}:** *\"{random.choice(host['lines'])}\"*\n\n"
+                f"**{user.display_name}** found {qp(amount)}!\nBalance: {qp(new_bal)}"
+            ),
+            color=discord.Color.gold(),
+        )
+        embed.set_thumbnail(url="attachment://stimmy.png")
+        try:
+            await channel.send(
+                embed=embed, file=_stimmy_file(host["image"]),
+                delete_after=contract_game.QP_REWARD_TTL,
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
+        except (discord.HTTPException, OSError):
+            pass
 
     def _grail_title(self, text: str) -> str:
         ge = self.bot.config.grail_emote
