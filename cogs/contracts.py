@@ -92,7 +92,7 @@ class ContractsCog(commands.Cog):
     def _summon_title(servant, is_new: bool) -> str:
         return f"Summoned: {servant.name}" + (" (NEW!)" if is_new else "")
 
-    def _servant_embed(self, servant, level: int, *, title=None, note=None, qp_line=None, pity=None, allow=None) -> discord.Embed:
+    def _servant_embed(self, servant, level: int, *, title=None, note=None, qp_line=None, pity=None, allow=None, show_line: bool = True) -> discord.Embed:
         embed = discord.Embed(
             title=title or servant.name,
             description=note,
@@ -107,7 +107,7 @@ class ContractsCog(commands.Cog):
         embed.add_field(name="Class", value=class_display(servant.class_name) or "?")
         embed.add_field(name="Rarity", value=_stars(servant.rarity))
         embed.add_field(name="Power", value=f"{contract_game.power(servant, level):,}")
-        line = getattr(servant, "summon_line", None)  # optional flavor (sync data addition)
+        line = getattr(servant, "summon_line", None) if show_line else None  # summon-only flavor
         if line:
             embed.add_field(name="​", value=f"*{line}*", inline=False)
         if qp_line:
@@ -231,11 +231,13 @@ class ContractsCog(commands.Cog):
         grails = await self.bot.contracts.grail_balance(interaction.guild_id, target.id)
         allow = await self.bot.restrictions.build_allow()
         embed = self._servant_embed(
-            servant, row["level"], title=f"{target.display_name}'s Servant", allow=allow
+            servant, row["level"], title=f"{target.display_name}'s Servant", allow=allow,
+            show_line=False,
         )
         level = row["level"]
         embed.add_field(name="Level", value=f"{level} / {cap}")
-        embed.add_field(name="Grails", value=str(grails))
+        ge = self.bot.config.grail_emote
+        embed.add_field(name="Grails", value=f"{grails:,} {ge}".strip() if ge else str(grails))
         if level < cap:
             need = contract_game.xp_to_next(level)
             embed.add_field(
