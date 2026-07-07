@@ -708,7 +708,7 @@ class ContractsCog(commands.Cog):
         members = await self.bot.wars.faction_members(interaction.guild_id, win["slot"])
         avg_size = sum(f["members"] for f in standings) / len(standings)
         factor = contract_game.underdog_factor(win["members"], avg_size)
-        tickets_each = round(factor)
+        tickets_each = contract_game.war_ticket_reward(factor)
         qp_each = round(contract_game.WAR_REWARD * factor)
         for uid in members:
             await self.bot.scoring.add_qp(interaction.guild_id, uid, qp_each)

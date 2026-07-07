@@ -138,6 +138,14 @@ def underdog_factor(winner_size: int, avg_size: float, cap: "float | None" = Non
     return min(cap, max(1.0, avg_size / winner_size))
 
 
+def war_ticket_reward(factor: float) -> int:
+    """Summon Tickets for a war win, scaled by the underdog factor from WAR_WIN_TICKETS (an
+    even/expected win) up to WAR_UPSET_TICKETS (a max upset at WAR_UNDERDOG_CAP)."""
+    span = WAR_UNDERDOG_CAP - 1.0
+    frac = 0.0 if span <= 0 else max(0.0, min(1.0, (factor - 1.0) / span))
+    return round(WAR_WIN_TICKETS + frac * (WAR_UPSET_TICKETS - WAR_WIN_TICKETS))
+
+
 def is_wishable(servant) -> bool:
     """Whether a servant may be set as a /wish: a summonable, non-NPC servant (NPC bosses
     are exempt)."""
@@ -203,7 +211,9 @@ CLASS_ADVANTAGE = 1.5     # effective-power multiplier when your class beats the
 
 # --- faction war ---
 WAR_REWARD = 500          # base QP to each member of the winning faction when a season ends
-WAR_UNDERDOG_CAP = 2.0    # max reward multiplier for winning while outnumbered (avg/size, clamped)
+WAR_UNDERDOG_CAP = 2.0    # max QP-reward multiplier for winning outnumbered (avg/size, clamped)
+WAR_WIN_TICKETS = 1       # Summon Tickets for an even/expected faction win
+WAR_UPSET_TICKETS = 4     # Summon Tickets for a maximum-upset win (scaled between the two)
 
 # The two clean FGO triangles (attacker class -> the class it beats). Extra classes
 # (Berserker, Ruler, Avenger, Moon Cancer, Alter Ego, Foreigner, Pretender, Beast) stay
