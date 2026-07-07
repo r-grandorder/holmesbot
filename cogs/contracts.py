@@ -485,6 +485,36 @@ class ContractsCog(commands.Cog):
             return None
         return discord.File(io.BytesIO(png), filename="duel.png")
 
+    @app_commands.command(name="setservantlevel", description="(Mods) Set a member's contracted servant level.")
+    @app_commands.guild_only()
+    @app_commands.describe(member="Whose servant to adjust", level="The level to set")
+    async def setservantlevel(
+        self, interaction: discord.Interaction, member: discord.Member, level: int
+    ) -> None:
+        if not (is_mod(interaction.user) or await self.bot.is_owner(interaction.user)):
+            return await interaction.response.send_message(
+                "You need moderator permissions to set servant levels.", ephemeral=True
+            )
+        row = await self.bot.contracts.active(interaction.guild_id, member.id)
+        if row is None:
+            return await interaction.response.send_message(
+                f"{member.display_name} has no active contract.", ephemeral=True
+            )
+        cap = contract_game.level_cap(row["grails_used"])
+        if not 1 <= level <= cap:
+            return await interaction.response.send_message(
+                f"Level must be between 1 and {cap} -- that's the current grail cap for "
+                f"{member.display_name}'s servant. Grail it first to go higher.",
+                ephemeral=True,
+            )
+        await self.bot.contracts.set_active_level(interaction.guild_id, member.id, level)
+        servant = self.bot.servants.get(row["servant_id"])
+        name = servant.name if servant else "their servant"
+        await interaction.response.send_message(
+            f"Set {member.display_name}'s **{name}** to level **{level}** (cap {cap}).",
+            ephemeral=True,
+        )
+
     @app_commands.command(name="triggerevent", description="(Mods) Spawn a server event now.")
     @app_commands.guild_only()
     @app_commands.describe(

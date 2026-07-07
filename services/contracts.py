@@ -121,6 +121,17 @@ class ContractService:
                 )
                 return row["servant_id"], row["level"], new_level, cap
 
+    async def set_active_level(self, guild_id: int, user_id: int, level: int) -> None:
+        """Mod override: set the active servant's level, resetting intra-level xp to 0. The
+        caller validates `level` against the grail cap first."""
+        await self.pool.execute(
+            "UPDATE servant_contracts SET level = $3, xp = 0, updated_at = CURRENT_TIMESTAMP "
+            "WHERE guild_id = $1 AND user_id = $2 AND active = 1",
+            guild_id,
+            user_id,
+            level,
+        )
+
     async def grail_balance(self, guild_id: int, user_id: int) -> int:
         val = await self.pool.fetchval(
             "SELECT balance FROM grail_balance WHERE guild_id = $1 AND user_id = $2",
