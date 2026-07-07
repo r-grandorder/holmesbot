@@ -126,18 +126,22 @@ class ContractsCog(commands.Cog):
         allow=None, big: bool = False,
     ) -> None:
         """Post a public celebration (a contract or a shared summon) to the announce channel,
-        falling back to the channel the summon happened in. Respects the art restriction gate;
-        `big` adds the full ascension figure (the opt-in Share flex), otherwise just a compact
-        face thumbnail keeps the auto contract announcement small."""
+        falling back to the channel the summon happened in. Respects the art restriction gate.
+        The compact contract announcement (big=False) shows a face thumbnail + the servant's
+        summon voice line; Share (big=True) adds the full ascension figure instead."""
         channel = await self._announce_channel(interaction.guild_id) or interaction.channel
         if channel is None:
             return
+        desc = (
+            f"{interaction.user.mention} {action} **{servant.name}** "
+            f"({_stars(servant.rarity)})!"
+        )
+        line = getattr(servant, "summon_line", None)
+        if line and not big:  # a voice line stands in for the figure on the compact announcement
+            desc += f'\n\n*"{line}"*'
         embed = discord.Embed(
             title=title,
-            description=(
-                f"{interaction.user.mention} {action} **{servant.name}** "
-                f"({_stars(servant.rarity)})!"
-            ),
+            description=desc,
             color=_RARITY_COLOR.get(servant.rarity, discord.Color.blurple()),
         )
         art = contract_game.display_art(servant, allow)
