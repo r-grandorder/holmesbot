@@ -233,6 +233,40 @@ class ContractsCog(commands.Cog):
             ephemeral=True,
         )
 
+    @app_commands.command(name="redeem", description="Redeem a Summon Ticket: a boosted pull for your wish (else a 5-star).")
+    @app_commands.guild_only()
+    async def redeem(self, interaction: discord.Interaction) -> None:
+        if not self._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        if not await self.bot.contracts.use_ticket(interaction.guild_id, interaction.user.id):
+            return await interaction.response.send_message(
+                "You have no Summon Tickets. Win a faction war to earn them.", ephemeral=True
+            )
+        allow = await self.bot.restrictions.build_allow()
+        wish = await self.bot.contracts.get_wish(interaction.guild_id, interaction.user.id)
+        servant, is_wish = contract_game.ticket_roll(
+            self.bot.servants, wish,
+            chance=self.bot.config.summon_ticket_wish_chance, allow=allow,
+        )
+        is_new = not await self.bot.contracts.has_contract(
+            interaction.guild_id, interaction.user.id, servant.id
+        )
+        note = (
+            "Your wished servant answers the call!" if is_wish
+            else "Not your wish this time -- but a guaranteed 5-star!"
+        )
+        view = SummonView(self, interaction.user.id, servant, allow_reroll=False)
+        view.interaction = interaction
+        await interaction.response.send_message(
+            embed=self._servant_embed(
+                servant, 1,
+                title=f"Summon Ticket: {servant.name}" + (" (NEW!)" if is_new else ""),
+                note=note, allow=allow,
+            ),
+            view=view,
+            ephemeral=True,
+        )
+
     @app_commands.command(name="profile", description="View your (or another player's) contracted servant.")
     @app_commands.guild_only()
     @app_commands.describe(member="Whose servant to view (defaults to you)")
@@ -291,10 +325,12 @@ class ContractsCog(commands.Cog):
             return await interaction.response.send_message(_DENY, ephemeral=True)
         bal = await self.bot.scoring.get_balance(interaction.guild_id, interaction.user.id)
         grails = await self.bot.contracts.grail_balance(interaction.guild_id, interaction.user.id)
+        tickets = await self.bot.contracts.summon_tickets(interaction.guild_id, interaction.user.id)
         ge = self.bot.config.grail_emote
         embed = discord.Embed(title="Your Items", color=discord.Color.blurple())
         embed.add_field(name="QP", value=qp(bal))
         embed.add_field(name="Holy Grails", value=f"{grails:,} {ge}".strip() if ge else str(grails))
+        embed.add_field(name="Summon Tickets", value=str(tickets))
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.command(name="grail", description="Spend a grail to raise a servant's cap (yours or another player's).")
@@ -633,9 +669,10 @@ class ContractsCog(commands.Cog):
         members = await self.bot.wars.faction_members(interaction.guild_id, win["slot"])
         for uid in members:
             await self.bot.scoring.add_qp(interaction.guild_id, uid, contract_game.WAR_REWARD)
+            await self.bot.contracts.grant_tickets(interaction.guild_id, uid, 1)
         await interaction.response.send_message(
-            f"**{win['name']}** wins the war with **{top:,} pts**! "
-            f"{len(members)} member(s) each earn {qp(contract_game.WAR_REWARD)}."
+            f"**{win['name']}** wins the war with **{top:,} pts**! Each of the {len(members)} "
+            f"member(s) earns a **Summon Ticket** + {qp(contract_game.WAR_REWARD)}."
         )
 
     @app_commands.command(name="setservantlevel", description="(Mods) Set a member's contracted servant level.")
@@ -829,12 +866,16 @@ class SummonView(discord.ui.View):
     """Ephemeral summon controls: Contract / Roll again (charges QP) / Dismiss. Only the
     summoner sees this (the message is ephemeral)."""
 
-    def __init__(self, cog: ContractsCog, user_id: int, servant) -> None:
+    def __init__(self, cog: ContractsCog, user_id: int, servant, *, allow_reroll: bool = True) -> None:
         super().__init__(timeout=SUMMON_VIEW_TIMEOUT)
         self.cog = cog
         self.user_id = user_id
         self.servant = servant
         self.interaction: discord.Interaction | None = None  # for greying out on timeout
+        if not allow_reroll:  # ticket pulls don't re-roll for QP
+            for child in list(self.children):
+                if getattr(child, "label", None) == "Roll again":
+                    self.remove_item(child)
 
     async def on_timeout(self) -> None:
         for child in self.children:

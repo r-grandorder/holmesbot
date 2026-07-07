@@ -101,6 +101,25 @@ def resets_pity(servant) -> bool:
     return servant.rarity == 5
 
 
+def ticket_roll(index, wish: "int | None" = None, *, chance: float = 0.15, allow=None):
+    """A Summon Ticket pull: with probability `chance`, the wished servant (if a valid,
+    summonable one is set); otherwise a random safe 5-star. Returns (servant, is_wish)."""
+    gate = allow or (lambda _sid, _k: True)
+    wished = index.get(wish) if wish is not None else None
+    valid_wish = (
+        wished is not None
+        and is_wishable(wished)
+        and any(gate(wished.id, k) for k in wished.art)
+    )
+    if valid_wish and random.random() < chance:
+        return wished, True
+    fives = [
+        s for s in index._by_id.values()
+        if not s.jp and s.art and not s.npc and s.rarity == 5 and any(gate(s.id, k) for k in s.art)
+    ]
+    return (random.choice(fives) if fives else wished), False
+
+
 def qp_reward_amount(tier: "tuple[int, int, int]") -> int:
     """A random QP-drop amount for a host's wealth tier (min, mode, max): a triangular roll
     peaking at the mode, so the payout tracks how rich the host is."""

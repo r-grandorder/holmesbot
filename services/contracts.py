@@ -132,6 +132,42 @@ class ContractService:
             level,
         )
 
+    async def summon_tickets(self, guild_id: int, user_id: int) -> int:
+        return await self.pool.fetchval(
+            "SELECT summon_tickets FROM grail_balance WHERE guild_id = $1 AND user_id = $2",
+            guild_id,
+            user_id,
+        ) or 0
+
+    async def grant_tickets(self, guild_id: int, user_id: int, n: int) -> int:
+        return await self.pool.fetchval(
+            "INSERT INTO grail_balance (guild_id, user_id, summon_tickets) VALUES ($1, $2, $3) "
+            "ON CONFLICT (guild_id, user_id) DO UPDATE SET summon_tickets = summon_tickets + $3 "
+            "RETURNING summon_tickets",
+            guild_id,
+            user_id,
+            n,
+        )
+
+    async def use_ticket(self, guild_id: int, user_id: int) -> bool:
+        """Consume one Summon Ticket; returns True if one was spent."""
+        async with self.pool.acquire() as conn:
+            async with conn.transaction():
+                bal = await conn.fetchval(
+                    "SELECT summon_tickets FROM grail_balance WHERE guild_id = $1 AND user_id = $2",
+                    guild_id,
+                    user_id,
+                )
+                if not bal:
+                    return False
+                await conn.execute(
+                    "UPDATE grail_balance SET summon_tickets = summon_tickets - 1 "
+                    "WHERE guild_id = $1 AND user_id = $2",
+                    guild_id,
+                    user_id,
+                )
+                return True
+
     async def grail_balance(self, guild_id: int, user_id: int) -> int:
         val = await self.pool.fetchval(
             "SELECT balance FROM grail_balance WHERE guild_id = $1 AND user_id = $2",
