@@ -16,8 +16,9 @@ class WarService:
     async def active(self, guild_id: int) -> bool:
         return bool(await self.pool.fetchval("SELECT active FROM war WHERE guild_id = $1", guild_id))
 
-    async def start(self, guild_id: int, names: "list[str]") -> None:
-        """Open a season with the given faction names (2-4), resetting all scores and members."""
+    async def start(self, guild_id: int, names: "list[str]", banner: "bytes | None" = None) -> None:
+        """Open a season with the given faction names (2-4), resetting all scores and members.
+        `banner` is an optional image (bytes) shown on /warstatus and the start announcement."""
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 await conn.execute("DELETE FROM war_factions WHERE guild_id = $1", guild_id)
@@ -30,10 +31,16 @@ class WarService:
                         name,
                     )
                 await conn.execute(
-                    "INSERT INTO war (guild_id, active, started_at) VALUES ($1, 1, CURRENT_TIMESTAMP) "
-                    "ON CONFLICT (guild_id) DO UPDATE SET active = 1, started_at = CURRENT_TIMESTAMP",
+                    "INSERT INTO war (guild_id, active, started_at, banner) "
+                    "VALUES ($1, 1, CURRENT_TIMESTAMP, $2) "
+                    "ON CONFLICT (guild_id) DO UPDATE SET "
+                    "active = 1, started_at = CURRENT_TIMESTAMP, banner = $2",
                     guild_id,
+                    banner,
                 )
+
+    async def banner(self, guild_id: int) -> "bytes | None":
+        return await self.pool.fetchval("SELECT banner FROM war WHERE guild_id = $1", guild_id)
 
     async def end(self, guild_id: int) -> None:
         await self.pool.execute("UPDATE war SET active = 0 WHERE guild_id = $1", guild_id)
@@ -57,9 +64,12 @@ class WarService:
             user_id,
         )
 
-    async def join(self, guild_id: int, user_id: int) -> "tuple[str | None, bool]":
-        """Place the user on the smallest faction, locked for the season. Returns
-        (faction_name, already_joined); name is None if no war/factions exist."""
+    async def join(
+        self, guild_id: int, user_id: int, choice: "str | None" = None
+    ) -> "tuple[str | None, bool]":
+        """Place the user on a faction, locked for the season. `choice` (a faction name) picks
+        that side; otherwise auto-place on the smallest. Returns (faction_name, already_joined);
+        name is None if there are no factions or `choice` matches none."""
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 existing = await conn.fetchrow(
@@ -76,13 +86,20 @@ class WarService:
                 )
                 if not factions:
                     return None, False
-                counts = {f["slot"]: 0 for f in factions}
-                for r in await conn.fetch(
-                    "SELECT slot, COUNT(*) AS n FROM war_members WHERE guild_id = $1 GROUP BY slot",
-                    guild_id,
-                ):
-                    counts[r["slot"]] = r["n"]
-                target = min(factions, key=lambda f: counts[f["slot"]])
+                if choice is not None and choice.strip():
+                    target = next(
+                        (f for f in factions if f["name"].lower() == choice.strip().lower()), None
+                    )
+                    if target is None:
+                        return None, False
+                else:
+                    counts = {f["slot"]: 0 for f in factions}
+                    for r in await conn.fetch(
+                        "SELECT slot, COUNT(*) AS n FROM war_members WHERE guild_id = $1 GROUP BY slot",
+                        guild_id,
+                    ):
+                        counts[r["slot"]] = r["n"]
+                    target = min(factions, key=lambda f: counts[f["slot"]])
                 await conn.execute(
                     "INSERT INTO war_members (guild_id, user_id, slot, score) VALUES ($1, $2, $3, 0)",
                     guild_id,

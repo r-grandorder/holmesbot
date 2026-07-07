@@ -580,6 +580,7 @@ class ContractsCog(commands.Cog):
         faction_b="Second faction name",
         faction_c="Third faction (optional)",
         faction_d="Fourth faction (optional)",
+        banner="Optional banner image shown on the war",
     )
     async def warstart(
         self,
@@ -588,6 +589,7 @@ class ContractsCog(commands.Cog):
         faction_b: str,
         faction_c: str | None = None,
         faction_d: str | None = None,
+        banner: discord.Attachment | None = None,
     ) -> None:
         if not (is_mod(interaction.user) or await self.bot.is_owner(interaction.user)):
             return await interaction.response.send_message(
@@ -598,22 +600,43 @@ class ContractsCog(commands.Cog):
             return await interaction.response.send_message(
                 "A war needs at least 2 factions.", ephemeral=True
             )
-        await self.bot.wars.start(interaction.guild_id, names)
-        await interaction.response.send_message(
-            "The war has begun! Factions: " + ", ".join(f"**{n}**" for n in names)
-            + ". Players, /warjoin a side -- every level you gain scores for your faction."
+        banner_bytes = None
+        if banner is not None:
+            if not (banner.content_type or "").startswith("image/"):
+                return await interaction.response.send_message(
+                    "The banner must be an image.", ephemeral=True
+                )
+            if banner.size > 8 * 1024 * 1024:
+                return await interaction.response.send_message(
+                    "Banner too large (max 8 MB).", ephemeral=True
+                )
+            banner_bytes = await banner.read()
+        await self.bot.wars.start(interaction.guild_id, names, banner_bytes)
+        embed = discord.Embed(
+            title="The War Begins!",
+            description="Factions: " + ", ".join(f"**{n}**" for n in names)
+            + ".\nPlayers, /warjoin a side -- every level you gain scores for your faction.",
+            color=discord.Color.orange(),
         )
+        file = discord.utils.MISSING
+        if banner_bytes:
+            embed.set_image(url="attachment://banner.png")
+            file = discord.File(io.BytesIO(banner_bytes), filename="banner.png")
+        await interaction.response.send_message(embed=embed, file=file)
 
-    @app_commands.command(name="warjoin", description="Join the faction war (placed on the smallest side).")
+    @app_commands.command(name="warjoin", description="Join the faction war (pick a side, or leave blank to auto-balance).")
     @app_commands.guild_only()
-    async def warjoin(self, interaction: discord.Interaction) -> None:
+    @app_commands.describe(faction="Which faction to join (blank = placed on the smallest side)")
+    async def warjoin(self, interaction: discord.Interaction, faction: str | None = None) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
         if not await self.bot.wars.active(interaction.guild_id):
             return await interaction.response.send_message("No war is running right now.", ephemeral=True)
-        name, already = await self.bot.wars.join(interaction.guild_id, interaction.user.id)
+        name, already = await self.bot.wars.join(interaction.guild_id, interaction.user.id, faction)
         if name is None:
-            return await interaction.response.send_message("No war is running right now.", ephemeral=True)
+            return await interaction.response.send_message(
+                "No faction by that name -- check /warstatus for the sides.", ephemeral=True
+            )
         if already:
             return await interaction.response.send_message(
                 f"You're already fighting for **{name}** this season.", ephemeral=True
@@ -621,6 +644,17 @@ class ContractsCog(commands.Cog):
         await interaction.response.send_message(
             f"You've joined **{name}**! Your level-ups now score for them.", ephemeral=True
         )
+
+    @warjoin.autocomplete("faction")
+    async def _warjoin_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[str]]:
+        standings = await self.bot.wars.standings(interaction.guild_id)
+        return [
+            app_commands.Choice(name=f["name"], value=f["name"])
+            for f in standings
+            if current.lower() in f["name"].lower()
+        ][:25]
 
     @app_commands.command(name="warstatus", description="Show the faction war standings.")
     @app_commands.guild_only()
@@ -642,9 +676,13 @@ class ContractsCog(commands.Cog):
             lines.append(f"\nYour faction: **{mine['name']}** -- you've scored {mine['score']:,} pts")
         else:
             lines.append("\nYou haven't joined -- use /warjoin.")
-        await interaction.response.send_message(
-            embed=discord.Embed(title="Faction War", description="\n".join(lines)), ephemeral=True
-        )
+        embed = discord.Embed(title="Faction War", description="\n".join(lines))
+        banner = await self.bot.wars.banner(interaction.guild_id)
+        file = discord.utils.MISSING
+        if banner:
+            embed.set_image(url="attachment://banner.png")
+            file = discord.File(io.BytesIO(banner), filename="banner.png")
+        await interaction.response.send_message(embed=embed, file=file, ephemeral=True)
 
     @app_commands.command(name="warend", description="(Mods) End the faction war and reward the winner.")
     @app_commands.guild_only()
