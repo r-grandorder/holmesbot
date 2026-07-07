@@ -1,11 +1,23 @@
 from __future__ import annotations
 
+import pathlib
+import random
+import time
+
 import discord
 from discord import app_commands
 from discord.ext import commands
 
 from branding import parse_qp, qp
+from data.stimmy_hosts import STIMMY_HOSTS
 from permissions import is_mod
+
+_STIMMY_DIR = pathlib.Path(__file__).resolve().parent.parent / "assets" / "stimmy"
+
+
+def _stimmy_file(image: str) -> discord.File:
+    """A fresh (single-use) File for a stimmy host's transparent portrait."""
+    return discord.File(str(_STIMMY_DIR / image), filename="stimmy.png")
 
 _GAME_CHOICES = [
     app_commands.Choice(name="guess_servant", value="guess_servant"),
@@ -172,7 +184,9 @@ class Admin(commands.Cog):
                 "Duration must be between 1 and 86400 seconds (24 hours).", ephemeral=True
             )
         view = StimulusView(self.bot, n, duration)
-        await interaction.response.send_message(embed=view.render(), view=view)
+        await interaction.response.send_message(
+            embed=view.render(), view=view, file=_stimmy_file(view.host["image"])
+        )
         view.message = await interaction.original_response()
 
     @app_commands.command(name="qp_reset", description="Wipe all QP and scores in this server.")
@@ -403,15 +417,18 @@ class Admin(commands.Cog):
 
 
 class StimulusView(discord.ui.View):
-    """A QP stimulus (created by /stimmy): any member claims a flat amount once, then it
-    self-deletes when the window closes. Claimers are tracked in memory, so a mid-stimulus
-    restart just ends it early (same trade-off as the grail-drop views)."""
+    """A QP stimulus (created by /stimmy), hosted by a random wealth-themed servant: any member
+    claims a flat amount once and gets a fleeting public shout-out, then it self-deletes when
+    the window closes. Claimers are tracked in memory, so a mid-stimulus restart just ends it
+    early (same trade-off as the grail-drop views)."""
 
     def __init__(self, bot, amount: int, duration: int) -> None:
         super().__init__(timeout=float(duration))
         self.bot = bot
         self.amount = amount
-        self.duration = duration
+        self.expires = time.time() + duration
+        self.host = random.choice(list(STIMMY_HOSTS.values()))
+        self.line = random.choice(self.host["lines"])
         self.claimers: set[int] = set()
         self.message: discord.Message | None = None
 
@@ -419,11 +436,13 @@ class StimulusView(discord.ui.View):
         embed = discord.Embed(
             title="Stimulus Available",
             description=(
+                f"**{self.host['name']}:** *\"{self.line}\"*\n\n"
                 f"Click **Claim QP** to receive {qp(self.amount)}.\n"
-                f"One claim per person. Open for {self.duration:,} seconds."
+                f"One claim per person. Closes <t:{int(self.expires)}:R>."
             ),
             color=discord.Color.green(),
         )
+        embed.set_thumbnail(url="attachment://stimmy.png")
         return embed
 
     async def on_timeout(self) -> None:
@@ -444,6 +463,14 @@ class StimulusView(discord.ui.View):
         await interaction.response.send_message(
             f"You claimed {qp(self.amount)}. Balance: {qp(new)}.", ephemeral=True
         )
+        try:  # fleeting public shout-out; self-deletes, and the mention doesn't ping
+            await interaction.channel.send(
+                f"{interaction.user.mention} claimed {qp(self.amount)}!",
+                delete_after=8,
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
+        except discord.HTTPException:
+            pass
 
 
 async def setup(bot) -> None:
