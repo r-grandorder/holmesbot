@@ -210,10 +210,11 @@ DUEL_PAIR_COOLDOWN = 180  # seconds before the same two players can duel again (
 CLASS_ADVANTAGE = 1.5     # effective-power multiplier when your class beats the opponent's
 
 # --- faction war ---
-WAR_REWARD = 500          # base QP to each member of the winning faction when a season ends
+WAR_REWARD = 5000         # base QP to each member of the winning faction when a season ends
 WAR_UNDERDOG_CAP = 2.0    # max QP-reward multiplier for winning outnumbered (avg/size, clamped)
 WAR_WIN_TICKETS = 1       # Summon Tickets for an even/expected faction win
 WAR_UPSET_TICKETS = 4     # Summon Tickets for a maximum-upset win (scaled between the two)
+WAR_DEFAULT_DAYS = 7.0    # default season length before a war auto-ends (mod can override)
 
 # The two clean FGO triangles (attacker class -> the class it beats). Extra classes
 # (Berserker, Ruler, Avenger, Moon Cancer, Alter Ego, Foreigner, Pretender, Beast) stay

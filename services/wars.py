@@ -16,9 +16,17 @@ class WarService:
     async def active(self, guild_id: int) -> bool:
         return bool(await self.pool.fetchval("SELECT active FROM war WHERE guild_id = $1", guild_id))
 
-    async def start(self, guild_id: int, names: "list[str]", banner: "bytes | None" = None) -> None:
+    async def start(
+        self,
+        guild_id: int,
+        names: "list[str]",
+        banner: "bytes | None" = None,
+        ends_at: "int | None" = None,
+        channel_id: "int | None" = None,
+    ) -> None:
         """Open a season with the given faction names (2-4), resetting all scores and members.
-        `banner` is an optional image (bytes) shown on /warstatus and the start announcement."""
+        `banner` is an optional image shown on the war; `ends_at` (unix) auto-ends it, announced
+        in `channel_id`."""
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 await conn.execute("DELETE FROM war_factions WHERE guild_id = $1", guild_id)
@@ -31,16 +39,28 @@ class WarService:
                         name,
                     )
                 await conn.execute(
-                    "INSERT INTO war (guild_id, active, started_at, banner) "
-                    "VALUES ($1, 1, CURRENT_TIMESTAMP, $2) "
-                    "ON CONFLICT (guild_id) DO UPDATE SET "
-                    "active = 1, started_at = CURRENT_TIMESTAMP, banner = $2",
+                    "INSERT INTO war (guild_id, active, started_at, banner, ends_at, channel_id) "
+                    "VALUES ($1, 1, CURRENT_TIMESTAMP, $2, $3, $4) "
+                    "ON CONFLICT (guild_id) DO UPDATE SET active = 1, started_at = CURRENT_TIMESTAMP, "
+                    "banner = $2, ends_at = $3, channel_id = $4",
                     guild_id,
                     banner,
+                    ends_at,
+                    channel_id,
                 )
 
     async def banner(self, guild_id: int) -> "bytes | None":
         return await self.pool.fetchval("SELECT banner FROM war WHERE guild_id = $1", guild_id)
+
+    async def ends_at(self, guild_id: int) -> "int | None":
+        return await self.pool.fetchval("SELECT ends_at FROM war WHERE guild_id = $1", guild_id)
+
+    async def expired(self) -> "list[Row]":
+        """Active wars past their end time -- (guild_id, channel_id) for the auto-end ticker."""
+        return await self.pool.fetch(
+            "SELECT guild_id, channel_id FROM war WHERE active = 1 AND ends_at IS NOT NULL "
+            "AND ends_at <= CAST(strftime('%s', 'now') AS INTEGER)"
+        )
 
     async def end(self, guild_id: int) -> None:
         await self.pool.execute("UPDATE war SET active = 0 WHERE guild_id = $1", guild_id)

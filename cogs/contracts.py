@@ -9,7 +9,7 @@ import time
 
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from branding import qp
 from data import contract_game
@@ -118,6 +118,28 @@ class ContractsCog(commands.Cog):
         self._qp_cd: dict[int, float] = {}              # guild -> last QP-reward monotonic
         self._duel_cd: dict[tuple[int, int], float] = {}  # (guild,challenger) -> last duel
         self._duel_pair_cd: dict = {}                     # (guild, frozenset{a,b}) -> last duel
+
+    async def cog_load(self) -> None:
+        self._war_ticker.start()
+
+    async def cog_unload(self) -> None:
+        self._war_ticker.cancel()
+
+    @tasks.loop(minutes=5)
+    async def _war_ticker(self) -> None:
+        """Auto-end wars past their scheduled end time, announcing in their start channel."""
+        for row in await self.bot.wars.expired():
+            text = await self._end_war(row["guild_id"])
+            channel = self.bot.get_channel(row["channel_id"]) if row["channel_id"] else None
+            if text and channel is not None:
+                try:
+                    await channel.send(text)
+                except discord.HTTPException:
+                    pass
+
+    @_war_ticker.before_loop
+    async def _war_ticker_before(self) -> None:
+        await self.bot.wait_until_ready()
 
     def _allowed(self, user_id: int) -> bool:
         return self.bot.config.contract_open or user_id in self.bot.config.contract_whitelist
@@ -581,6 +603,7 @@ class ContractsCog(commands.Cog):
         faction_c="Third faction (optional)",
         faction_d="Fourth faction (optional)",
         banner="Optional banner image shown on the war",
+        days="Days until the war auto-ends (default 7)",
     )
     async def warstart(
         self,
@@ -590,6 +613,7 @@ class ContractsCog(commands.Cog):
         faction_c: str | None = None,
         faction_d: str | None = None,
         banner: discord.Attachment | None = None,
+        days: float | None = None,
     ) -> None:
         if not (is_mod(interaction.user) or await self.bot.is_owner(interaction.user)):
             return await interaction.response.send_message(
@@ -611,11 +635,16 @@ class ContractsCog(commands.Cog):
                     "Banner too large (max 8 MB).", ephemeral=True
                 )
             banner_bytes = await banner.read()
-        await self.bot.wars.start(interaction.guild_id, names, banner_bytes)
+        length = contract_game.WAR_DEFAULT_DAYS if days is None else max(0.01, days)
+        ends_at = int(time.time() + length * 86400)
+        await self.bot.wars.start(
+            interaction.guild_id, names, banner_bytes, ends_at, interaction.channel_id
+        )
         embed = discord.Embed(
             title="The War Begins!",
             description="Factions: " + ", ".join(f"**{n}**" for n in names)
-            + ".\nPlayers, /warjoin a side -- every level you gain scores for your faction.",
+            + ".\nPlayers, /warjoin a side -- every level you gain scores for your faction.\n"
+            + f"Ends <t:{ends_at}:R>.",
             color=discord.Color.orange(),
         )
         file = discord.utils.MISSING
@@ -665,17 +694,27 @@ class ContractsCog(commands.Cog):
             return await interaction.response.send_message("No war is running right now.", ephemeral=True)
         standings = await self.bot.wars.standings(interaction.guild_id)
         leader = standings[0]["score"] if standings else 0
+        avg_size = (sum(f["members"] for f in standings) / len(standings)) if standings else 0
+        te = self.bot.config.summon_ticket_emote
         lines = []
         for i, f in enumerate(standings, 1):
             bar = _war_bar(f["score"], leader)
+            factor = contract_game.underdog_factor(f["members"], avg_size)
+            tk = contract_game.war_ticket_reward(factor)
+            wq = round(contract_game.WAR_REWARD * factor)
+            reward = f"win {tk} ticket{'s' if tk != 1 else ''}{' ' + te if te else ''} + {qp(wq)}"
             lines.append(
-                f"**{i}.** {f['name']}  {bar}  {f['score']:,} pts \N{MIDDLE DOT} {f['members']} members"
+                f"**{i}.** {f['name']}  {bar}  {f['score']:,} pts \N{MIDDLE DOT} "
+                f"{f['members']} members \N{MIDDLE DOT} {reward}"
             )
         mine = await self.bot.wars.member(interaction.guild_id, interaction.user.id)
         if mine is not None:
             lines.append(f"\nYour faction: **{mine['name']}** -- you've scored {mine['score']:,} pts")
         else:
             lines.append("\nYou haven't joined -- use /warjoin.")
+        ends = await self.bot.wars.ends_at(interaction.guild_id)
+        if ends:
+            lines.append(f"Ends <t:{ends}:R>")
         embed = discord.Embed(title="Faction War", description="\n".join(lines))
         banner = await self.bot.wars.banner(interaction.guild_id)
         file = discord.utils.MISSING
@@ -684,39 +723,45 @@ class ContractsCog(commands.Cog):
             file = discord.File(io.BytesIO(banner), filename="banner.png")
         await interaction.response.send_message(embed=embed, file=file, ephemeral=True)
 
-    @app_commands.command(name="warend", description="(Mods) End the faction war and reward the winner.")
+    @app_commands.command(name="warend", description="(Mods) End the faction war now and reward the winner.")
     @app_commands.guild_only()
     async def warend(self, interaction: discord.Interaction) -> None:
         if not (is_mod(interaction.user) or await self.bot.is_owner(interaction.user)):
             return await interaction.response.send_message(
                 "You need moderator permissions to end a war.", ephemeral=True
             )
-        if not await self.bot.wars.active(interaction.guild_id):
+        text = await self._end_war(interaction.guild_id)
+        if text is None:
             return await interaction.response.send_message("No war is running.", ephemeral=True)
-        standings = await self.bot.wars.standings(interaction.guild_id)
-        await self.bot.wars.end(interaction.guild_id)
+        await interaction.response.send_message(text)
+
+    async def _end_war(self, guild_id: int) -> "str | None":
+        """Resolve + close an active war, granting rewards. Returns the announcement text, or
+        None if no war is active. Shared by /warend and the auto-end ticker."""
+        if not await self.bot.wars.active(guild_id):
+            return None
+        standings = await self.bot.wars.standings(guild_id)
+        await self.bot.wars.end(guild_id)
         if not standings or standings[0]["score"] == 0:
-            return await interaction.response.send_message("The war ends with no points scored -- no winner.")
+            return "The war ends with no points scored -- no winner."
         top = standings[0]["score"]
         winners = [f for f in standings if f["score"] == top]
         if len(winners) > 1:
             names = " and ".join(f"**{w['name']}**" for w in winners)
-            return await interaction.response.send_message(
-                f"The war ends in a tie between {names} at {top:,} pts! No payout."
-            )
+            return f"The war ends in a tie between {names} at {top:,} pts! No payout."
         win = winners[0]
-        members = await self.bot.wars.faction_members(interaction.guild_id, win["slot"])
+        members = await self.bot.wars.faction_members(guild_id, win["slot"])
         avg_size = sum(f["members"] for f in standings) / len(standings)
         factor = contract_game.underdog_factor(win["members"], avg_size)
         tickets_each = contract_game.war_ticket_reward(factor)
         qp_each = round(contract_game.WAR_REWARD * factor)
         for uid in members:
-            await self.bot.scoring.add_qp(interaction.guild_id, uid, qp_each)
-            await self.bot.contracts.grant_tickets(interaction.guild_id, uid, tickets_each)
+            await self.bot.scoring.add_qp(guild_id, uid, qp_each)
+            await self.bot.contracts.grant_tickets(guild_id, uid, tickets_each)
         te = self.bot.config.summon_ticket_emote
         ticket_word = f"{tickets_each} Summon Ticket{'s' if tickets_each != 1 else ''}"
         bonus = " (outnumbered-win bonus!)" if factor > 1.0 else ""
-        await interaction.response.send_message(
+        return (
             f"**{win['name']}** wins the war with **{top:,} pts**!{bonus} Each of the "
             f"{len(members)} member(s) earns **{ticket_word}**{' ' + te if te else ''} + {qp(qp_each)}."
         )
