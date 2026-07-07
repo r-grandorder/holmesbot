@@ -27,6 +27,11 @@ class Config:
     # Seconds the post-reveal "next round" vote stays open. 0 disables it entirely
     # (reveals keep the plain Play Again button), so the feature ships dark.
     next_vote_seconds: int
+    # Contracted-servant feature (ships dark). The whitelist is the master switch AND the
+    # tester list: empty = the cog/commands/listener are never registered; non-empty =
+    # only these user IDs may use it. summon_cost is the QP per roll.
+    contract_whitelist: frozenset[int]
+    contract_summon_cost: int
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -46,6 +51,12 @@ class Config:
             qp_emote=os.environ.get("QP_EMOTE", "QP"),
             repost_after=int(os.environ.get("REPOST_AFTER") or "0"),
             next_vote_seconds=int(os.environ.get("NEXT_VOTE_SECONDS") or "0"),
+            contract_whitelist=frozenset(
+                int(x)
+                for x in (os.environ.get("CONTRACT_WHITELIST") or "").replace(",", " ").split()
+                if x.strip().isdigit()
+            ),
+            contract_summon_cost=int(os.environ.get("CONTRACT_SUMMON_COST") or "250"),
         )
 
 

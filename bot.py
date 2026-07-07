@@ -15,6 +15,7 @@ from data.servants import ServantIndex
 from data.shadows import ShadowCatalog
 from db import Database
 from services.aliases import AliasService
+from services.contracts import ContractService
 from services.games import GameService
 from services.guild_config import GuildConfigService
 from services.restrictions import RestrictionService
@@ -63,6 +64,7 @@ class HolmesBot(commands.Bot):
         self.restrictions: RestrictionService | None = None
         self.guild_config: GuildConfigService | None = None
         self.games: GameService | None = None
+        self.contracts: ContractService | None = None
         self._health_runner: web.AppRunner | None = None
 
     async def setup_hook(self) -> None:
@@ -79,6 +81,7 @@ class HolmesBot(commands.Bot):
         self.guild_config = GuildConfigService(self.db.pool)
         self.games = GameService(self.db.pool)
         self.aliases = AliasService(self.db.pool)
+        self.contracts = ContractService(self.db.pool)
         await self.aliases.reload()
         await self.games.sweep_expired()
 
@@ -87,6 +90,13 @@ class HolmesBot(commands.Bot):
         branding.configure(self.config.qp_emote)
         for ext in COGS:
             await self.load_extension(ext)
+        # Contracted-servant feature ships dark: only register it when the whitelist is set.
+        if self.config.contract_whitelist:
+            await self.load_extension("cogs.contracts")
+            log.info(
+                "contracted-servant feature enabled for %d user(s)",
+                len(self.config.contract_whitelist),
+            )
 
         if self.config.guild_ids:
             # Register directly in our guild(s) for instant command updates.
