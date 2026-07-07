@@ -8,7 +8,7 @@ import random
 # --- progression ---
 BASE_CAP = 60          # same for every servant; grails raise it
 GRAIL_STEP = 5         # cap += 5 per grail applied, uncapped
-XP_PER_MSG = 15        # xp granted per (cooldown-gated) chat message
+XP_PER_MSG = 25        # xp granted per (cooldown-gated) chat message
 XP_COOLDOWN = 60.0     # seconds between xp-earning messages, per user (enforced in the cog)
 LEVELUP_MILESTONE_EVERY = 10   # "milestones" announce mode pings only on multiples of this (and at cap)
 
@@ -152,7 +152,9 @@ def roll_servant(index, *, force_5star: bool = False, wish: "int | None" = None,
 
 # --- duels ---
 DUEL_REWARD = 30          # QP to the winner
-DUEL_DAILY_CAP = 5        # reward-earning duels per player per day (extra duels are glory only)
+DUEL_DAILY_CAP = 5        # reward-earning duels per player per day, ALL opponents combined
+DUEL_COOLDOWN = 20        # seconds between a challenger's duels (anti-flood)
+DUEL_PAIR_COOLDOWN = 180  # seconds before the same two players can duel again (anti-targeting)
 CLASS_ADVANTAGE = 1.5     # effective-power multiplier when your class beats the opponent's
 
 # The two clean FGO triangles (attacker class -> the class it beats). Extra classes
