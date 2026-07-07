@@ -10,6 +10,7 @@ BASE_CAP = 60          # same for every servant; grails raise it
 GRAIL_STEP = 5         # cap += 5 per grail applied, uncapped
 XP_PER_MSG = 15        # xp granted per (cooldown-gated) chat message
 XP_COOLDOWN = 60.0     # seconds between xp-earning messages, per user (enforced in the cog)
+LEVELUP_MILESTONE_EVERY = 10   # "milestones" announce mode pings only on multiples of this (and at cap)
 
 # --- Power (single stat) = BASE_POWER[rarity] * (1 + level*POWER_PER_LEVEL) ---
 BASE_POWER = {0: 500, 1: 800, 2: 1200, 3: 2000, 4: 3500, 5: 5000}

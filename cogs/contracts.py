@@ -314,6 +314,14 @@ class ContractsCog(commands.Cog):
         servant_id, old_level, new_level, cap = result
         if new_level <= old_level:
             return
+        mode = self.bot.config.levelup_announce
+        if mode == "off":
+            return
+        every = contract_game.LEVELUP_MILESTONE_EVERY
+        hit_cap = new_level >= cap and old_level < cap
+        crossed_milestone = new_level // every > old_level // every
+        if mode == "milestones" and not (hit_cap or crossed_milestone):
+            return  # regular level; watch progress on /profile
         servant = self.bot.servants.get(servant_id)
         name = servant.name if servant else "Your servant"
         tail = "  (at cap -- /grail to raise it)" if new_level >= cap else ""

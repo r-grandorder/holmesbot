@@ -33,6 +33,8 @@ class Config:
     # only these user IDs may use it. summon_cost is the QP per roll.
     contract_whitelist: frozenset[int]
     contract_summon_cost: int
+    # How contract level-up pings behave: "off" | "milestones" (every Nth level + at cap) | "all".
+    levelup_announce: str
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -40,6 +42,9 @@ class Config:
         guild_ids = tuple(int(g.strip()) for g in guild_ids_raw.split(",") if g.strip())
         if not guild_ids:
             guild_ids = DEFAULT_GUILD_IDS
+        levelup_announce = (os.environ.get("LEVELUP_ANNOUNCE") or "milestones").strip().lower()
+        if levelup_announce not in ("off", "milestones", "all"):
+            levelup_announce = "milestones"
         return cls(
             discord_token=_require("DISCORD_BOT_TOKEN"),
             application_id=int(_require("DISCORD_APPLICATION_ID")),
@@ -59,6 +64,7 @@ class Config:
                 if x.strip().isdigit()
             ),
             contract_summon_cost=int(os.environ.get("CONTRACT_SUMMON_COST") or "250"),
+            levelup_announce=levelup_announce,
         )
 
 
