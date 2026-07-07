@@ -329,8 +329,9 @@ class ContractsCog(commands.Cog):
         ge = self.bot.config.grail_emote
         embed = discord.Embed(title="Your Items", color=discord.Color.blurple())
         embed.add_field(name="QP", value=qp(bal))
+        te = self.bot.config.summon_ticket_emote
         embed.add_field(name="Holy Grails", value=f"{grails:,} {ge}".strip() if ge else str(grails))
-        embed.add_field(name="Summon Tickets", value=str(tickets))
+        embed.add_field(name="Summon Tickets", value=f"{tickets:,} {te}".strip() if te else str(tickets))
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.command(name="grail", description="Spend a grail to raise a servant's cap (yours or another player's).")
@@ -670,9 +671,10 @@ class ContractsCog(commands.Cog):
         for uid in members:
             await self.bot.scoring.add_qp(interaction.guild_id, uid, contract_game.WAR_REWARD)
             await self.bot.contracts.grant_tickets(interaction.guild_id, uid, 1)
+        te = self.bot.config.summon_ticket_emote
         await interaction.response.send_message(
             f"**{win['name']}** wins the war with **{top:,} pts**! Each of the {len(members)} "
-            f"member(s) earns a **Summon Ticket** + {qp(contract_game.WAR_REWARD)}."
+            f"member(s) earns a **Summon Ticket**{' ' + te if te else ''} + {qp(contract_game.WAR_REWARD)}."
         )
 
     @app_commands.command(name="setservantlevel", description="(Mods) Set a member's contracted servant level.")

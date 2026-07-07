@@ -24,6 +24,7 @@ class Config:
     assets_base_url: str | None
     qp_emote: str
     grail_emote: str
+    summon_ticket_emote: str
     repost_after: int
     # Seconds the post-reveal "next round" vote stays open. 0 disables it entirely
     # (reveals keep the plain Play Again button), so the feature ships dark.
@@ -71,6 +72,7 @@ class Config:
             assets_base_url=(os.environ.get("ASSETS_BASE_URL") or "").rstrip("/") or None,
             qp_emote=os.environ.get("QP_EMOTE", "QP"),
             grail_emote=os.environ.get("GRAIL_EMOTE", ""),
+            summon_ticket_emote=os.environ.get("SUMMON_TICKET_EMOTE", ""),
             repost_after=int(os.environ.get("REPOST_AFTER") or "0"),
             next_vote_seconds=int(os.environ.get("NEXT_VOTE_SECONDS") or "0"),
             contract_open=contract_open,
