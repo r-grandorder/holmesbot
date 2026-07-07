@@ -131,7 +131,7 @@ class ContractsCog(commands.Cog):
         await interaction.response.send_message(
             embed=self._servant_embed(
                 servant, 1, title=self._summon_title(servant, is_new),
-                qp_line=f"{qp(cost)} \N{RIGHTWARDS ARROW} {qp(new_bal)}", pity=pity_after,
+                qp_line=f"{qp(new_bal + cost)} \N{RIGHTWARDS ARROW} {qp(new_bal)}", pity=pity_after,
             ),
             view=view,
             ephemeral=True,
@@ -443,7 +443,7 @@ class SummonView(discord.ui.View):
         await interaction.response.edit_message(
             embed=self.cog._servant_embed(
                 self.servant, 1, title=self.cog._summon_title(self.servant, is_new),
-                qp_line=f"{qp(cost)} \N{RIGHTWARDS ARROW} {qp(new_bal)}", pity=pity_after,
+                qp_line=f"{qp(new_bal + cost)} \N{RIGHTWARDS ARROW} {qp(new_bal)}", pity=pity_after,
             ),
             view=self,
         )
