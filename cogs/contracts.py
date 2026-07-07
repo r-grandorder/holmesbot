@@ -25,6 +25,9 @@ _RARITY_COLOR = {
     0: discord.Color.dark_grey(),
 }
 _DENY = "The servant contract feature isn't open to you yet."
+# The summon buttons' idle timeout. It RESETS on each click, so they stay live while you
+# keep deciding, then grey out. Capped in practice by Discord's ~15min ephemeral token.
+SUMMON_VIEW_TIMEOUT = 780
 
 
 def _stars(rarity: int) -> str:
@@ -44,7 +47,11 @@ class ContractsCog(commands.Cog):
     def _allowed(self, user_id: int) -> bool:
         return user_id in self.bot.config.contract_whitelist
 
-    def _servant_embed(self, servant, level: int, *, title=None, note=None) -> discord.Embed:
+    @staticmethod
+    def _summon_title(servant, is_new: bool) -> str:
+        return f"Summoned: {servant.name}" + (" (NEW!)" if is_new else "")
+
+    def _servant_embed(self, servant, level: int, *, title=None, note=None, qp_line=None) -> discord.Embed:
         embed = discord.Embed(
             title=title or servant.name,
             description=note,
@@ -61,6 +68,8 @@ class ContractsCog(commands.Cog):
         line = getattr(servant, "summon_line", None)  # optional flavor (sync data addition)
         if line:
             embed.add_field(name="​", value=f"*{line}*", inline=False)
+        if qp_line:
+            embed.add_field(name="QP", value=qp_line, inline=False)
         return embed
 
     # ---- commands ----
@@ -75,11 +84,19 @@ class ContractsCog(commands.Cog):
             return await interaction.response.send_message(
                 f"You need {qp(cost)} to summon; you have {qp(bal)}.", ephemeral=True
             )
-        await self.bot.scoring.sub_qp(interaction.guild_id, interaction.user.id, cost)
+        new_bal = await self.bot.scoring.sub_qp(interaction.guild_id, interaction.user.id, cost)
         servant = contract_game.roll_servant(self.bot.servants)
+        is_new = not await self.bot.contracts.has_contract(
+            interaction.guild_id, interaction.user.id, servant.id
+        )
+        view = SummonView(self, interaction.user.id, servant)
+        view.interaction = interaction
         await interaction.response.send_message(
-            embed=self._servant_embed(servant, 1, title=f"Summoned: {servant.name}"),
-            view=SummonView(self, interaction.user.id, servant),
+            embed=self._servant_embed(
+                servant, 1, title=self._summon_title(servant, is_new),
+                qp_line=f"Spent {qp(cost)} · {qp(new_bal)} left",
+            ),
+            view=view,
             ephemeral=True,
         )
 
@@ -219,10 +236,20 @@ class SummonView(discord.ui.View):
     summoner sees this (the message is ephemeral)."""
 
     def __init__(self, cog: ContractsCog, user_id: int, servant) -> None:
-        super().__init__(timeout=120)
+        super().__init__(timeout=SUMMON_VIEW_TIMEOUT)
         self.cog = cog
         self.user_id = user_id
         self.servant = servant
+        self.interaction: discord.Interaction | None = None  # for greying out on timeout
+
+    async def on_timeout(self) -> None:
+        for child in self.children:
+            child.disabled = True  # type: ignore[attr-defined]
+        if self.interaction is not None:
+            try:
+                await self.interaction.edit_original_response(view=self)
+            except discord.HTTPException:
+                pass
 
     @discord.ui.button(label="Contract", style=discord.ButtonStyle.success)
     async def contract(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
@@ -255,10 +282,17 @@ class SummonView(discord.ui.View):
             return await interaction.response.send_message(
                 f"Not enough QP to roll again (need {qp(cost)}).", ephemeral=True
             )
-        await self.cog.bot.scoring.sub_qp(interaction.guild_id, self.user_id, cost)
+        new_bal = await self.cog.bot.scoring.sub_qp(interaction.guild_id, self.user_id, cost)
         self.servant = contract_game.roll_servant(self.cog.bot.servants)
+        is_new = not await self.cog.bot.contracts.has_contract(
+            interaction.guild_id, self.user_id, self.servant.id
+        )
+        self.interaction = interaction  # freshest token, for greying out on timeout
         await interaction.response.edit_message(
-            embed=self.cog._servant_embed(self.servant, 1, title=f"Summoned: {self.servant.name}"),
+            embed=self.cog._servant_embed(
+                self.servant, 1, title=self.cog._summon_title(self.servant, is_new),
+                qp_line=f"Spent {qp(cost)} · {qp(new_bal)} left",
+            ),
             view=self,
         )
 

@@ -22,6 +22,16 @@ class ContractService:
             user_id,
         )
 
+    async def has_contract(self, guild_id: int, user_id: int, servant_id: int) -> bool:
+        """Whether the user has ever contracted this servant (a progress row exists)."""
+        val = await self.pool.fetchval(
+            "SELECT 1 FROM servant_contracts WHERE guild_id = $1 AND user_id = $2 AND servant_id = $3",
+            guild_id,
+            user_id,
+            servant_id,
+        )
+        return val is not None
+
     async def contract(self, guild_id: int, user_id: int, servant_id: int) -> None:
         """Make `servant_id` the user's active contract, atomically: deactivate any current
         contract, then activate this one -- creating it at level 1 if new, else resuming its
