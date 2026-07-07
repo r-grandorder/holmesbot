@@ -150,6 +150,26 @@ class Admin(commands.Cog):
             f"Subtracted {qp(n)}. {member.display_name} now has {qp(new)}.", ephemeral=True
         )
 
+    @app_commands.command(name="stimmy", description="Post a QP stimulus that members can each claim once.")
+    @app_commands.guild_only()
+    @app_commands.describe(
+        amount="QP each person receives (e.g. 500, 1k)",
+        duration="Seconds the stimulus stays open (default 300, max 86400)",
+    )
+    async def stimmy(
+        self, interaction: discord.Interaction, amount: str, duration: int = 300
+    ) -> None:
+        n = parse_qp(amount)
+        if n is None or n < 1:
+            return await interaction.response.send_message("Invalid amount.", ephemeral=True)
+        if not 1 <= duration <= 86400:
+            return await interaction.response.send_message(
+                "Duration must be between 1 and 86400 seconds (24 hours).", ephemeral=True
+            )
+        view = StimulusView(self.bot, n, duration)
+        await interaction.response.send_message(embed=view.render(), view=view)
+        view.message = await interaction.original_response()
+
     @app_commands.command(name="qp_reset", description="Wipe all QP and scores in this server.")
     @app_commands.guild_only()
     async def qp_reset(self, interaction: discord.Interaction) -> None:
@@ -299,6 +319,50 @@ class Admin(commands.Cog):
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[int]]:
         return self._servant_choices(current)
+
+
+class StimulusView(discord.ui.View):
+    """A QP stimulus (created by /stimmy): any member claims a flat amount once, then it
+    self-deletes when the window closes. Claimers are tracked in memory, so a mid-stimulus
+    restart just ends it early (same trade-off as the grail-drop views)."""
+
+    def __init__(self, bot, amount: int, duration: int) -> None:
+        super().__init__(timeout=float(duration))
+        self.bot = bot
+        self.amount = amount
+        self.duration = duration
+        self.claimers: set[int] = set()
+        self.message: discord.Message | None = None
+
+    def render(self) -> discord.Embed:
+        embed = discord.Embed(
+            title="Stimulus Available",
+            description=(
+                f"Click **Claim QP** to receive {qp(self.amount)}.\n"
+                f"One claim per person. Open for {self.duration:,} seconds."
+            ),
+            color=discord.Color.green(),
+        )
+        return embed
+
+    async def on_timeout(self) -> None:
+        if self.message is not None:
+            try:
+                await self.message.delete()
+            except discord.HTTPException:
+                pass
+
+    @discord.ui.button(label="Claim QP", style=discord.ButtonStyle.success)
+    async def claim(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if interaction.user.id in self.claimers:
+            return await interaction.response.send_message(
+                "You already claimed this stimulus.", ephemeral=True
+            )
+        self.claimers.add(interaction.user.id)  # before any await: callbacks run serially
+        new = await self.bot.scoring.add_qp(interaction.guild_id, interaction.user.id, self.amount)
+        await interaction.response.send_message(
+            f"You claimed {qp(self.amount)}. Balance: {qp(new)}.", ephemeral=True
+        )
 
 
 async def setup(bot) -> None:
