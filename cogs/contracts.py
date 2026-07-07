@@ -659,7 +659,7 @@ class ContractsCog(commands.Cog):
         """Bunyan-style QP reward: auto-award `user` a random (exponential) QP amount with a
         random wealth-servant host, in a self-deleting notification."""
         host = random.choice(list(STIMMY_HOSTS.values()))
-        amount = contract_game.qp_reward_amount()
+        amount = contract_game.qp_reward_amount(host["qp"])
         new_bal = await self.bot.scoring.add_qp(channel.guild.id, user.id, amount)
         embed = discord.Embed(
             title="Random Encounter!",
