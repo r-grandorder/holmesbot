@@ -58,6 +58,22 @@ def _stars(rarity: int) -> str:
     return f"{rarity}\N{BLACK STAR}"
 
 
+def _flavor(line: str | None, limit: int = 140) -> str | None:
+    """A summon voice line trimmed for a short flavor blurb: whitespace collapsed, then cut at
+    the last sentence break within `limit` (a clean full sentence), falling back to a word
+    boundary + ellipsis. Some firstGet lines are paragraphs; the raw capture hard-cuts mid-word."""
+    if not line:
+        return line
+    line = " ".join(line.split())
+    if len(line) <= limit:
+        return line
+    head = line[:limit]
+    cut = max(head.rfind(". "), head.rfind("! "), head.rfind("? "))
+    if cut >= 40:  # end on a full sentence when there's a clean one in range
+        return head[: cut + 1]
+    return head.rsplit(" ", 1)[0].rstrip(" .,;:!?-") + "\N{HORIZONTAL ELLIPSIS}"
+
+
 def _progress_bar(have: int, need: int, length: int = 10) -> str:
     """A text progress bar in Bunyan's autobattle style, e.g. [####......] 40%."""
     pct = 0 if need <= 0 else max(0, min(100, round(100 * have / need)))
@@ -107,7 +123,7 @@ class ContractsCog(commands.Cog):
         embed.add_field(name="Class", value=class_display(servant.class_name) or "?")
         embed.add_field(name="Rarity", value=_stars(servant.rarity))
         embed.add_field(name="Power", value=f"{contract_game.power(servant, level):,}")
-        line = getattr(servant, "summon_line", None) if show_line else None  # summon-only flavor
+        line = _flavor(getattr(servant, "summon_line", None)) if show_line else None  # summon-only
         if line:
             embed.add_field(name="​", value=f"*{line}*", inline=False)
         if qp_line:
@@ -141,13 +157,11 @@ class ContractsCog(commands.Cog):
         return ch if isinstance(ch, (discord.TextChannel, discord.Thread)) else None
 
     async def _broadcast(
-        self, interaction: discord.Interaction, servant, *, title: str, action: str,
-        allow=None, big: bool = False,
+        self, interaction: discord.Interaction, servant, *, title: str, action: str, allow=None,
     ) -> None:
-        """Post a public celebration (a contract or a shared summon) to the announce channel,
-        falling back to the channel the summon happened in. Respects the art restriction gate.
-        The compact contract announcement (big=False) shows a face thumbnail + the servant's
-        summon voice line; Share (big=True) adds the full ascension figure instead."""
+        """Post a public contract announcement to the announce channel, falling back to the
+        channel the summon happened in: a compact face thumbnail + the servant's (trimmed)
+        summon voice line, respecting the art restriction gate."""
         channel = await self._announce_channel(interaction.guild_id) or interaction.channel
         if channel is None:
             return
@@ -155,8 +169,8 @@ class ContractsCog(commands.Cog):
             f"{interaction.user.mention} {action} **{servant.name}** "
             f"({_stars(servant.rarity)})!"
         )
-        line = getattr(servant, "summon_line", None)
-        if line and not big:  # a voice line stands in for the figure on the compact announcement
+        line = _flavor(getattr(servant, "summon_line", None))
+        if line:
             desc += f'\n\n*"{line}"*'
         embed = discord.Embed(
             title=title,
@@ -164,11 +178,8 @@ class ContractsCog(commands.Cog):
             color=_RARITY_COLOR.get(servant.rarity, discord.Color.blurple()),
         )
         art = contract_game.display_art(servant, allow)
-        if art:  # gate both on safe art (fully restricted -> show neither)
-            if servant.face:
-                embed.set_thumbnail(url=servant.face)
-            if big:
-                embed.set_image(url=art)
+        if art and servant.face:  # gate the face on safe art (fully restricted -> no portrait)
+            embed.set_thumbnail(url=servant.face)
         try:
             await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
         except discord.HTTPException:
@@ -731,14 +742,6 @@ class SummonView(discord.ui.View):
             ),
             view=self,
         )
-
-    @discord.ui.button(label="Share", style=discord.ButtonStyle.secondary)
-    async def share(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
-        allow = await self.cog.bot.restrictions.build_allow()
-        await self.cog._broadcast(
-            interaction, self.servant, title="Summon", action="summoned", allow=allow, big=True
-        )
-        await interaction.response.send_message("Shared to the channel.", ephemeral=True)
 
     @discord.ui.button(label="Dismiss", style=discord.ButtonStyle.danger)
     async def dismiss(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
