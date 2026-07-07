@@ -32,6 +32,24 @@ class ContractService:
         )
         return val is not None
 
+    async def pity_count(self, guild_id: int, user_id: int) -> int:
+        """Rolls since the user's last 5-star (drives the pity guarantee)."""
+        val = await self.pool.fetchval(
+            "SELECT pity_rolls FROM grail_balance WHERE guild_id = $1 AND user_id = $2",
+            guild_id,
+            user_id,
+        )
+        return val or 0
+
+    async def set_pity(self, guild_id: int, user_id: int, count: int) -> None:
+        await self.pool.execute(
+            "INSERT INTO grail_balance (guild_id, user_id, pity_rolls) VALUES ($1, $2, $3) "
+            "ON CONFLICT (guild_id, user_id) DO UPDATE SET pity_rolls = $3",
+            guild_id,
+            user_id,
+            count,
+        )
+
     async def contract(self, guild_id: int, user_id: int, servant_id: int) -> None:
         """Make `servant_id` the user's active contract, atomically: deactivate any current
         contract, then activate this one -- creating it at level 1 if new, else resuming its

@@ -51,7 +51,7 @@ class ContractsCog(commands.Cog):
     def _summon_title(servant, is_new: bool) -> str:
         return f"Summoned: {servant.name}" + (" (NEW!)" if is_new else "")
 
-    def _servant_embed(self, servant, level: int, *, title=None, note=None, qp_line=None) -> discord.Embed:
+    def _servant_embed(self, servant, level: int, *, title=None, note=None, qp_line=None, pity=None) -> discord.Embed:
         embed = discord.Embed(
             title=title or servant.name,
             description=note,
@@ -70,7 +70,21 @@ class ContractsCog(commands.Cog):
             embed.add_field(name="​", value=f"*{line}*", inline=False)
         if qp_line:
             embed.add_field(name="QP", value=qp_line, inline=False)
+        if pity is not None:
+            embed.set_footer(
+                text=f"Pity {pity}/{contract_game.PITY_5STAR} to a guaranteed 5\N{BLACK STAR}"
+            )
         return embed
+
+    async def _do_roll(self, guild_id: int, user_id: int):
+        """Roll a servant with pity applied; returns (servant, pity_after) and persists the
+        updated counter. Forces a 5-star when the streak would hit PITY_5STAR."""
+        pity = await self.bot.contracts.pity_count(guild_id, user_id)
+        force = pity + 1 >= contract_game.PITY_5STAR
+        servant = contract_game.roll_servant(self.bot.servants, force_5star=force)
+        pity_after = 0 if contract_game.resets_pity(servant) else pity + 1
+        await self.bot.contracts.set_pity(guild_id, user_id, pity_after)
+        return servant, pity_after
 
     # ---- commands ----
     @app_commands.command(name="summon", description="Spend QP to summon a servant to contract.")
@@ -85,7 +99,7 @@ class ContractsCog(commands.Cog):
                 f"You need {qp(cost)} to summon; you have {qp(bal)}.", ephemeral=True
             )
         new_bal = await self.bot.scoring.sub_qp(interaction.guild_id, interaction.user.id, cost)
-        servant = contract_game.roll_servant(self.bot.servants)
+        servant, pity_after = await self._do_roll(interaction.guild_id, interaction.user.id)
         is_new = not await self.bot.contracts.has_contract(
             interaction.guild_id, interaction.user.id, servant.id
         )
@@ -94,7 +108,7 @@ class ContractsCog(commands.Cog):
         await interaction.response.send_message(
             embed=self._servant_embed(
                 servant, 1, title=self._summon_title(servant, is_new),
-                qp_line=f"Spent {qp(cost)} · {qp(new_bal)} left",
+                qp_line=f"Spent {qp(cost)} · {qp(new_bal)} left", pity=pity_after,
             ),
             view=view,
             ephemeral=True,
@@ -283,7 +297,7 @@ class SummonView(discord.ui.View):
                 f"Not enough QP to roll again (need {qp(cost)}).", ephemeral=True
             )
         new_bal = await self.cog.bot.scoring.sub_qp(interaction.guild_id, self.user_id, cost)
-        self.servant = contract_game.roll_servant(self.cog.bot.servants)
+        self.servant, pity_after = await self.cog._do_roll(interaction.guild_id, self.user_id)
         is_new = not await self.cog.bot.contracts.has_contract(
             interaction.guild_id, self.user_id, self.servant.id
         )
@@ -291,7 +305,7 @@ class SummonView(discord.ui.View):
         await interaction.response.edit_message(
             embed=self.cog._servant_embed(
                 self.servant, 1, title=self.cog._summon_title(self.servant, is_new),
-                qp_line=f"Spent {qp(cost)} · {qp(new_bal)} left",
+                qp_line=f"Spent {qp(cost)} · {qp(new_bal)} left", pity=pity_after,
             ),
             view=self,
         )

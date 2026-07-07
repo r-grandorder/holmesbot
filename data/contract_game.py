@@ -26,6 +26,12 @@ GRAIL_DROP_CHANCE = 0.05       # chance per qualifying message once off cooldown
 GRAIL_MIN, GRAIL_MAX = 1, 5
 CLAIM_TTL = 60.0               # seconds a drop stays claimable before self-deleting
 
+# --- pity: guarantee a (random) 5-star by this many rolls without one ---
+# 100 = ~3x more generous than FGO's spark distance (FGO: 900 SQ / 30 SQ per multi = 300
+# rolls). Natural pulls stay the majority, but pity is actually reachable here (~25k QP), so
+# it works as a real safety net. Ours grants a RANDOM 5-star, not a pick like FGO's spark.
+PITY_5STAR = 100
+
 
 def level_cap(grails_used: int) -> int:
     return BASE_CAP + grails_used * GRAIL_STEP
@@ -61,14 +67,22 @@ def display_art(servant) -> "str | None":
     return art[keys[-1]]
 
 
-def roll_servant(index):
-    """Weighted FGO-like roll from the NA + NPC pool (exclude JP-only). Returns a Servant."""
+def resets_pity(servant) -> bool:
+    """A 5-star (NPC bosses are also rarity 5) ends a pity streak."""
+    return servant.rarity == 5
+
+
+def roll_servant(index, *, force_5star: bool = False):
+    """Weighted FGO-like roll from the NA + NPC pool (exclude JP-only). With force_5star,
+    return a random 5-star (the pity guarantee). Returns a Servant."""
     pool = [s for s in index._by_id.values() if not s.jp and s.art]
     npcs = [s for s in pool if s.npc]
     by_rarity: dict[int, list] = {}
     for s in pool:
         if not s.npc:
             by_rarity.setdefault(s.rarity, []).append(s)
+    if force_5star and by_rarity.get(5):
+        return random.choice(by_rarity[5])
     tiers: list = []
     weights: list[float] = []
     if npcs:
