@@ -105,6 +105,18 @@ def _active_skills(record: dict) -> list[dict]:
     return [{"num": n, "name": best[n]["name"], "icon": best[n]["icon"]} for n in sorted(best)]
 
 
+def _summon_line(record: dict) -> "str | None":
+    """The servant's summon line: the first non-empty subtitle in the 'firstGet' voice
+    group (the '...are you my Master?' line). None if unavailable."""
+    for group in (record.get("profile") or {}).get("voices", []):
+        if group.get("type") == "firstGet":
+            for line in group.get("voiceLines", []):
+                sub = (line.get("subtitle") or "").strip()
+                if sub:
+                    return sub[:300]
+    return None
+
+
 def main_na() -> int:
     print(f"Fetching {EXPORT_URL} ...", flush=True)
     with urllib.request.urlopen(EXPORT_URL) as resp:
@@ -132,6 +144,7 @@ def main_na() -> int:
                 "face": face,
                 "cv": ((s.get("profile") or {}).get("cv") or "").strip() or None,
                 "skills": _active_skills(s),
+                "summon_line": _summon_line(s),
             }
         )
 
@@ -191,6 +204,7 @@ def main_jp() -> int:
                     nicknames.get(str(s.get("collectionNo")), []), s["name"]
                 ),
                 "skills": _active_skills(nice),
+                "summon_line": _summon_line(nice),
             }
         )
         if i % 10 == 0:

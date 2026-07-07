@@ -33,6 +33,7 @@ class Servant:
     aliases: tuple[str, ...] = ()  # extra accepted answers (NPCs + JP), normalized at match
     traits: frozenset[str] = frozenset()  # Atlas trait names; category filter
     skills: tuple[tuple[int, str, str], ...] = ()  # (slot num, name, icon URL); guess_skill
+    summon_line: str | None = None  # Atlas 'firstGet' voice line text; shown on /summon
 
     def assets(self, kind: str) -> dict[str, str]:
         return self.figure if kind == "figure" else self.art
@@ -145,6 +146,7 @@ class ServantIndex:
                 for sk in item.get("skills", ())
                 if sk.get("num") and sk.get("name") and sk.get("icon")
             ),
+            summon_line=item.get("summon_line"),
         )
 
     def __len__(self) -> int:
