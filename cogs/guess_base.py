@@ -42,8 +42,8 @@ FORFEIT_VOTES = 3  # distinct humans whose reaction ends the round
 HINT_REWARD = (1.0, 0.7, 0.5, 0.3)  # win multiplier by hints used (0..3): hints cost QP
 # Extra QP when the winner nails it on their FIRST guess -- i.e. made no earlier
 # wrong-but-real guess of their own this round. A fraction of the (post-hint) award, so
-# it scales with difficulty and rewards a clean no-hint solve the most.
-FIRST_GUESS_BONUS = 0.5
+# it scales with difficulty and rewards a clean no-hint solve the most. 1.0 = a 2x win.
+FIRST_GUESS_BONUS = 1.0
 
 # Post-reveal "next round" vote (config.next_vote_seconds > 0). Type-only for now.
 NEXT_VOTE_TYPES = [
@@ -547,15 +547,16 @@ class ChatRound:
         praise = host.line(self.host_id, "correct", player=message.author.display_name)
         embed, file = await self._build_reveal_embed(f"*{praise}*")
         embed.color = discord.Color.green()
-        reward = f"+{qp(award)} (QP {qp(total)})"
-        extras = []
-        if bonus:
-            extras.append(f"first guess +{qp(bonus)}")
+        reward = f"+{qp(award)}  ·  balance {qp(total)}"
         if self.hints_given:
-            extras.append(f"{self.hints_given} hint{'s' if self.hints_given > 1 else ''} used")
-        if extras:
-            reward += "  ·  " + "  ·  ".join(extras)
+            reward += f"  ·  {self.hints_given} hint{'s' if self.hints_given > 1 else ''} used"
         embed.add_field(name="Reward", value=reward, inline=False)
+        if bonus:
+            embed.add_field(
+                name="First-guess bonus",
+                value=f"+{qp(bonus)}  ·  {round(FIRST_GUESS_BONUS * 100)}% for a clean first guess",
+                inline=False,
+            )
         await self._post_reveal(message.channel, embed, file, ping=message.author.mention, engaged=True)
         # Slim the now-buried prompt so it isn't left showing "type the name".
         await self._slim_prompt(f"Solved by {message.author.display_name}.")

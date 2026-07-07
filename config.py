@@ -73,7 +73,7 @@ class Config:
             next_vote_seconds=int(os.environ.get("NEXT_VOTE_SECONDS") or "0"),
             contract_open=contract_open,
             contract_whitelist=contract_whitelist,
-            contract_summon_cost=int(os.environ.get("CONTRACT_SUMMON_COST") or "250"),
+            contract_summon_cost=int(os.environ.get("CONTRACT_SUMMON_COST") or "100"),
             levelup_announce=levelup_announce,
         )
 
