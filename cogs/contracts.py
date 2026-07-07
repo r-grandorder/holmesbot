@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import datetime
+import io
 import logging
 import pathlib
 import random
@@ -11,6 +13,7 @@ from discord.ext import commands
 
 from branding import qp
 from data import contract_game
+from data import images
 from data.grail_hosts import GRAIL_HOSTS
 from data.servants import class_display
 from permissions import is_mod
@@ -60,6 +63,13 @@ def _progress_bar(have: int, need: int, length: int = 10) -> str:
     pct = 0 if need <= 0 else max(0, min(100, round(100 * have / need)))
     filled = round(length * pct / 100)
     return f"[{'█' * filled}{'░' * (length - filled)}] {pct}%"
+
+
+def _daily_reset_ts() -> int:
+    """Unix time of the next UTC midnight -- when SQLite date('now') rolls over (the duel cap)."""
+    now = datetime.datetime.now(datetime.timezone.utc)
+    nxt = (now + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    return int(nxt.timestamp())
 
 
 class ContractsCog(commands.Cog):
@@ -334,7 +344,17 @@ class ContractsCog(commands.Cog):
                 if (s := self.bot.servants.get(r["servant_id"])) and s.class_name.lower() == klass.value
             ]
             suffix, empty = f" - {klass.name}", f"No {klass.name} contracts yet."
-        rows = rows[:10]
+        # One row per user -- their highest-level match (board() is already level-sorted).
+        seen: set[int] = set()
+        top = []
+        for r in rows:
+            if r["user_id"] in seen:
+                continue
+            seen.add(r["user_id"])
+            top.append(r)
+            if len(top) >= 10:
+                break
+        rows = top
         if not rows:
             return await interaction.response.send_message(empty, ephemeral=True)
         lines = []
@@ -395,13 +415,16 @@ class ContractsCog(commands.Cog):
             )
         self._duel_cd[(gid, interaction.user.id)] = now
         self._duel_pair_cd[pair] = now
-        embed = await self._duel_result(gid, interaction.user, opponent)
-        if embed is None:
+        result = await self._duel_result(gid, interaction.user, opponent)
+        if result is None:
             return await interaction.response.send_message(
                 "A servant is no longer available.", ephemeral=True
             )
+        embed, file = result
         await interaction.response.send_message(
-            embed=embed, allowed_mentions=discord.AllowedMentions.none()
+            embed=embed,
+            file=file if file is not None else discord.utils.MISSING,
+            allowed_mentions=discord.AllowedMentions.none(),
         )
 
     async def _duel_result(self, gid: int, challenger, opponent):
@@ -420,13 +443,16 @@ class ContractsCog(commands.Cog):
             winner, loser, ws, ls, wp, lp = challenger, opponent, sa, sb, pa, pb
         else:
             winner, loser, ws, ls, wp, lp = opponent, challenger, sb, sa, pb, pa
+        cap = contract_game.DUEL_DAILY_CAP
         count = await self.bot.contracts.duel_reward_count(gid, winner.id)
-        if count < contract_game.DUEL_DAILY_CAP:
+        if count < cap:
             await self.bot.scoring.add_qp(gid, winner.id, contract_game.DUEL_REWARD)
             await self.bot.contracts.bump_duel_reward(gid, winner.id)
-            reward_line = f"\n{winner.display_name} earns {qp(contract_game.DUEL_REWARD)}."
+            wins_today = count + 1
+            reward_line = f"\n\n{winner.display_name} earns {qp(contract_game.DUEL_REWARD)}."
         else:
-            reward_line = f"\n{winner.display_name} has hit today's duel reward cap (no QP)."
+            wins_today = count
+            reward_line = f"\n\n{winner.display_name} won, but has no reward wins left today."
         desc = (
             f"{winner.mention}'s **{ws.name}** ({class_display(ws.class_name)}, Power {wp:,}) "
             f"defeated {loser.mention}'s **{ls.name}** "
@@ -435,7 +461,29 @@ class ContractsCog(commands.Cog):
         if contract_game.class_multiplier(ws.class_name, ls.class_name) > 1:
             desc += f"\n{class_display(ws.class_name)} held the class advantage."
         desc += reward_line
-        return discord.Embed(title="Duel Result", description=desc, color=discord.Color.green())
+        embed = discord.Embed(title="Duel Result", description=desc, color=discord.Color.green())
+        cap_note = f"{winner.display_name}: {wins_today}/{cap} paid wins today"
+        if wins_today >= cap:
+            cap_note += " (cap reached)"
+        cap_note += f" \N{MIDDLE DOT} resets <t:{_daily_reset_ts()}:R>"
+        embed.add_field(name="Daily reward cap", value=cap_note, inline=False)
+        file = await self._duel_banner(ws, ls)
+        if file is not None:
+            embed.set_image(url="attachment://duel.png")
+        return embed, file
+
+    async def _duel_banner(self, winner_servant, loser_servant):
+        """The winner-vs-loser face banner (winner on the left), or None on any hiccup."""
+        session = self.bot.http_session
+        if not (session and winner_servant.face and loser_servant.face):
+            return None
+        try:
+            wb = await images.fetch_bytes(session, winner_servant.face)
+            lb = await images.fetch_bytes(session, loser_servant.face)
+            png = images.duel_banner(wb, lb)
+        except Exception:  # cosmetic banner: any fetch/decode failure just drops it
+            return None
+        return discord.File(io.BytesIO(png), filename="duel.png")
 
     @app_commands.command(name="triggerevent", description="(Mods) Spawn a server event now.")
     @app_commands.guild_only()
