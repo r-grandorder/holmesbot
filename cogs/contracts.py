@@ -55,6 +55,13 @@ def _stars(rarity: int) -> str:
     return f"{rarity}\N{BLACK STAR}"
 
 
+def _progress_bar(have: int, need: int, length: int = 10) -> str:
+    """A text progress bar in Bunyan's autobattle style, e.g. [####......] 40%."""
+    pct = 0 if need <= 0 else max(0, min(100, round(100 * have / need)))
+    filled = round(length * pct / 100)
+    return f"[{'█' * filled}{'░' * (length - filled)}] {pct}%"
+
+
 class ContractsCog(commands.Cog):
     """The contracted-servant QP sink. Gated by config.contract_whitelist: bot.py only loads
     this cog when the whitelist is non-empty, and every entrypoint re-checks membership so
@@ -214,8 +221,18 @@ class ContractsCog(commands.Cog):
         embed = self._servant_embed(
             servant, row["level"], title=f"{target.display_name}'s Servant", allow=allow
         )
-        embed.add_field(name="Level", value=f"{row['level']} / {cap}")
+        level = row["level"]
+        embed.add_field(name="Level", value=f"{level} / {cap}")
         embed.add_field(name="Grails", value=str(grails))
+        if level < cap:
+            need = contract_game.xp_to_next(level)
+            embed.add_field(
+                name="Progress",
+                value=f"{_progress_bar(row['xp'], need)}\n{row['xp']:,} / {need:,} XP to Lv {level + 1}",
+                inline=False,
+            )
+        else:
+            embed.add_field(name="Progress", value="At cap -- use /grail to raise it", inline=False)
         wish_id = await self.bot.contracts.get_wish(interaction.guild_id, target.id)
         wished = self.bot.servants.get(wish_id) if wish_id else None
         if wished is not None:
