@@ -306,35 +306,57 @@ class ContractsCog(commands.Cog):
 
     @app_commands.command(name="servantboard", description="Top contracted servants by level.")
     @app_commands.guild_only()
-    @app_commands.describe(klass="Only show servants of this class")
+    @app_commands.describe(
+        klass="Only show servants of this class",
+        servant="Only show a specific servant (by name)",
+    )
     @app_commands.rename(klass="class")
     @app_commands.choices(klass=filters.CLASS_CHOICES)
     async def servantboard(
-        self, interaction: discord.Interaction, klass: app_commands.Choice[str] | None = None
+        self,
+        interaction: discord.Interaction,
+        klass: app_commands.Choice[str] | None = None,
+        servant: int | None = None,
     ) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
         rows = await self.bot.contracts.board(interaction.guild_id)
-        if klass is not None:
+        suffix = ""
+        empty = "No contracts yet."
+        if servant is not None:  # a specific servant beats the class filter (more specific)
+            rows = [r for r in rows if r["servant_id"] == servant]
+            s = self.bot.servants.get(servant)
+            label = s.name if s else f"#{servant}"
+            suffix, empty = f" - {label}", f"Nobody has contracted {label} yet."
+        elif klass is not None:
             rows = [
                 r for r in rows
                 if (s := self.bot.servants.get(r["servant_id"])) and s.class_name.lower() == klass.value
             ]
+            suffix, empty = f" - {klass.name}", f"No {klass.name} contracts yet."
         rows = rows[:10]
         if not rows:
-            return await interaction.response.send_message("No contracts yet.", ephemeral=True)
+            return await interaction.response.send_message(empty, ephemeral=True)
         lines = []
         for i, r in enumerate(rows, 1):
             s = self.bot.servants.get(r["servant_id"])
             name = s.name if s else f"#{r['servant_id']}"
             cap = contract_game.level_cap(r["grails_used"])
             lines.append(f"**{i}.** <@{r['user_id']}> - {name} (Lv {r['level']}/{cap})")
-        title = "Servant Leaderboard" + (f" - {klass.name}" if klass else "")
         await interaction.response.send_message(
-            embed=discord.Embed(title=title, description="\n".join(lines)),
+            embed=discord.Embed(title="Servant Leaderboard" + suffix, description="\n".join(lines)),
             ephemeral=True,
             allowed_mentions=discord.AllowedMentions.none(),
         )
+
+    @servantboard.autocomplete("servant")
+    async def _servantboard_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[int]]:
+        return [
+            app_commands.Choice(name=f"{s.name[:90]} ({s.rarity}\N{BLACK STAR})", value=s.id)
+            for s in self.bot.servants.search(current, 25)
+        ]
 
     @app_commands.command(name="duel", description="Duel another player's contracted servant (resolves instantly).")
     @app_commands.guild_only()
