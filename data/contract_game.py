@@ -148,3 +148,32 @@ def roll_servant(index, *, force_5star: bool = False, wish: "int | None" = None,
     if tier == "special":
         return random.choice(special)
     return random.choice(by_rarity[tier])
+
+
+# --- duels ---
+DUEL_REWARD = 30          # QP to the winner
+DUEL_DAILY_CAP = 5        # reward-earning duels per player per day (extra duels are glory only)
+CLASS_ADVANTAGE = 1.5     # effective-power multiplier when your class beats the opponent's
+
+# The two clean FGO triangles (attacker class -> the class it beats). Extra classes
+# (Berserker, Ruler, Avenger, Moon Cancer, Alter Ego, Foreigner, Pretender, Beast) stay
+# neutral here and lean on Power; their real matchups can drop in later without touching duels.
+_CLASS_BEATS = {
+    "saber": "lancer", "lancer": "archer", "archer": "saber",
+    "rider": "caster", "caster": "assassin", "assassin": "rider",
+}
+
+
+def class_multiplier(attacker_class: str, defender_class: str) -> float:
+    """The attacker's effective-power multiplier vs the defender under the class triangle."""
+    beats = _CLASS_BEATS.get((attacker_class or "").lower())
+    return CLASS_ADVANTAGE if beats == (defender_class or "").lower() else 1.0
+
+
+def duel_odds(power_a: int, class_a: str, power_b: int, class_b: str) -> float:
+    """P(A wins) = A's effective-power share, where a class advantage multiplies Power. Higher
+    Power/level and a class edge both tilt the odds, but upsets stay possible."""
+    eff_a = power_a * class_multiplier(class_a, class_b)
+    eff_b = power_b * class_multiplier(class_b, class_a)
+    total = eff_a + eff_b
+    return 0.5 if total <= 0 else eff_a / total

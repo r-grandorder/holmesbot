@@ -186,3 +186,24 @@ class ContractService:
             "WHERE guild_id = $1 ORDER BY level DESC, grails_used DESC",
             guild_id,
         )
+
+    async def duel_reward_count(self, guild_id: int, user_id: int) -> int:
+        """Reward-earning duels the user has won today (drives the daily cap)."""
+        val = await self.pool.fetchval(
+            "SELECT rewarded FROM duel_daily "
+            "WHERE guild_id = $1 AND user_id = $2 AND day = date('now')",
+            guild_id,
+            user_id,
+        )
+        return val or 0
+
+    async def bump_duel_reward(self, guild_id: int, user_id: int) -> int:
+        """Record a reward-earning duel win for today; returns the new daily count."""
+        return await self.pool.fetchval(
+            "INSERT INTO duel_daily (guild_id, user_id, day, rewarded) "
+            "VALUES ($1, $2, date('now'), 1) "
+            "ON CONFLICT (guild_id, user_id, day) DO UPDATE SET rewarded = rewarded + 1 "
+            "RETURNING rewarded",
+            guild_id,
+            user_id,
+        )

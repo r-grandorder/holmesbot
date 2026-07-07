@@ -334,6 +334,84 @@ class ContractsCog(commands.Cog):
             allowed_mentions=discord.AllowedMentions.none(),
         )
 
+    @app_commands.command(name="duel", description="Challenge another player's contracted servant.")
+    @app_commands.guild_only()
+    @app_commands.describe(opponent="The player to challenge")
+    async def duel(self, interaction: discord.Interaction, opponent: discord.Member) -> None:
+        if not self._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        if opponent.bot or opponent.id == interaction.user.id:
+            return await interaction.response.send_message(
+                "Pick another player to duel.", ephemeral=True
+            )
+        if not self._allowed(opponent.id):
+            return await interaction.response.send_message(
+                f"{opponent.display_name} isn't in the contract feature yet.", ephemeral=True
+            )
+        if await self.bot.contracts.active(interaction.guild_id, interaction.user.id) is None:
+            return await interaction.response.send_message(
+                "You have no active contract -- use /summon.", ephemeral=True
+            )
+        if await self.bot.contracts.active(interaction.guild_id, opponent.id) is None:
+            return await interaction.response.send_message(
+                f"{opponent.display_name} has no active contract.", ephemeral=True
+            )
+        view = DuelView(self, interaction.user, opponent)
+        embed = discord.Embed(
+            title="Duel Challenge",
+            description=(
+                f"{interaction.user.mention} challenges {opponent.mention} to a servant duel.\n"
+                f"{opponent.display_name}, do you accept?"
+            ),
+            color=discord.Color.orange(),
+        )
+        await interaction.response.send_message(
+            content=opponent.mention, embed=embed, view=view,
+            allowed_mentions=discord.AllowedMentions(users=[opponent]),
+        )
+        view.message = await interaction.original_response()
+
+    async def _resolve_duel(self, interaction: discord.Interaction, challenger, opponent) -> None:
+        gid = interaction.guild_id
+        a = await self.bot.contracts.active(gid, challenger.id)
+        b = await self.bot.contracts.active(gid, opponent.id)
+        sa = self.bot.servants.get(a["servant_id"]) if a else None
+        sb = self.bot.servants.get(b["servant_id"]) if b else None
+        if not (a and b and sa and sb):
+            return await interaction.response.edit_message(
+                embed=discord.Embed(
+                    title="Duel", description="A servant is no longer available.",
+                    color=discord.Color.dark_grey(),
+                ),
+                view=None,
+            )
+        pa = contract_game.power(sa, a["level"])
+        pb = contract_game.power(sb, b["level"])
+        odds = contract_game.duel_odds(pa, sa.class_name, pb, sb.class_name)
+        if random.random() < odds:
+            winner, loser, ws, ls, wp, lp = challenger, opponent, sa, sb, pa, pb
+        else:
+            winner, loser, ws, ls, wp, lp = opponent, challenger, sb, sa, pb, pa
+        count = await self.bot.contracts.duel_reward_count(gid, winner.id)
+        if count < contract_game.DUEL_DAILY_CAP:
+            await self.bot.scoring.add_qp(gid, winner.id, contract_game.DUEL_REWARD)
+            await self.bot.contracts.bump_duel_reward(gid, winner.id)
+            reward_line = f"\n{winner.display_name} earns {qp(contract_game.DUEL_REWARD)}."
+        else:
+            reward_line = f"\n{winner.display_name} has hit today's duel reward cap (no QP)."
+        desc = (
+            f"{winner.mention}'s **{ws.name}** ({class_display(ws.class_name)}, Power {wp:,}) "
+            f"defeated {loser.mention}'s **{ls.name}** "
+            f"({class_display(ls.class_name)}, Power {lp:,})!"
+        )
+        if contract_game.class_multiplier(ws.class_name, ls.class_name) > 1:
+            desc += f"\n{class_display(ws.class_name)} held the class advantage."
+        desc += reward_line
+        await interaction.response.edit_message(
+            embed=discord.Embed(title="Duel Result", description=desc, color=discord.Color.green()),
+            view=None,
+        )
+
     @app_commands.command(name="triggerevent", description="(Mods) Spawn a server event now.")
     @app_commands.guild_only()
     @app_commands.describe(
@@ -544,6 +622,63 @@ class SummonView(discord.ui.View):
             child.disabled = True
         self.stop()
         await interaction.response.edit_message(content="Summon dismissed.", embed=None, view=self)
+
+
+class DuelView(discord.ui.View):
+    """A duel challenge. Only the challenged player may Accept or Decline; on accept the duel
+    resolves at once (Power + class-triangle weighted). An ignored challenge expires."""
+
+    def __init__(self, cog: ContractsCog, challenger, opponent) -> None:
+        super().__init__(timeout=60)
+        self.cog = cog
+        self.challenger = challenger
+        self.opponent = opponent
+        self.message: discord.Message | None = None
+        self.done = False
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.opponent.id:
+            await interaction.response.send_message(
+                "This challenge isn't yours to answer.", ephemeral=True
+            )
+            return False
+        return True
+
+    async def on_timeout(self) -> None:
+        if self.done or self.message is None:
+            return
+        for child in self.children:
+            child.disabled = True
+        try:
+            await self.message.edit(
+                embed=discord.Embed(
+                    title="Duel Challenge",
+                    description=f"{self.challenger.display_name}'s challenge went unanswered.",
+                    color=discord.Color.dark_grey(),
+                ),
+                view=self,
+            )
+        except discord.HTTPException:
+            pass
+
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.success)
+    async def accept(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        self.done = True
+        self.stop()
+        await self.cog._resolve_duel(interaction, self.challenger, self.opponent)
+
+    @discord.ui.button(label="Decline", style=discord.ButtonStyle.secondary)
+    async def decline(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        self.done = True
+        self.stop()
+        await interaction.response.edit_message(
+            embed=discord.Embed(
+                title="Duel Declined",
+                description=f"{self.opponent.display_name} declined the duel.",
+                color=discord.Color.dark_grey(),
+            ),
+            view=None,
+        )
 
 
 class SingleGrailView(discord.ui.View):
