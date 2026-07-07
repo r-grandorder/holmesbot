@@ -44,6 +44,11 @@ class Admin(commands.Cog):
     alias = app_commands.Group(
         name="alias", description="Manage accepted servant name aliases", guild_only=True
     )
+    contractconfig = app_commands.Group(
+        name="contractconfig",
+        description="Contracted-servant feature configuration",
+        guild_only=True,
+    )
 
     # --- restrictions ---
     @restrict.command(name="add", description="Restrict a servant or specific ascensions.")
@@ -265,6 +270,54 @@ class Admin(commands.Cog):
         await interaction.response.send_message(
             f"Game logs (answers + media) will post to {channel.mention}.", ephemeral=True
         )
+
+    # --- contracted-servant feature config ---
+    @contractconfig.command(
+        name="grailchannel", description="Restrict grail drops to specific channels."
+    )
+    @app_commands.describe(channel="Channel to add or remove (not needed for clear/list)")
+    @app_commands.choices(
+        action=[
+            app_commands.Choice(name="add", value="add"),
+            app_commands.Choice(name="remove", value="remove"),
+            app_commands.Choice(name="clear", value="clear"),
+            app_commands.Choice(name="list", value="list"),
+        ]
+    )
+    async def contractconfig_grailchannel(
+        self,
+        interaction: discord.Interaction,
+        action: app_commands.Choice[str],
+        channel: discord.TextChannel | None = None,
+    ) -> None:
+        if action.value == "clear":
+            await self.bot.guild_config.clear_grail_channels(interaction.guild_id)
+            await interaction.response.send_message(
+                "Grail drops can spawn in any channel now.", ephemeral=True
+            )
+            return
+        if action.value == "list":
+            chans = await self.bot.guild_config.grail_channels(interaction.guild_id)
+            msg = (
+                "Grail drops are limited to: " + ", ".join(f"<#{c}>" for c in chans)
+                if chans
+                else "Grail drops can spawn in any channel."
+            )
+            await interaction.response.send_message(msg, ephemeral=True)
+            return
+        if channel is None:
+            await interaction.response.send_message("Pick a channel.", ephemeral=True)
+            return
+        if action.value == "add":
+            await self.bot.guild_config.add_grail_channel(interaction.guild_id, channel.id)
+            await interaction.response.send_message(
+                f"Grail drops can spawn in {channel.mention}.", ephemeral=True
+            )
+        else:
+            await self.bot.guild_config.remove_grail_channel(interaction.guild_id, channel.id)
+            await interaction.response.send_message(
+                f"Grail drops removed from {channel.mention}.", ephemeral=True
+            )
 
     # --- aliases (extra accepted names per servant; handles Atlas naming quirks) ---
     @alias.command(name="add", description="Add an accepted name for a servant.")

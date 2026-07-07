@@ -335,6 +335,10 @@ class ContractsCog(commands.Cog):
             pass
 
     async def _maybe_drop_grail(self, message: discord.Message) -> None:
+        if not await self.bot.guild_config.is_grail_channel_allowed(
+            message.guild.id, message.channel.id
+        ):
+            return
         gid = message.guild.id
         now = time.monotonic()
         cg = contract_game
