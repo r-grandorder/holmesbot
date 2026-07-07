@@ -268,19 +268,38 @@ class ContractsCog(commands.Cog):
         embed.add_field(name="Holy Grails", value=f"{grails:,} {ge}".strip() if ge else str(grails))
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @app_commands.command(name="grail", description="Spend a grail to raise your servant's level cap.")
+    @app_commands.command(name="grail", description="Spend a grail to raise a servant's cap (yours or another player's).")
     @app_commands.guild_only()
-    async def grail(self, interaction: discord.Interaction) -> None:
+    @app_commands.describe(member="Whose servant to grail (defaults to yours)")
+    async def grail(
+        self, interaction: discord.Interaction, member: discord.Member | None = None
+    ) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
-        status, cap = await self.bot.contracts.apply_grail(interaction.guild_id, interaction.user.id)
-        msg = {
-            "no_contract": "You have no active contract. Use /summon first.",
-            "not_max": f"Your servant must be at its cap (level {cap}) to use a grail.",
-            "no_grails": "You have no grails. Claim them from chat drops.",
-            "ok": f"Grail used -- your servant's cap is now **{cap}**.",
-        }[status]
-        await interaction.response.send_message(msg, ephemeral=True)
+        target = member or interaction.user
+        is_self = target.id == interaction.user.id
+        status, cap = await self.bot.contracts.apply_grail(
+            interaction.guild_id, interaction.user.id, target.id
+        )
+        if status == "no_contract":
+            msg = ("You have no active contract. Use /summon first." if is_self
+                   else f"{target.display_name} has no active contract.")
+        elif status == "not_max":
+            msg = (f"Your servant must be at its cap (level {cap}) to grail." if is_self
+                   else f"{target.display_name}'s servant must be at its cap (level {cap}) to grail.")
+        elif status == "no_grails":
+            msg = "You have no grails. Claim them from chat drops."
+        elif is_self:
+            msg = f"Grail used -- your servant's cap is now **{cap}**."
+        else:
+            msg = (f"{interaction.user.display_name} grailed {target.mention}'s servant -- "
+                   f"its cap is now **{cap}**!")
+        public = status == "ok" and not is_self
+        await interaction.response.send_message(
+            msg,
+            ephemeral=not public,
+            allowed_mentions=discord.AllowedMentions(users=[target] if public else []),
+        )
 
     @app_commands.command(name="wish", description="Chase a servant: it gets boosted summon odds (NPC bosses excluded).")
     @app_commands.guild_only()

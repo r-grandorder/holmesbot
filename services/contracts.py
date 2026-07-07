@@ -150,16 +150,19 @@ class ContractService:
             n,
         )
 
-    async def apply_grail(self, guild_id: int, user_id: int) -> "tuple[str, int | None]":
-        """Spend one grail to raise the active servant's cap by GRAIL_STEP. Returns a
-        (status, cap) pair -- status in {'ok','no_contract','not_max','no_grails'}."""
+    async def apply_grail(
+        self, guild_id: int, giver_id: int, target_id: int
+    ) -> "tuple[str, int | None]":
+        """Spend one of giver's grails to raise target's active servant cap by GRAIL_STEP
+        (giver == target for a self-grail). Returns a (status, cap) pair -- status in
+        {'ok','no_contract','not_max','no_grails'}."""
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 row = await conn.fetchrow(
                     "SELECT servant_id, level, grails_used FROM servant_contracts "
                     "WHERE guild_id = $1 AND user_id = $2 AND active = 1",
                     guild_id,
-                    user_id,
+                    target_id,
                 )
                 if row is None:
                     return "no_contract", None
@@ -169,7 +172,7 @@ class ContractService:
                 bal = await conn.fetchval(
                     "SELECT balance FROM grail_balance WHERE guild_id = $1 AND user_id = $2",
                     guild_id,
-                    user_id,
+                    giver_id,
                 )
                 if not bal:
                     return "no_grails", cap
@@ -177,14 +180,14 @@ class ContractService:
                     "UPDATE grail_balance SET balance = balance - 1 "
                     "WHERE guild_id = $1 AND user_id = $2",
                     guild_id,
-                    user_id,
+                    giver_id,
                 )
                 await conn.execute(
                     "UPDATE servant_contracts SET grails_used = grails_used + 1, "
                     "updated_at = CURRENT_TIMESTAMP "
                     "WHERE guild_id = $1 AND user_id = $2 AND servant_id = $3",
                     guild_id,
-                    user_id,
+                    target_id,
                     row["servant_id"],
                 )
                 return "ok", cap + contract_game.GRAIL_STEP
