@@ -20,6 +20,13 @@ POWER_PER_LEVEL = 0.05
 TIER_WEIGHTS = {5: 1.0, 4: 5.0, 3: 40.0, 2: 25.0, 1: 20.0, 0: 8.8}
 NPC_WEIGHT = 0.2       # the NPC-boss tier (ultra-rare flex)
 
+# Notable servants that should be a RARE, exciting pull regardless of their star rating,
+# rather than tier-fillers -- Angra is the sole 0-star (would otherwise be ~8.8%), Habetrot
+# a specific 4-star (would otherwise be ~1-in-3000). Pulled out of their normal rarity tier
+# into this dedicated one; split uniformly among however many are present. Extend freely.
+SPECIAL_SERVANTS = {1100100, 404200}   # Angra Mainyu, Habetrot
+SPECIAL_WEIGHT = 2.0
+
 # --- grail events: two flavored random drops (random host each), independently tunable ---
 # Single grail: the first to claim takes exactly ONE grail, then it self-deletes.
 GRAIL_SINGLE_COOLDOWN = 40 * 60   # seconds; at most one single drop per guild per window
@@ -81,9 +88,10 @@ def roll_servant(index, *, force_5star: bool = False):
     return a random 5-star (the pity guarantee). Returns a Servant."""
     pool = [s for s in index._by_id.values() if not s.jp and s.art]
     npcs = [s for s in pool if s.npc]
+    special = [s for s in pool if s.id in SPECIAL_SERVANTS and not s.npc]
     by_rarity: dict[int, list] = {}
     for s in pool:
-        if not s.npc:
+        if not s.npc and s.id not in SPECIAL_SERVANTS:
             by_rarity.setdefault(s.rarity, []).append(s)
     if force_5star and by_rarity.get(5):
         return random.choice(by_rarity[5])
@@ -92,10 +100,13 @@ def roll_servant(index, *, force_5star: bool = False):
     if npcs:
         tiers.append("npc")
         weights.append(NPC_WEIGHT)
+    if special:
+        tiers.append("special")
+        weights.append(SPECIAL_WEIGHT)
     for rarity, weight in TIER_WEIGHTS.items():
         if by_rarity.get(rarity):
             tiers.append(rarity)
             weights.append(weight)
     tier = random.choices(tiers, weights=weights, k=1)[0]
-    bucket = npcs if tier == "npc" else by_rarity[tier]
+    bucket = npcs if tier == "npc" else (special if tier == "special" else by_rarity[tier])
     return random.choice(bucket)
