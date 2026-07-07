@@ -44,9 +44,9 @@ class Admin(commands.Cog):
     alias = app_commands.Group(
         name="alias", description="Manage accepted servant name aliases", guild_only=True
     )
-    contractconfig = app_commands.Group(
-        name="contractconfig",
-        description="Contracted-servant feature configuration",
+    summonconfig = app_commands.Group(
+        name="summonconfig",
+        description="Summon feature configuration",
         guild_only=True,
     )
 
@@ -272,7 +272,7 @@ class Admin(commands.Cog):
         )
 
     # --- contracted-servant feature config ---
-    @contractconfig.command(
+    @summonconfig.command(
         name="grailchannel", description="Restrict grail drops to specific channels."
     )
     @app_commands.describe(channel="Channel to add or remove (not needed for clear/list)")
@@ -284,7 +284,7 @@ class Admin(commands.Cog):
             app_commands.Choice(name="list", value="list"),
         ]
     )
-    async def contractconfig_grailchannel(
+    async def summonconfig_grailchannel(
         self,
         interaction: discord.Interaction,
         action: app_commands.Choice[str],
@@ -319,12 +319,12 @@ class Admin(commands.Cog):
                 f"Grail drops removed from {channel.mention}.", ephemeral=True
             )
 
-    @contractconfig.command(
+    @summonconfig.command(
         name="announcechannel",
         description="Channel for contract announcements, shares, and level-ups (omit to clear).",
     )
     @app_commands.describe(channel="Where contract broadcasts post (omit to post in-context)")
-    async def contractconfig_announcechannel(
+    async def summonconfig_announcechannel(
         self, interaction: discord.Interaction, channel: discord.TextChannel | None = None
     ) -> None:
         if channel is None:
