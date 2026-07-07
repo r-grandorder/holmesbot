@@ -27,6 +27,10 @@ NPC_WEIGHT = 0.2       # the NPC-boss tier (ultra-rare flex)
 SPECIAL_SERVANTS = {1100100, 404200}   # Angra Mainyu, Habetrot
 SPECIAL_WEIGHT = 2.0
 
+# A player's /wish target gets its own personal tier at this weight (~1% of a roll). NPC
+# bosses are exempt -- they can't be wished, staying an un-buyable rare flex.
+WISH_WEIGHT = 1.0
+
 # --- grail events: two flavored random drops (random host each), independently tunable ---
 # Single grail: the first to claim takes exactly ONE grail, then it self-deletes.
 GRAIL_SINGLE_COOLDOWN = 40 * 60   # seconds; at most one single drop per guild per window
@@ -83,20 +87,35 @@ def resets_pity(servant) -> bool:
     return servant.rarity == 5
 
 
-def roll_servant(index, *, force_5star: bool = False):
+def is_wishable(servant) -> bool:
+    """Whether a servant may be set as a /wish: a summonable, non-NPC servant (NPC bosses
+    are exempt)."""
+    return bool(servant) and not servant.jp and bool(servant.art) and not servant.npc
+
+
+def roll_servant(index, *, force_5star: bool = False, wish: "int | None" = None):
     """Weighted FGO-like roll from the NA + NPC pool (exclude JP-only). With force_5star,
-    return a random 5-star (the pity guarantee). Returns a Servant."""
+    return a random 5-star (the pity guarantee, never the wished one). `wish` is a servant
+    id the roller is chasing: a summonable non-NPC gets its own personal tier at
+    WISH_WEIGHT (~1%). Returns a Servant."""
     pool = [s for s in index._by_id.values() if not s.jp and s.art]
     npcs = [s for s in pool if s.npc]
-    special = [s for s in pool if s.id in SPECIAL_SERVANTS and not s.npc]
+    wished = index.get(wish) if wish is not None else None
+    if not (wished is not None and is_wishable(wished)):
+        wished = None
+    wid = wished.id if wished is not None else None
+    special = [s for s in pool if s.id in SPECIAL_SERVANTS and not s.npc and s.id != wid]
     by_rarity: dict[int, list] = {}
     for s in pool:
-        if not s.npc and s.id not in SPECIAL_SERVANTS:
+        if not s.npc and s.id not in SPECIAL_SERVANTS and s.id != wid:
             by_rarity.setdefault(s.rarity, []).append(s)
     if force_5star and by_rarity.get(5):
         return random.choice(by_rarity[5])
     tiers: list = []
     weights: list[float] = []
+    if wished is not None:
+        tiers.append("wish")
+        weights.append(WISH_WEIGHT)
     if npcs:
         tiers.append("npc")
         weights.append(NPC_WEIGHT)
@@ -108,5 +127,10 @@ def roll_servant(index, *, force_5star: bool = False):
             tiers.append(rarity)
             weights.append(weight)
     tier = random.choices(tiers, weights=weights, k=1)[0]
-    bucket = npcs if tier == "npc" else (special if tier == "special" else by_rarity[tier])
-    return random.choice(bucket)
+    if tier == "wish":
+        return wished
+    if tier == "npc":
+        return random.choice(npcs)
+    if tier == "special":
+        return random.choice(special)
+    return random.choice(by_rarity[tier])

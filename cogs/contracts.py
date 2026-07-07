@@ -102,8 +102,9 @@ class ContractsCog(commands.Cog):
         """Roll a servant with pity applied; returns (servant, pity_after) and persists the
         updated counter. Forces a 5-star when the streak would hit PITY_5STAR."""
         pity = await self.bot.contracts.pity_count(guild_id, user_id)
+        wish = await self.bot.contracts.get_wish(guild_id, user_id)
         force = pity + 1 >= contract_game.PITY_5STAR
-        servant = contract_game.roll_servant(self.bot.servants, force_5star=force)
+        servant = contract_game.roll_servant(self.bot.servants, force_5star=force, wish=wish)
         pity_after = 0 if contract_game.resets_pity(servant) else pity + 1
         await self.bot.contracts.set_pity(guild_id, user_id, pity_after)
         return servant, pity_after
@@ -164,6 +165,25 @@ class ContractsCog(commands.Cog):
         embed = self._servant_embed(servant, row["level"], title=f"{target.display_name}'s Servant")
         embed.add_field(name="Level", value=f"{row['level']} / {cap}")
         embed.add_field(name="Grails", value=str(grails))
+        wish_id = await self.bot.contracts.get_wish(interaction.guild_id, target.id)
+        wished = self.bot.servants.get(wish_id) if wish_id else None
+        if wished is not None:
+            embed.add_field(
+                name="Wishing for", value=f"{wished.name} ({_stars(wished.rarity)})", inline=False
+            )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @app_commands.command(name="items", description="See your QP and Holy Grails.")
+    @app_commands.guild_only()
+    async def items(self, interaction: discord.Interaction) -> None:
+        if not self._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        bal = await self.bot.scoring.get_balance(interaction.guild_id, interaction.user.id)
+        grails = await self.bot.contracts.grail_balance(interaction.guild_id, interaction.user.id)
+        ge = self.bot.config.grail_emote
+        embed = discord.Embed(title="Your Items", color=discord.Color.blurple())
+        embed.add_field(name="QP", value=qp(bal))
+        embed.add_field(name="Holy Grails", value=f"{grails:,} {ge}".strip() if ge else str(grails))
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.command(name="grail", description="Spend a grail to raise your servant's level cap.")
@@ -179,6 +199,40 @@ class ContractsCog(commands.Cog):
             "ok": f"Grail used -- your servant's cap is now **{cap}**.",
         }[status]
         await interaction.response.send_message(msg, ephemeral=True)
+
+    @app_commands.command(name="wish", description="Chase a servant: it gets boosted summon odds (NPC bosses excluded).")
+    @app_commands.guild_only()
+    @app_commands.describe(servant="Servant to wish for (leave empty to clear your wish)")
+    async def wish(self, interaction: discord.Interaction, servant: int | None = None) -> None:
+        if not self._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        if servant is None:
+            await self.bot.contracts.set_wish(interaction.guild_id, interaction.user.id, None)
+            return await interaction.response.send_message(
+                "Wish cleared -- no servant is boosted.", ephemeral=True
+            )
+        s = self.bot.servants.get(servant)
+        if s is None:
+            return await interaction.response.send_message("No such servant.", ephemeral=True)
+        if not contract_game.is_wishable(s):
+            reason = "NPC bosses can't be wished." if s.npc else "That servant isn't summonable."
+            return await interaction.response.send_message(reason, ephemeral=True)
+        await self.bot.contracts.set_wish(interaction.guild_id, interaction.user.id, s.id)
+        await interaction.response.send_message(
+            f"Wish set: **{s.name}** ({_stars(s.rarity)}) now has boosted summon odds "
+            "(~1% per roll) in your /summon.",
+            ephemeral=True,
+        )
+
+    @wish.autocomplete("servant")
+    async def _wish_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[int]]:
+        return [
+            app_commands.Choice(name=f"{s.name[:80]} ({s.rarity}\N{BLACK STAR})", value=s.id)
+            for s in self.bot.servants.search(current, 50)
+            if contract_game.is_wishable(s)
+        ][:25]
 
     @app_commands.command(name="servantboard", description="Top contracted servants by level.")
     @app_commands.guild_only()

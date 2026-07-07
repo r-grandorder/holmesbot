@@ -50,6 +50,24 @@ class ContractService:
             count,
         )
 
+    async def get_wish(self, guild_id: int, user_id: int) -> "int | None":
+        """The servant id the user is chasing (its personal boosted summon odds), or None."""
+        return await self.pool.fetchval(
+            "SELECT wish_servant_id FROM grail_balance WHERE guild_id = $1 AND user_id = $2",
+            guild_id,
+            user_id,
+        )
+
+    async def set_wish(self, guild_id: int, user_id: int, servant_id: "int | None") -> None:
+        """Set (or clear, with None) the user's wished servant."""
+        await self.pool.execute(
+            "INSERT INTO grail_balance (guild_id, user_id, wish_servant_id) VALUES ($1, $2, $3) "
+            "ON CONFLICT (guild_id, user_id) DO UPDATE SET wish_servant_id = $3",
+            guild_id,
+            user_id,
+            servant_id,
+        )
+
     async def contract(self, guild_id: int, user_id: int, servant_id: int) -> None:
         """Make `servant_id` the user's active contract, atomically: deactivate any current
         contract, then activate this one -- creating it at level 1 if new, else resuming its
