@@ -67,7 +67,7 @@ class ContractsCog(commands.Cog):
         self._box_cd: dict[int, float] = {}             # guild -> last grail-box monotonic
 
     def _allowed(self, user_id: int) -> bool:
-        return user_id in self.bot.config.contract_whitelist
+        return self.bot.config.contract_open or user_id in self.bot.config.contract_whitelist
 
     @staticmethod
     def _summon_title(servant, is_new: bool) -> str:

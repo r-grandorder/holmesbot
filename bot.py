@@ -90,12 +90,14 @@ class HolmesBot(commands.Bot):
         branding.configure(self.config.qp_emote)
         for ext in COGS:
             await self.load_extension(ext)
-        # Contracted-servant feature ships dark: only register it when the whitelist is set.
-        if self.config.contract_whitelist:
+        # Contracted-servant feature ships dark: register it when open to all or whitelisted.
+        if self.config.contract_open or self.config.contract_whitelist:
             await self.load_extension("cogs.contracts")
             log.info(
-                "contracted-servant feature enabled for %d user(s)",
-                len(self.config.contract_whitelist),
+                "contracted-servant feature enabled (%s)",
+                "whole server"
+                if self.config.contract_open
+                else f"{len(self.config.contract_whitelist)} user(s)",
             )
 
         if self.config.guild_ids:

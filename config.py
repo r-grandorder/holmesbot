@@ -28,9 +28,11 @@ class Config:
     # Seconds the post-reveal "next round" vote stays open. 0 disables it entirely
     # (reveals keep the plain Play Again button), so the feature ships dark.
     next_vote_seconds: int
-    # Contracted-servant feature (ships dark). The whitelist is the master switch AND the
-    # tester list: empty = the cog/commands/listener are never registered; non-empty =
-    # only these user IDs may use it. summon_cost is the QP per roll.
+    # Contracted-servant feature (ships dark). CONTRACT_WHITELIST is the master switch: empty
+    # = off (cog/commands/listener never registered); a boolean (true/all/1/on/yes) = open to
+    # everyone in the server (contract_open); a list of user IDs = only those testers.
+    # summon_cost is the QP per roll.
+    contract_open: bool
     contract_whitelist: frozenset[int]
     contract_summon_cost: int
     # How contract level-up pings behave: "off" | "milestones" (every Nth level + at cap) | "all".
@@ -45,6 +47,17 @@ class Config:
         levelup_announce = (os.environ.get("LEVELUP_ANNOUNCE") or "milestones").strip().lower()
         if levelup_announce not in ("off", "milestones", "all"):
             levelup_announce = "milestones"
+        raw_whitelist = (os.environ.get("CONTRACT_WHITELIST") or "").strip()
+        contract_open = raw_whitelist.lower() in ("true", "1", "yes", "on", "all", "*", "enabled")
+        contract_whitelist = (
+            frozenset()
+            if contract_open
+            else frozenset(
+                int(x)
+                for x in raw_whitelist.replace(",", " ").split()
+                if x.isdigit() and int(x) > 0
+            )
+        )
         return cls(
             discord_token=_require("DISCORD_BOT_TOKEN"),
             application_id=int(_require("DISCORD_APPLICATION_ID")),
@@ -58,11 +71,8 @@ class Config:
             grail_emote=os.environ.get("GRAIL_EMOTE", ""),
             repost_after=int(os.environ.get("REPOST_AFTER") or "0"),
             next_vote_seconds=int(os.environ.get("NEXT_VOTE_SECONDS") or "0"),
-            contract_whitelist=frozenset(
-                int(x)
-                for x in (os.environ.get("CONTRACT_WHITELIST") or "").replace(",", " ").split()
-                if x.strip().isdigit()
-            ),
+            contract_open=contract_open,
+            contract_whitelist=contract_whitelist,
             contract_summon_cost=int(os.environ.get("CONTRACT_SUMMON_COST") or "250"),
             levelup_announce=levelup_announce,
         )
