@@ -122,10 +122,13 @@ class ContractsCog(commands.Cog):
         return ch if isinstance(ch, (discord.TextChannel, discord.Thread)) else None
 
     async def _broadcast(
-        self, interaction: discord.Interaction, servant, *, title: str, action: str, allow=None
+        self, interaction: discord.Interaction, servant, *, title: str, action: str,
+        allow=None, big: bool = False,
     ) -> None:
         """Post a public celebration (a contract or a shared summon) to the announce channel,
-        falling back to the channel the summon happened in. Respects the art restriction gate."""
+        falling back to the channel the summon happened in. Respects the art restriction gate;
+        `big` adds the full ascension figure (the opt-in Share flex), otherwise just a compact
+        face thumbnail keeps the auto contract announcement small."""
         channel = await self._announce_channel(interaction.guild_id) or interaction.channel
         if channel is None:
             return
@@ -138,10 +141,11 @@ class ContractsCog(commands.Cog):
             color=_RARITY_COLOR.get(servant.rarity, discord.Color.blurple()),
         )
         art = contract_game.display_art(servant, allow)
-        if art:
+        if art:  # gate both on safe art (fully restricted -> show neither)
             if servant.face:
                 embed.set_thumbnail(url=servant.face)
-            embed.set_image(url=art)
+            if big:
+                embed.set_image(url=art)
         try:
             await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
         except discord.HTTPException:
@@ -509,7 +513,7 @@ class SummonView(discord.ui.View):
     async def share(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         allow = await self.cog.bot.restrictions.build_allow()
         await self.cog._broadcast(
-            interaction, self.servant, title="Summon", action="summoned", allow=allow
+            interaction, self.servant, title="Summon", action="summoned", allow=allow, big=True
         )
         await interaction.response.send_message("Shared to the channel.", ephemeral=True)
 
