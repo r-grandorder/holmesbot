@@ -1,1 +1,19 @@
-[]
+[
+  {
+    "id": -9001,
+    "name": "Gudako: Maximum Overdrive",
+    "className": "caster",
+    "rarity": 5,
+    "art": { "0": "https://bunyanbot-assets-327760835875.s3.us-east-1.amazonaws.com/custom/gudako_maximum_overdrive/art.png" },
+    "face": "https://bunyanbot-assets-327760835875.s3.us-east-1.amazonaws.com/custom/gudako_maximum_overdrive/face.png",
+    "figure": {},
+    "attribute": "human",
+    "gender": "female",
+    "traits": [],
+    "aliases": ["gudako", "maximum overdrive"],
+    "summon_line": "GACHA GACHA YEYEYEYEYEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEAH",
+    "custom": true,
+    "summon_weight": 0.025,
+    "wishable": false
+  }
+]
