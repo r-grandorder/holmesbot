@@ -144,6 +144,18 @@ class ContractsCog(commands.Cog):
     def _allowed(self, user_id: int) -> bool:
         return self.bot.config.contract_open or user_id in self.bot.config.contract_whitelist
 
+    async def _resolve_public(
+        self, interaction: discord.Interaction, public: bool
+    ) -> "tuple[bool, str | None]":
+        """Mod-gate a public-post request on an otherwise-ephemeral command. Returns
+        (post_public, note); `note` is a soft heads-up shown to a non-mod who asked for public
+        (they still get the private view)."""
+        if not public:
+            return False, None
+        if is_mod(interaction.user) or await self.bot.is_owner(interaction.user):
+            return True, None
+        return False, "Public posting is mods-only -- showing you privately."
+
     @staticmethod
     def _summon_title(servant, is_new: bool) -> str:
         return f"Summoned: {servant.name}" + (" (NEW!)" if is_new else "")
@@ -291,9 +303,13 @@ class ContractsCog(commands.Cog):
 
     @app_commands.command(name="profile", description="View your (or another player's) contracted servant.")
     @app_commands.guild_only()
-    @app_commands.describe(member="Whose servant to view (defaults to you)")
+    @app_commands.describe(
+        member="Whose servant to view (defaults to you)",
+        public="Mods only: post the card publicly instead of just to you",
+    )
     async def profile(
-        self, interaction: discord.Interaction, member: discord.Member | None = None
+        self, interaction: discord.Interaction, member: discord.Member | None = None,
+        public: bool = False,
     ) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
@@ -338,7 +354,11 @@ class ContractsCog(commands.Cog):
             embed.add_field(
                 name="Wishing for", value=f"{wished.name} ({_stars(wished.rarity)})", inline=False
             )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        is_public, note = await self._resolve_public(interaction, public)
+        await interaction.response.send_message(
+            content=note, embed=embed, ephemeral=not is_public,
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
 
     @app_commands.command(name="items", description="See your QP and Holy Grails.")
     @app_commands.guild_only()
@@ -390,7 +410,7 @@ class ContractsCog(commands.Cog):
             title="Grail Bestowed",
             description=(
                 f"{interaction.user.mention} grailed {target.mention}'s {whose} -- "
-                f"its cap is now **{cap}**!"
+                f"level cap raised to **{cap}**!"
             ),
             color=(_RARITY_COLOR.get(servant.rarity, discord.Color.blurple())
                    if servant else discord.Color.blurple()),
@@ -442,6 +462,7 @@ class ContractsCog(commands.Cog):
     @app_commands.describe(
         klass="Only show servants of this class",
         servant="Only show a specific servant (by name)",
+        public="Mods only: post the leaderboard publicly instead of just to you",
     )
     @app_commands.rename(klass="class")
     @app_commands.choices(klass=filters.CLASS_CHOICES)
@@ -450,6 +471,7 @@ class ContractsCog(commands.Cog):
         interaction: discord.Interaction,
         klass: app_commands.Choice[str] | None = None,
         servant: int | None = None,
+        public: bool = False,
     ) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
@@ -486,9 +508,11 @@ class ContractsCog(commands.Cog):
             name = s.name if s else f"#{r['servant_id']}"
             cap = contract_game.level_cap(r["grails_used"])
             lines.append(f"**{i}.** <@{r['user_id']}> - {name} (Lv {r['level']}/{cap})")
+        is_public, note = await self._resolve_public(interaction, public)
         await interaction.response.send_message(
+            content=note,
             embed=discord.Embed(title="Servant Leaderboard" + suffix, description="\n".join(lines)),
-            ephemeral=True,
+            ephemeral=not is_public,
             allowed_mentions=discord.AllowedMentions.none(),
         )
 
@@ -585,7 +609,7 @@ class ContractsCog(commands.Cog):
             desc += f"\n{class_display(ws.class_name)} held the class advantage."
         desc += reward_line
         embed = discord.Embed(title="Duel Result", description=desc, color=discord.Color.green())
-        cap_note = f"{winner.display_name}: {wins_today}/{cap} paid wins today"
+        cap_note = f"{winner.display_name}: {wins_today}/{cap} reward wins used today"
         if wins_today >= cap:
             cap_note += " (cap reached)"
         cap_note += f" \N{MIDDLE DOT} resets <t:{_daily_reset_ts()}:R>"
@@ -1109,7 +1133,7 @@ class SummonView(discord.ui.View):
             prev = self.cog.bot.servants.get(had["servant_id"])
             note = (
                 f"Contract formed. {prev.name if prev else 'Your previous servant'} was "
-                "released (its progress is saved)."
+                "released (their progress is saved)."
             )
         for child in self.children:
             child.disabled = True

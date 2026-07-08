@@ -116,7 +116,7 @@ def skill_strip(
     return _to_png(canvas)
 
 
-def duel_banner(left: bytes, right: bytes, *, side: int = 180, gap: int = 48, pad: int = 16) -> bytes:
+def duel_banner(left: bytes, right: bytes, *, side: int = 120, gap: int = 32, pad: int = 11) -> bytes:
     """Two servant faces side by side (the duel result banner): each scaled to `side` px and
     laid left and right on a transparent background with a gap between them."""
     a = Image.open(io.BytesIO(left)).convert("RGBA").resize((side, side), Image.LANCZOS)
