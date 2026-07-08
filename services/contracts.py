@@ -33,7 +33,8 @@ class ContractService:
         return val is not None
 
     async def pity_count(self, guild_id: int, user_id: int) -> int:
-        """Rolls since the user's last 5-star (drives the pity guarantee)."""
+        """Rolls toward the next guaranteed 5-star. Only the guarantee resets this; a natural
+        5-star carries over (does not reset it)."""
         val = await self.pool.fetchval(
             "SELECT pity_rolls FROM grail_balance WHERE guild_id = $1 AND user_id = $2",
             guild_id,

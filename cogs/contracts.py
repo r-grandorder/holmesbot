@@ -177,7 +177,7 @@ class ContractsCog(commands.Cog):
     def _summon_title(servant, is_new: bool) -> str:
         return f"Summoned: {servant.name}" + (" (NEW!)" if is_new else "")
 
-    def _servant_embed(self, servant, level: int, *, title=None, note=None, qp_line=None, pity=None, allow=None, show_line: bool = True) -> discord.Embed:
+    def _servant_embed(self, servant, level: int, *, title=None, note=None, qp_line=None, pity=None, allow=None, show_line: bool = True, spark: "str | None" = None) -> discord.Embed:
         embed = discord.Embed(
             title=title or servant.name,
             description=note,
@@ -198,24 +198,32 @@ class ContractsCog(commands.Cog):
         if qp_line:
             embed.add_field(name="QP", value=qp_line, inline=False)
         if pity is not None:
+            target = spark if spark else "5\N{BLACK STAR}"
             embed.set_footer(
-                text=f"Pity {pity}/{contract_game.PITY_5STAR} to a guaranteed 5\N{BLACK STAR}"
+                text=f"Guaranteed summon: {pity}/{contract_game.PITY_5STAR} ({target})"
             )
         return embed
 
     async def _do_roll(self, guild_id: int, user_id: int, allow=None):
         """Roll a servant with pity applied; returns (servant, pity_after) and persists the
-        updated counter. Forces a 5-star when the streak would hit PITY_5STAR. `allow` is the
-        content-policy gate (restricted servants are excluded from the pool)."""
+        updated counter. Forces a 5-star when the streak would hit PITY_5STAR. Pity counts
+        rolls toward that guarantee and carries over natural 5-stars -- only the guarantee
+        resets it. `allow` is the content-policy gate (restricted servants excluded)."""
         pity = await self.bot.contracts.pity_count(guild_id, user_id)
         wish = await self.bot.contracts.get_wish(guild_id, user_id)
         force = pity + 1 >= contract_game.PITY_5STAR
         servant = contract_game.roll_servant(
             self.bot.servants, force_5star=force, wish=wish, allow=allow
         )
-        pity_after = 0 if contract_game.resets_pity(servant) else pity + 1
+        pity_after = 0 if force else pity + 1  # carry pity over natural 5-stars; only the guarantee resets it
         await self.bot.contracts.set_pity(guild_id, user_id, pity_after)
         return servant, pity_after
+
+    async def _spark_name(self, guild_id: int, user_id: int) -> "str | None":
+        """Display name of the user's pity spark (their /wish), or None if unset/invalid."""
+        wid = await self.bot.contracts.get_wish(guild_id, user_id)
+        s = self.bot.servants.get(wid) if wid else None
+        return s.name if (s and contract_game.is_wishable(s)) else None
 
     async def _announce_channel(self, guild_id: int):
         """The configured contract-announcement channel, or None to post in-context."""
@@ -274,11 +282,12 @@ class ContractsCog(commands.Cog):
         )
         view = SummonView(self, interaction.user.id, servant)
         view.interaction = interaction
+        spark = await self._spark_name(interaction.guild_id, interaction.user.id)
         await interaction.response.send_message(
             embed=self._servant_embed(
                 servant, 1, title=self._summon_title(servant, is_new),
                 qp_line=f"{qp(new_bal + cost)} \N{RIGHTWARDS ARROW} {qp(new_bal)}", pity=pity_after,
-                allow=allow,
+                allow=allow, spark=spark,
             ),
             view=view,
             ephemeral=True,
@@ -440,16 +449,16 @@ class ContractsCog(commands.Cog):
             embed=embed, allowed_mentions=discord.AllowedMentions(users=[target])
         )
 
-    @app_commands.command(name="wish", description="Chase a servant: it gets boosted summon odds (NPC bosses excluded).")
+    @app_commands.command(name="wish", description="Choose the servant your guaranteed summon delivers (NPC bosses excluded).")
     @app_commands.guild_only()
-    @app_commands.describe(servant="Servant to wish for (leave empty to clear your wish)")
+    @app_commands.describe(servant="Servant to spark (leave empty to clear)")
     async def wish(self, interaction: discord.Interaction, servant: int | None = None) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
         if servant is None:
             await self.bot.contracts.set_wish(interaction.guild_id, interaction.user.id, None)
             return await interaction.response.send_message(
-                "Wish cleared -- no servant is boosted.", ephemeral=True
+                "Cleared -- your guaranteed summon is a random 5-star again.", ephemeral=True
             )
         s = self.bot.servants.get(servant)
         if s is None:
@@ -459,8 +468,8 @@ class ContractsCog(commands.Cog):
             return await interaction.response.send_message(reason, ephemeral=True)
         await self.bot.contracts.set_wish(interaction.guild_id, interaction.user.id, s.id)
         await interaction.response.send_message(
-            f"Wish set: **{s.name}** ({_stars(s.rarity)}) now has boosted summon odds "
-            "(~1% per roll) in your /summon.",
+            f"Set: your guaranteed summon now delivers **{s.name}** ({_stars(s.rarity)}). "
+            "This does not change your natural pull odds.",
             ephemeral=True,
         )
 
@@ -1249,11 +1258,12 @@ class SummonView(discord.ui.View):
             interaction.guild_id, self.user_id, self.servant.id
         )
         self.interaction = interaction  # freshest token, for greying out on timeout
+        spark = await self.cog._spark_name(interaction.guild_id, self.user_id)
         await interaction.response.edit_message(
             embed=self.cog._servant_embed(
                 self.servant, 1, title=self.cog._summon_title(self.servant, is_new),
                 qp_line=f"{qp(new_bal + cost)} \N{RIGHTWARDS ARROW} {qp(new_bal)}", pity=pity_after,
-                allow=allow,
+                allow=allow, spark=spark,
             ),
             view=self,
         )

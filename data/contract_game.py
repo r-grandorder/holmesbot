@@ -28,9 +28,9 @@ NPC_WEIGHT = 0.2       # the NPC-boss tier (ultra-rare flex)
 SPECIAL_SERVANTS = {1100100, 404200}   # Angra Mainyu, Habetrot
 SPECIAL_WEIGHT = 2.0
 
-# A player's /wish target gets its own personal tier at this weight (~1% of a roll). NPC
-# bosses are exempt -- they can't be wished, staying an un-buyable rare flex.
-WISH_WEIGHT = 1.0
+# A player's /wish is their pity SPARK target: when the pity guarantee fires it delivers the
+# wished servant (else a random 5-star). Wishing does NOT boost natural pull odds. NPC bosses
+# can't be wished (see is_wishable), staying un-buyable rare flexes.
 
 # --- grail events: two flavored random drops (random host each), independently tunable ---
 # Single grail: the first to claim takes exactly ONE grail, then it self-deletes.
@@ -49,7 +49,7 @@ QP_REWARD_COOLDOWN = 40 * 60      # seconds; at most one QP drop per guild per w
 QP_REWARD_CHANCE = 0.02           # chance per qualifying message once off cooldown
 QP_REWARD_TTL = 10               # seconds the notification lingers before self-deleting
 
-# --- pity: guarantee a (random) 5-star by this many rolls without one ---
+# --- pity: guarantee a (random) 5-star every this many rolls; natural 5-stars carry over ---
 # 100 = ~3x more generous than FGO's spark distance (FGO: 900 SQ / 30 SQ per multi = 300
 # rolls). Natural pulls stay the majority, but pity is actually reachable here (~25k QP), so
 # it works as a real safety net. Ours grants a RANDOM 5-star, not a pick like FGO's spark.
@@ -98,11 +98,6 @@ def display_art(servant, allow=None) -> "str | None":
         key=lambda k: int(k) if str(k).isdigit() else -1,
     )
     return art[keys[-1]] if keys else None
-
-
-def resets_pity(servant) -> bool:
-    """A 5-star (NPC bosses are also rarity 5) ends a pity streak."""
-    return servant.rarity == 5
 
 
 def ticket_roll(index, wish: "int | None" = None, *, chance: float = 0.15, allow=None):
@@ -163,17 +158,17 @@ def is_wishable(servant) -> bool:
     )
 
 
-def _summon_buckets(pool, wid):
+def _summon_buckets(pool):
     """Weighted summon buckets from `pool`, as a list of (label, weight, members): a roll picks
-    a bucket by weight then a uniform member. Excludes servant id `wid` (the wish target, added
-    as its own bucket by the caller). Shared by roll_servant and summon_rates so the displayed
-    odds always match real pulls. Also returns by_rarity (for the force-5-star pity path)."""
+    a bucket by weight then a uniform member. Shared by roll_servant and summon_rates so the
+    displayed odds always match real pulls. Also returns by_rarity (for the pity path). Wishing
+    does not change these odds -- the wish is a pity spark target, not a rate boost."""
     npcs = [s for s in pool if s.npc]
-    special = [s for s in pool if s.id in SPECIAL_SERVANTS and not s.npc and s.id != wid]
-    customs = [s for s in pool if s.custom and s.id != wid]  # each is its own weighted tier
+    special = [s for s in pool if s.id in SPECIAL_SERVANTS and not s.npc]
+    customs = [s for s in pool if s.custom]  # each is its own weighted tier
     by_rarity: dict[int, list] = {}
     for s in pool:
-        if not s.npc and not s.custom and s.id not in SPECIAL_SERVANTS and s.id != wid:
+        if not s.npc and not s.custom and s.id not in SPECIAL_SERVANTS:
             by_rarity.setdefault(s.rarity, []).append(s)
     buckets: list = []
     if npcs:
@@ -189,26 +184,24 @@ def _summon_buckets(pool, wid):
 
 
 def roll_servant(index, *, force_5star: bool = False, wish: "int | None" = None, allow=None):
-    """Weighted FGO-like roll from the NA + NPC pool (exclude JP-only). With force_5star,
-    return a random 5-star (the pity guarantee, never the wished one). `wish` is a servant id
-    the roller is chasing: a summonable one gets its own personal tier at WISH_WEIGHT (~1%).
-    `allow(servant_id, ascension_key)` is the content-policy gate: servants with no allowed art
-    are excluded entirely (fail-safe). Returns a Servant (or None if the pool is empty)."""
+    """Weighted FGO-like roll from the NA + NPC pool (exclude JP-only). With force_5star (the
+    pity guarantee), return the roller's wished servant if they have a valid one set (their
+    spark), otherwise a random 5-star. `wish` is a servant id; it matters ONLY on the guarantee
+    and does not boost natural pull odds. `allow(servant_id, ascension_key)` is the
+    content-policy gate: servants with no allowed art are excluded (fail-safe). Returns a
+    Servant (or None if the pool is empty)."""
     gate = allow or (lambda _sid, _k: True)
 
     def _has_safe_art(s) -> bool:
         return any(gate(s.id, k) for k in s.art)
 
     pool = [s for s in index._by_id.values() if not s.jp and s.art and _has_safe_art(s)]
-    wished = index.get(wish) if wish is not None else None
-    if not (wished is not None and is_wishable(wished) and _has_safe_art(wished)):
-        wished = None
-    wid = wished.id if wished is not None else None
-    buckets, by_rarity = _summon_buckets(pool, wid)
-    if force_5star and by_rarity.get(5):
-        return random.choice(by_rarity[5])
-    if wished is not None:  # the wish gets its own personal tier
-        buckets = [("wish", WISH_WEIGHT, [wished])] + buckets
+    buckets, by_rarity = _summon_buckets(pool)
+    if force_5star:  # pity guarantee: the wished servant (spark), else a random 5-star
+        wished = index.get(wish) if wish is not None else None
+        if wished is not None and is_wishable(wished) and _has_safe_art(wished):
+            return wished
+        return random.choice(by_rarity[5]) if by_rarity.get(5) else None
     if not buckets:
         return None
     members = random.choices(
@@ -227,7 +220,7 @@ def summon_rates(index, *, allow=None):
         s for s in index._by_id.values()
         if not s.jp and s.art and any(gate(s.id, k) for k in s.art)
     ]
-    buckets, _ = _summon_buckets(pool, None)
+    buckets, _ = _summon_buckets(pool)
     total = sum(w for _, w, _ in buckets) or 1.0
     rows = []
     for label, weight, members in buckets:
