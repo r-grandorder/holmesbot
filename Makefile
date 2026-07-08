@@ -1,4 +1,4 @@
-.PHONY: lock lock-check run migrate sync sync-jp sync-data
+.PHONY: lock lock-check run migrate sync sync-jp sync-data sync-custom-assets install-hooks
 
 lock:
 	pip-compile --quiet --output-file=requirements.txt requirements.in
@@ -27,3 +27,15 @@ sync-jp:
 sync-data:
 	python scripts/sync_atlas.py
 	python scripts/sync_atlas.py --jp
+
+# Custom-servant art: drop PNGs under custom-assets/<slug>/ (see custom-assets/README.md),
+# then push them to the public assets bucket under the custom/ prefix. Only adds/updates --
+# never deletes -- so it can't disturb the precomputed silhouettes. Uses default AWS creds.
+sync-custom-assets:
+	aws s3 sync custom-assets/ "s3://$${ASSETS_BUCKET:-bunyanbot-assets-327760835875}/custom/" --exclude "README.md" --exclude "*.DS_Store"
+
+# Install the git hooks (a pre-commit that syncs custom-assets/ to S3). One-time, per clone.
+install-hooks:
+	ln -sf ../../hooks/pre-commit .git/hooks/pre-commit
+	chmod +x hooks/pre-commit
+	@echo "installed pre-commit hook (custom-assets -> S3 on commit)"

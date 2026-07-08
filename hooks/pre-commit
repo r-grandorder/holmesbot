@@ -1,0 +1,12 @@
+#!/bin/sh
+# Push staged custom-servant art to S3 on commit (see custom-assets/README.md).
+# Installed via `make install-hooks`. Non-blocking: if the sync fails (offline, no AWS
+# creds), it warns but never blocks the commit. Override the bucket with ASSETS_BUCKET.
+bucket="${ASSETS_BUCKET:-bunyanbot-assets-327760835875}"
+if [ -n "$(find custom-assets -mindepth 2 -type f 2>/dev/null)" ]; then
+    echo "pre-commit: syncing custom-assets/ -> s3://$bucket/custom/"
+    aws s3 sync custom-assets/ "s3://$bucket/custom/" \
+        --exclude "README.md" --exclude "*.DS_Store" --only-show-errors \
+        || echo "pre-commit: custom-assets sync skipped (aws failed; run 'make sync-custom-assets')"
+fi
+exit 0
