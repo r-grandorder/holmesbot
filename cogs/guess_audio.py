@@ -9,7 +9,7 @@ from data import audio, host, images
 from . import filters
 from .guess_base import Media, launch_round
 
-POINTS = 20
+POINTS = 150  # voice is the hardest game (harder than skill's 120) -- reward accordingly
 
 
 class GuessAudio(commands.Cog):

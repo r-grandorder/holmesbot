@@ -423,7 +423,8 @@ class ChatRound:
         hints: list[tuple[str, str]] = []
         if self.servant.rarity:
             hints.append(("Rarity", f"{self.servant.rarity}-star"))
-        if self.servant.gender in ("male", "female"):
+        # Voice: gender is usually obvious from the clip, so it's a near-free hint -- skip it.
+        if self.servant.gender in ("male", "female") and self.game_type != "guess_audio":
             hints.append(("Gender", self.servant.gender.title()))
         if self.servant.class_name:
             hints.append(("Class", class_display(self.servant.class_name)))
