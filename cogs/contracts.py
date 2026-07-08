@@ -298,7 +298,7 @@ class ContractsCog(commands.Cog):
             ephemeral=True,
         )
 
-    @app_commands.command(name="redeem", description="Redeem a Summon Ticket: a boosted pull for your wish (else a 5-star).")
+    @app_commands.command(name="redeem", description="Redeem a Summon Ticket: a boosted shot at your wish, a rare NPC/custom unit, or a 5-star.")
     @app_commands.guild_only()
     async def redeem(self, interaction: discord.Interaction) -> None:
         if not self._allowed(interaction.user.id):
@@ -316,10 +316,12 @@ class ContractsCog(commands.Cog):
         is_new = not await self.bot.contracts.has_contract(
             interaction.guild_id, interaction.user.id, servant.id
         )
-        note = (
-            "Your wished servant answers the call!" if is_wish
-            else "Not your wish this time -- but a guaranteed 5-star!"
-        )
+        if is_wish:
+            note = "Your wished servant answers the call!"
+        elif servant.npc or servant.custom:
+            note = "A rare pull! The ticket turned up something special."
+        else:
+            note = "Not your wish this time, but a guaranteed 5-star."
         view = SummonView(self, interaction.user.id, servant, allow_reroll=False)
         view.interaction = interaction
         await interaction.response.send_message(

@@ -55,6 +55,11 @@ QP_REWARD_TTL = 10               # seconds the notification lingers before self-
 # it works as a real safety net. Ours grants a RANDOM 5-star, not a pick like FGO's spark.
 PITY_5STAR = 100
 
+# Summon Ticket (/redeem): after the wish check, the chance to pull from the ticket's RARE
+# pool (NPC bosses + custom units) instead of a plain 5-star -- far above their base summon
+# odds, so a ticket is a real shot at the flexes. (The wish chance is config-driven.)
+SUMMON_TICKET_RARE_CHANCE = 0.1
+
 
 def level_cap(grails_used: int) -> int:
     return BASE_CAP + grails_used * GRAIL_STEP
@@ -100,23 +105,26 @@ def display_art(servant, allow=None) -> "str | None":
     return art[keys[-1]] if keys else None
 
 
-def ticket_roll(index, wish: "int | None" = None, *, chance: float = 0.15, allow=None):
-    """A Summon Ticket pull: with probability `chance`, the wished servant (if a valid,
-    summonable one is set); otherwise a random safe 5-star. Returns (servant, is_wish)."""
+def ticket_roll(index, wish: "int | None" = None, *, chance: float = 0.15,
+                rare_chance: float = SUMMON_TICKET_RARE_CHANCE, allow=None):
+    """A Summon Ticket pull, in priority order: (1) with probability `chance`, the wished
+    servant (if a valid, summonable one is set); (2) else with probability `rare_chance`, a
+    random NPC boss or custom unit -- the ticket's elevated shot at the rare flexes, far above
+    their base summon odds; (3) else a random 5-star. Returns (servant, is_wish); is_wish is
+    True only for outcome (1)."""
     gate = allow or (lambda _sid, _k: True)
+
+    def _safe(s) -> bool:
+        return any(gate(s.id, k) for k in s.art)
+
     wished = index.get(wish) if wish is not None else None
-    valid_wish = (
-        wished is not None
-        and is_wishable(wished)
-        and any(gate(wished.id, k) for k in wished.art)
-    )
-    if valid_wish and random.random() < chance:
+    if wished is not None and is_wishable(wished) and _safe(wished) and random.random() < chance:
         return wished, True
-    fives = [
-        s for s in index._by_id.values()
-        if not s.jp and s.art and not s.npc and not s.custom and s.rarity == 5
-        and any(gate(s.id, k) for k in s.art)
-    ]
+    pool = [s for s in index._by_id.values() if not s.jp and s.art and _safe(s)]
+    rare = [s for s in pool if s.npc or s.custom]
+    if rare and random.random() < rare_chance:
+        return random.choice(rare), False
+    fives = [s for s in pool if not s.npc and not s.custom and s.rarity == 5]
     return (random.choice(fives) if fives else wished), False
 
 
