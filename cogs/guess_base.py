@@ -274,7 +274,12 @@ class BeatView(discord.ui.View):
         if self._done:
             return
         self._done = True
-        if self._task is not None:
+        # Cancel the pending auto-start timer -- but NOT when we're running inside it. Start now
+        # runs in the button's task, so cancelling the (separate) timer task is fine. But when
+        # the timer itself fires, self._task IS the current task; cancelling it raises
+        # CancelledError at the next await, which aborts _go before _launch -- so the next round
+        # silently never starts. Skipping the self-cancel lets the timer path reach _launch.
+        if self._task is not None and self._task is not asyncio.current_task():
             self._task.cancel()
         for child in self.children:
             child.disabled = True  # type: ignore[attr-defined]
@@ -296,20 +301,29 @@ class BeatView(discord.ui.View):
         try:
             if self.winner == "random":
                 cog = self.bot.get_cog("GuessRandom")
-                if cog is not None:
-                    await cog._play(ctx, include_jp=self.include_jp, difficulty=diff)
-                return
-            name, has_difficulty = _VOTE_DISPATCH[self.winner]
-            cog = self.bot.get_cog(name)
-            if cog is None:
-                return
-            if has_difficulty:
-                await cog._play(
-                    ctx, diff or app_commands.Choice(name="Easy", value="easy"),
-                    include_jp=self.include_jp,
-                )
+                if cog is None:
+                    log.warning("next-round: GuessRandom cog not loaded")
+                    return
+                ok = await cog._play(ctx, include_jp=self.include_jp, difficulty=diff)
             else:
-                await cog._play(ctx, include_jp=self.include_jp)
+                name, has_difficulty = _VOTE_DISPATCH[self.winner]
+                cog = self.bot.get_cog(name)
+                if cog is None:
+                    log.warning("next-round: cog %s not loaded for %s", name, self.winner)
+                    return
+                if has_difficulty:
+                    ok = await cog._play(
+                        ctx, diff or app_commands.Choice(name="Easy", value="easy"),
+                        include_jp=self.include_jp,
+                    )
+                else:
+                    ok = await cog._play(ctx, include_jp=self.include_jp)
+            if ok is False:
+                log.warning(
+                    "next-round: launch declined for %s in channel %s "
+                    "(game off, wrong channel, or a round already running)",
+                    self.winner, self.channel.id,
+                )
         except Exception:
             log.exception("next-round launch failed (%s)", self.winner)
             try:
@@ -582,9 +596,10 @@ class ChatRound:
         if vote_on and (engaged or self.next_votes):
             winner = self._next_winner()
             label = dict(NEXT_VOTE_TYPES).get(winner, winner)
+            starts_at = int(time.time()) + self.bot.config.next_vote_seconds
             embed.add_field(
                 name="Next up",
-                value=f"**{label}** in {self.bot.config.next_vote_seconds}s",
+                value=f"**{label}** <t:{starts_at}:R>",
                 inline=False,
             )
             beat = BeatView(
