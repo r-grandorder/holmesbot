@@ -501,7 +501,8 @@ class ContractsCog(commands.Cog):
         active = await self.bot.contracts.active(gid, uid)
         if active and active["servant_id"] == servant:
             return await interaction.response.send_message(
-                "That servant is already active.", ephemeral=True
+                "That servant is already active. Summon and contract another servant to have "
+                "one to switch to.", ephemeral=True
             )
         now = time.monotonic()
         wait = contract_game.SWITCH_COOLDOWN - (now - self._switch_cd.get((gid, uid), 0.0))
@@ -531,17 +532,21 @@ class ContractsCog(commands.Cog):
     async def _switch_autocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[int]]:
+        # Show the whole roster (active first, marked) rather than only switch targets: a player
+        # who has contracted just one servant would otherwise see an empty box and think /switch
+        # is broken. Picking the active one gets a helpful "already active" nudge.
         rows = await self.bot.contracts.owned(interaction.guild_id, interaction.user.id)
         q = current.strip().lower()
         out: list[app_commands.Choice[int]] = []
         for r in rows:
-            if r["active"]:  # can't switch to the servant you are already on
-                continue
             s = self.bot.servants.get(r["servant_id"])
             if s is None or (q and q not in s.name.lower()):
                 continue
             cap = contract_game.level_cap(r["grails_used"])
-            out.append(app_commands.Choice(name=f"{s.name[:70]} (Lv {r['level']}/{cap})", value=s.id))
+            tag = " (active)" if r["active"] else ""
+            out.append(
+                app_commands.Choice(name=f"{s.name[:60]} (Lv {r['level']}/{cap}){tag}", value=s.id)
+            )
             if len(out) >= 25:
                 break
         return out
