@@ -238,6 +238,10 @@ DUEL_COOLDOWN = 20        # seconds between a challenger's duels (anti-flood)
 DUEL_PAIR_COOLDOWN = 180  # seconds before the same two players can duel again (anti-targeting)
 CLASS_ADVANTAGE = 1.5     # effective-power multiplier when your class beats the opponent's
 
+# --- switching the active contract to an already-owned servant ---
+SWITCH_COST = 50           # QP to switch (re-activate a servant you already contracted)
+SWITCH_COOLDOWN = 30 * 60  # seconds between switches per user (also blocks duel counter-picking)
+
 # --- faction war ---
 WAR_REWARD = 5000         # base QP to each member of the winning faction when a season ends
 WAR_UNDERDOG_CAP = 2.0    # max QP-reward multiplier for winning outnumbered (avg/size, clamped)

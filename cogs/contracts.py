@@ -118,6 +118,7 @@ class ContractsCog(commands.Cog):
         self._qp_cd: dict[int, float] = {}              # guild -> last QP-reward monotonic
         self._duel_cd: dict[tuple[int, int], float] = {}  # (guild,challenger) -> last duel
         self._duel_pair_cd: dict = {}                     # (guild, frozenset{a,b}) -> last duel
+        self._switch_cd: dict[tuple[int, int], float] = {}  # (guild,user) -> last active-swap
 
     async def cog_load(self) -> None:
         self._war_ticker.start()
@@ -486,6 +487,65 @@ class ContractsCog(commands.Cog):
             if contract_game.is_wishable(s)
         ][:25]
 
+    @app_commands.command(name="switch", description="Switch your active servant to one you have already contracted.")
+    @app_commands.guild_only()
+    @app_commands.describe(servant="A servant you already own (search by name)")
+    async def switch(self, interaction: discord.Interaction, servant: int) -> None:
+        if not self._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        gid, uid = interaction.guild_id, interaction.user.id
+        if not await self.bot.contracts.has_contract(gid, uid, servant):
+            return await interaction.response.send_message(
+                "You have not contracted that servant. Use /summon to get a new one.", ephemeral=True
+            )
+        active = await self.bot.contracts.active(gid, uid)
+        if active and active["servant_id"] == servant:
+            return await interaction.response.send_message(
+                "That servant is already active.", ephemeral=True
+            )
+        now = time.monotonic()
+        wait = contract_game.SWITCH_COOLDOWN - (now - self._switch_cd.get((gid, uid), 0.0))
+        if wait > 0:
+            return await interaction.response.send_message(
+                f"You can switch again in {int(wait // 60) + 1} min.", ephemeral=True
+            )
+        cost = contract_game.SWITCH_COST
+        bal = await self.bot.scoring.get_balance(gid, uid)
+        if bal < cost:
+            return await interaction.response.send_message(
+                f"Switching costs {qp(cost)}; you have {qp(bal)}.", ephemeral=True
+            )
+        new_bal = await self.bot.scoring.sub_qp(gid, uid, cost)
+        await self.bot.contracts.contract(gid, uid, servant)
+        self._switch_cd[(gid, uid)] = now
+        row = await self.bot.contracts.active(gid, uid)
+        s = self.bot.servants.get(servant)
+        name = s.name if s else "your servant"
+        lvl = row["level"] if row else 1
+        await interaction.response.send_message(
+            f"Switched to **{name}** (Lv {lvl}). {qp(cost)} spent, balance now {qp(new_bal)}.",
+            ephemeral=True,
+        )
+
+    @switch.autocomplete("servant")
+    async def _switch_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[int]]:
+        rows = await self.bot.contracts.owned(interaction.guild_id, interaction.user.id)
+        q = current.strip().lower()
+        out: list[app_commands.Choice[int]] = []
+        for r in rows:
+            if r["active"]:  # can't switch to the servant you are already on
+                continue
+            s = self.bot.servants.get(r["servant_id"])
+            if s is None or (q and q not in s.name.lower()):
+                continue
+            cap = contract_game.level_cap(r["grails_used"])
+            out.append(app_commands.Choice(name=f"{s.name[:70]} (Lv {r['level']}/{cap})", value=s.id))
+            if len(out) >= 25:
+                break
+        return out
+
     @app_commands.command(name="servantboard", description="Top contracted servants by level.")
     @app_commands.guild_only()
     @app_commands.describe(
@@ -518,7 +578,7 @@ class ContractsCog(commands.Cog):
                 if (s := self.bot.servants.get(r["servant_id"])) and s.class_name.lower() == klass.value
             ]
             suffix, empty = f" - {klass.name}", f"No {klass.name} contracts yet."
-        # One row per user -- their highest-level match (board() is already level-sorted).
+        # board() already returns one (active) row per user, level-sorted; take the top 10.
         seen: set[int] = set()
         top = []
         for r in rows:

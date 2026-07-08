@@ -251,12 +251,23 @@ class ContractService:
                 return "ok", contract_game.level_cap(row["grails_used"] + 1), row["servant_id"]
 
     async def board(self, guild_id: int) -> "list[Row]":
-        """All of the guild's contracts, ranked by level (then grails). The cog applies
-        the optional class filter + top-N slice in-app (the set is small)."""
+        """Each player's ACTIVE contract, ranked by level (then grails) -- one row per user, so
+        the leaderboard reflects the servant they're currently fielding, not their all-time
+        best. The cog applies the optional class filter + top-N slice in-app."""
         return await self.pool.fetch(
             "SELECT user_id, servant_id, level, grails_used FROM servant_contracts "
-            "WHERE guild_id = $1 ORDER BY level DESC, grails_used DESC",
+            "WHERE guild_id = $1 AND active = 1 ORDER BY level DESC, grails_used DESC",
             guild_id,
+        )
+
+    async def owned(self, guild_id: int, user_id: int) -> "list[Row]":
+        """Every servant this user has contracted (their roster), active first then by level.
+        Drives /switch (re-activating an owned servant) and its autocomplete."""
+        return await self.pool.fetch(
+            "SELECT servant_id, level, grails_used, active FROM servant_contracts "
+            "WHERE guild_id = $1 AND user_id = $2 ORDER BY active DESC, level DESC",
+            guild_id,
+            user_id,
         )
 
     async def duel_reward_count(self, guild_id: int, user_id: int) -> int:
