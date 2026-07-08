@@ -236,15 +236,19 @@ class ContractsCog(commands.Cog):
 
     async def _broadcast(
         self, interaction: discord.Interaction, servant, *, title: str, action: str, allow=None,
+        actor: "discord.abc.User | None" = None,
     ) -> None:
         """Post a public contract announcement to the announce channel, falling back to the
-        channel the summon happened in: a compact face thumbnail + the servant's (trimmed)
-        summon voice line, respecting the art restriction gate."""
+        channel the command happened in: a compact face thumbnail + the servant's (trimmed)
+        summon voice line, respecting the art restriction gate. `actor` overrides who the
+        announcement credits (defaults to the invoker); /grantservant passes the recipient so
+        a granted contract reads like a normal one."""
         channel = await self._announce_channel(interaction.guild_id) or interaction.channel
         if channel is None:
             return
+        who = actor or interaction.user
         desc = (
-            f"{interaction.user.mention} {action} **{servant.name}** "
+            f"{who.mention} {action} **{servant.name}** "
             f"({_stars(servant.rarity)})!"
         )
         line = _flavor(getattr(servant, "summon_line", None))
@@ -977,12 +981,13 @@ class ContractsCog(commands.Cog):
             f"Granted **{s.name}** ({_stars(s.rarity)}) as {whose} active contract.",
             ephemeral=True,
         )
-        await self._notify_grant(
-            interaction, target,
-            f"**{interaction.user.display_name}** granted you **{s.name}** "
-            f"({_stars(s.rarity)})!",
-            quiet,
-        )
+        # Announce it like a regular summon-contract, crediting the recipient (quiet skips it).
+        if not quiet:
+            allow = await self.bot.restrictions.build_allow()
+            await self._broadcast(
+                interaction, s, title="New Contract",
+                action="formed a contract with", allow=allow, actor=target,
+            )
 
     @grantservant.autocomplete("servant")
     async def _grantservant_autocomplete(
