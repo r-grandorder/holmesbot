@@ -156,6 +156,23 @@ class ContractsCog(commands.Cog):
             return True, None
         return False, "Public posting is mods-only -- showing you privately."
 
+    async def _notify_grant(
+        self, interaction: discord.Interaction, target: discord.Member, text: str, quiet: bool
+    ) -> None:
+        """Ping the recipient of a mod grant with a short self-deleting notice -- unless it's a
+        self-grant or the mod chose quiet. The mention pings so they actually see it; the
+        message removes itself after 10s to avoid channel clutter."""
+        if quiet or target.id == interaction.user.id or interaction.channel is None:
+            return
+        try:
+            await interaction.channel.send(
+                f"{target.mention} {text}",
+                delete_after=10,
+                allowed_mentions=discord.AllowedMentions(users=[target]),
+            )
+        except discord.HTTPException:
+            pass
+
     @staticmethod
     def _summon_title(servant, is_new: bool) -> str:
         return f"Summoned: {servant.name}" + (" (NEW!)" if is_new else "")
@@ -452,7 +469,10 @@ class ContractsCog(commands.Cog):
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[int]]:
         return [
-            app_commands.Choice(name=f"{s.name[:80]} ({s.rarity}\N{BLACK STAR})", value=s.id)
+            app_commands.Choice(
+                name=f"{s.name[:60]} ({class_display(s.class_name)}, {s.rarity}\N{BLACK STAR})",
+                value=s.id,
+            )
             for s in self.bot.servants.search(current, 50)
             if contract_game.is_wishable(s)
         ][:25]
@@ -521,7 +541,10 @@ class ContractsCog(commands.Cog):
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[int]]:
         return [
-            app_commands.Choice(name=f"{s.name[:90]} ({s.rarity}\N{BLACK STAR})", value=s.id)
+            app_commands.Choice(
+                name=f"{s.name[:60]} ({class_display(s.class_name)}, {s.rarity}\N{BLACK STAR})",
+                value=s.id,
+            )
             for s in self.bot.servants.search(current, 25)
         ]
 
@@ -840,6 +863,7 @@ class ContractsCog(commands.Cog):
         servant="The servant to grant (search by name)",
         member="Who receives it (defaults to you)",
         overwrite="Required to replace an existing active contract",
+        quiet="Skip the recipient notification (silent grant)",
     )
     async def grantservant(
         self,
@@ -847,6 +871,7 @@ class ContractsCog(commands.Cog):
         servant: int,
         member: discord.Member | None = None,
         overwrite: bool = False,
+        quiet: bool = False,
     ) -> None:
         if not (is_mod(interaction.user) or await self.bot.is_owner(interaction.user)):
             return await interaction.response.send_message(
@@ -872,6 +897,11 @@ class ContractsCog(commands.Cog):
             f"Granted **{s.name}** ({_stars(s.rarity)}) as {whose} active contract.",
             ephemeral=True,
         )
+        await self._notify_grant(
+            interaction, target,
+            f"was granted **{s.name}** ({_stars(s.rarity)}) as a contracted servant by a mod.",
+            quiet,
+        )
 
     @grantservant.autocomplete("servant")
     async def _grantservant_autocomplete(
@@ -889,6 +919,7 @@ class ContractsCog(commands.Cog):
         grails="Grail amount (omit to leave unchanged)",
         tickets="Summon Ticket amount (omit to leave unchanged)",
         mode="add (default) adjusts by the amount; set replaces the balance",
+        quiet="Skip the recipient notification (silent grant)",
     )
     @app_commands.choices(
         mode=[
@@ -903,6 +934,7 @@ class ContractsCog(commands.Cog):
         grails: int | None = None,
         tickets: int | None = None,
         mode: app_commands.Choice[str] | None = None,
+        quiet: bool = False,
     ) -> None:
         if not (is_mod(interaction.user) or await self.bot.is_owner(interaction.user)):
             return await interaction.response.send_message(
@@ -939,6 +971,11 @@ class ContractsCog(commands.Cog):
         whose = "your" if target.id == interaction.user.id else f"{target.display_name}'s"
         await interaction.response.send_message(
             f"Updated {whose} items -- " + ", ".join(parts) + ".", ephemeral=True
+        )
+        await self._notify_grant(
+            interaction, target,
+            "had their items updated by a mod -- " + ", ".join(parts) + ".",
+            quiet,
         )
 
     @app_commands.command(name="triggerevent", description="(Mods) Spawn a server event now.")

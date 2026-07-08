@@ -50,6 +50,16 @@ def class_display(class_name: str) -> str:
     return class_name.title()
 
 
+# Curated display-name overrides for servants Atlas ships under an ambiguous/colliding name
+# (two "Ereshkigal"s; base vs red-haired "Super" Aoko, both of which Atlas calls "Aozaki Aoko").
+# Keyed by Atlas servant id and applied at load, so they survive a data resync; the original
+# Atlas name is retained as an accepted alias so guess-game answers still match either name.
+NAME_OVERRIDES = {
+    3300200: "Space Ereshkigal",   # Beast-class; Atlas name "Ereshkigal" collides with the Lancer
+    2501500: "Super Aozaki Aoko",  # red-haired form; Atlas name "Aozaki Aoko" collides with base Aoko
+}
+
+
 @dataclass(frozen=True)
 class ServantFilter:
     """Optional pool narrowing from the /guess category params. Each dimension is a set
@@ -126,9 +136,13 @@ class ServantIndex:
 
     @staticmethod
     def _from_item(item: dict, *, npc: bool = False, jp: bool = False) -> Servant:
+        override = NAME_OVERRIDES.get(item["id"])
+        aliases = tuple(item.get("aliases", ()))
+        if override and item["name"] not in aliases:
+            aliases += (item["name"],)  # keep the original Atlas name matchable in guess games
         return Servant(
             id=item["id"],
-            name=item["name"],
+            name=override or item["name"],
             class_name=item.get("className", ""),
             rarity=item.get("rarity", 0),
             art={str(k): v for k, v in item.get("art", {}).items() if v},
@@ -139,7 +153,7 @@ class ServantIndex:
             attribute=item.get("attribute", ""),
             npc=npc or bool(item.get("npc")),
             jp=jp or bool(item.get("jp")),
-            aliases=tuple(item.get("aliases", ())),
+            aliases=aliases,
             traits=frozenset(item.get("traits", ())),
             skills=tuple(
                 (sk["num"], sk["name"], sk["icon"])
