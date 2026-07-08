@@ -899,7 +899,8 @@ class ContractsCog(commands.Cog):
         )
         await self._notify_grant(
             interaction, target,
-            f"was granted **{s.name}** ({_stars(s.rarity)}) as a contracted servant by a mod.",
+            f"**{interaction.user.display_name}** granted you **{s.name}** "
+            f"({_stars(s.rarity)})!",
             quiet,
         )
 
@@ -972,11 +973,22 @@ class ContractsCog(commands.Cog):
         await interaction.response.send_message(
             f"Updated {whose} items -- " + ", ".join(parts) + ".", ephemeral=True
         )
-        await self._notify_grant(
-            interaction, target,
-            "had their items updated by a mod -- " + ", ".join(parts) + ".",
-            quiet,
-        )
+        mod = interaction.user.display_name
+        if setmode:
+            sbits = []
+            if grails is not None:
+                sbits.append(f"Holy Grails to **{grails}**")
+            if tickets is not None:
+                sbits.append(f"Summon Tickets to **{tickets}**")
+            notice = f"**{mod}** set your " + " and ".join(sbits) + "."
+        else:
+            gbits = []
+            if grails is not None:
+                gbits.append(f"**{grails}** Holy Grail{'s' if abs(grails) != 1 else ''}")
+            if tickets is not None:
+                gbits.append(f"**{tickets}** Summon Ticket{'s' if abs(tickets) != 1 else ''}")
+            notice = f"**{mod}** granted you " + " and ".join(gbits) + "!"
+        await self._notify_grant(interaction, target, notice, quiet)
 
     @app_commands.command(name="triggerevent", description="(Mods) Spawn a server event now.")
     @app_commands.guild_only()
