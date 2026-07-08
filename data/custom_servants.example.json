@@ -1,0 +1,40 @@
+[
+  {
+    "_note": "EXAMPLE FILE, not loaded. Copy an entry into custom_servants.json to use it. Two patterns below: an Atlas-sourced event unit, and a fully custom unit.",
+
+    "id": 9939999,
+    "name": "Example Event Enemy",
+    "className": "Assassin",
+    "rarity": 4,
+    "art": { "0": "https://static.atlasacademy.io/NA/CharaGraph/9939999/9939999a.png" },
+    "face": "https://static.atlasacademy.io/NA/Faces/f_99399990.png",
+    "figure": {},
+    "attribute": "human",
+    "gender": "female",
+    "traits": [],
+    "aliases": ["event enemy"],
+    "summon_line": "Optional voice line shown on /summon.",
+    "custom": true,
+    "summon_weight": 0.5,
+    "wishable": false
+  },
+  {
+    "_note": "Fully custom unit: hand-authored art on S3, and a NEGATIVE id so it can never collide with a real Atlas servant id. summon_weight is its relative rarity (lower = rarer); wishable lets players /wish for it.",
+
+    "id": -1,
+    "name": "Server Mascot",
+    "className": "Foreigner",
+    "rarity": 5,
+    "art": { "0": "https://your-bucket.s3.amazonaws.com/custom/server-mascot.png" },
+    "face": "https://your-bucket.s3.amazonaws.com/custom/server-mascot-face.png",
+    "figure": {},
+    "attribute": "star",
+    "gender": "unknown",
+    "traits": [],
+    "aliases": ["mascot"],
+    "summon_line": "For truly custom units, host the art on S3 and pick any unused negative id.",
+    "custom": true,
+    "summon_weight": 0.3,
+    "wishable": true
+  }
+]

@@ -14,6 +14,9 @@ DEFAULT_NPC_PATH = Path(__file__).resolve().parent / "npc_servants.json"
 # `python scripts/sync_atlas.py --jp`. Loaded into the index but gated behind the
 # *jp game commands via the jp flag.
 DEFAULT_JP_PATH = Path(__file__).resolve().parent / "servants_jp.json"
+# Hand-authored summonable units (event NPCs promoted to summonable, or truly custom units).
+# Curated by hand like npc_servants.json; see custom_servants.example.json for the schema.
+DEFAULT_CUSTOM_PATH = Path(__file__).resolve().parent / "custom_servants.json"
 
 
 @dataclass(frozen=True)
@@ -34,6 +37,11 @@ class Servant:
     traits: frozenset[str] = frozenset()  # Atlas trait names; category filter
     skills: tuple[tuple[int, str, str], ...] = ()  # (slot num, name, icon URL); guess_skill
     summon_line: str | None = None  # Atlas 'firstGet' voice line text; shown on /summon
+    custom: bool = False       # hand-authored summonable unit (custom_servants.json); summon-only,
+    #                            excluded from the guessing games. Own rare summon tier.
+    summon_weight: float = 1.0  # a custom unit's relative summon odds (ignored for normal servants)
+    wishable: bool = False     # a custom unit may be /wish-ed (only consulted when custom is True;
+    #                            normal servants are wishable by rule, see is_wishable)
 
     def assets(self, kind: str) -> dict[str, str]:
         return self.figure if kind == "figure" else self.art
@@ -103,6 +111,7 @@ class ServantIndex:
         path: Path | str = DEFAULT_INDEX_PATH,
         npc_path: Path | str = DEFAULT_NPC_PATH,
         jp_path: Path | str = DEFAULT_JP_PATH,
+        custom_path: Path | str = DEFAULT_CUSTOM_PATH,
     ) -> "ServantIndex":
         p = Path(path)
         if not p.exists():
@@ -132,10 +141,20 @@ class ServantIndex:
                 for it in json.loads(jp_p.read_text())
                 if it["id"] not in known
             ]
+        # Hand-authored summonable units: summon-only flexes (event NPCs or truly custom
+        # characters). Loaded last; a custom entry's id wins over any earlier dup.
+        custom_p = Path(custom_path)
+        if custom_p.exists():
+            for it in json.loads(custom_p.read_text()):
+                s = cls._from_item(it, custom=True)
+                servants = [x for x in servants if x.id != s.id]
+                servants.append(s)
         return cls(s for s in servants if s.art or s.figure)
 
     @staticmethod
-    def _from_item(item: dict, *, npc: bool = False, jp: bool = False) -> Servant:
+    def _from_item(
+        item: dict, *, npc: bool = False, jp: bool = False, custom: bool = False
+    ) -> Servant:
         override = NAME_OVERRIDES.get(item["id"])
         aliases = tuple(item.get("aliases", ()))
         if override and item["name"] not in aliases:
@@ -153,6 +172,9 @@ class ServantIndex:
             attribute=item.get("attribute", ""),
             npc=npc or bool(item.get("npc")),
             jp=jp or bool(item.get("jp")),
+            custom=custom or bool(item.get("custom")),
+            summon_weight=float(item.get("summon_weight", 1.0)),
+            wishable=bool(item.get("wishable", False)),
             aliases=aliases,
             traits=frozenset(item.get("traits", ())),
             skills=tuple(
@@ -248,6 +270,7 @@ class ServantIndex:
             s
             for s in self._by_id.values()
             if (include_jp or not s.jp)
+            and not s.custom  # custom units are summon-only, never a guess target
             and (filt is None or filt.matches(s))
             and (not need_skills or len(s.skills) >= 3)
         ]
@@ -277,6 +300,7 @@ class ServantIndex:
             for s in self._by_id.values()
             if s.art
             and not s.npc
+            and not s.custom  # custom units are summon-only, never a guess target
             and (include_jp or not s.jp)
             and (filt is None or filt.matches(s))
         ]
@@ -294,5 +318,8 @@ class ServantIndex:
         return sum(
             1
             for s in self._by_id.values()
-            if s.art and (include_jp or not s.jp) and (filt is None or filt.matches(s))
+            if s.art
+            and not s.custom  # custom units are summon-only, never a guess target
+            and (include_jp or not s.jp)
+            and (filt is None or filt.matches(s))
         )

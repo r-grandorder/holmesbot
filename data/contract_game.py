@@ -119,7 +119,8 @@ def ticket_roll(index, wish: "int | None" = None, *, chance: float = 0.15, allow
         return wished, True
     fives = [
         s for s in index._by_id.values()
-        if not s.jp and s.art and not s.npc and s.rarity == 5 and any(gate(s.id, k) for k in s.art)
+        if not s.jp and s.art and not s.npc and not s.custom and s.rarity == 5
+        and any(gate(s.id, k) for k in s.art)
     ]
     return (random.choice(fives) if fives else wished), False
 
@@ -151,59 +152,90 @@ def war_ticket_reward(factor: float) -> int:
 
 
 def is_wishable(servant) -> bool:
-    """Whether a servant may be set as a /wish: a summonable, non-NPC servant (NPC bosses
-    are exempt)."""
-    return bool(servant) and not servant.jp and bool(servant.art) and not servant.npc
+    """Whether a servant may be set as a /wish: a summonable, non-NPC servant (NPC bosses are
+    exempt). A custom unit is wishable only when its own `wishable` flag is set."""
+    return (
+        bool(servant)
+        and not servant.jp
+        and bool(servant.art)
+        and not servant.npc
+        and (not servant.custom or servant.wishable)
+    )
+
+
+def _summon_buckets(pool, wid):
+    """Weighted summon buckets from `pool`, as a list of (label, weight, members): a roll picks
+    a bucket by weight then a uniform member. Excludes servant id `wid` (the wish target, added
+    as its own bucket by the caller). Shared by roll_servant and summon_rates so the displayed
+    odds always match real pulls. Also returns by_rarity (for the force-5-star pity path)."""
+    npcs = [s for s in pool if s.npc]
+    special = [s for s in pool if s.id in SPECIAL_SERVANTS and not s.npc and s.id != wid]
+    customs = [s for s in pool if s.custom and s.id != wid]  # each is its own weighted tier
+    by_rarity: dict[int, list] = {}
+    for s in pool:
+        if not s.npc and not s.custom and s.id not in SPECIAL_SERVANTS and s.id != wid:
+            by_rarity.setdefault(s.rarity, []).append(s)
+    buckets: list = []
+    if npcs:
+        buckets.append(("NPC bosses", NPC_WEIGHT, npcs))
+    if special:
+        buckets.append(("Special (Angra/Habetrot)", SPECIAL_WEIGHT, special))
+    for rarity, weight in TIER_WEIGHTS.items():
+        if by_rarity.get(rarity):
+            buckets.append((f"{rarity}-star", weight, by_rarity[rarity]))
+    for s in customs:  # each custom unit competes on its own per-unit summon weight
+        buckets.append((s.name, s.summon_weight, [s]))
+    return buckets, by_rarity
 
 
 def roll_servant(index, *, force_5star: bool = False, wish: "int | None" = None, allow=None):
     """Weighted FGO-like roll from the NA + NPC pool (exclude JP-only). With force_5star,
-    return a random 5-star (the pity guarantee, never the wished one). `wish` is a servant
-    id the roller is chasing: a summonable non-NPC gets its own personal tier at
-    WISH_WEIGHT (~1%). `allow(servant_id, ascension_key)` is the content-policy gate:
-    servants with no allowed art are excluded entirely (fail-safe), so a fully-restricted
-    servant is never summoned. Returns a Servant."""
+    return a random 5-star (the pity guarantee, never the wished one). `wish` is a servant id
+    the roller is chasing: a summonable one gets its own personal tier at WISH_WEIGHT (~1%).
+    `allow(servant_id, ascension_key)` is the content-policy gate: servants with no allowed art
+    are excluded entirely (fail-safe). Returns a Servant (or None if the pool is empty)."""
     gate = allow or (lambda _sid, _k: True)
 
     def _has_safe_art(s) -> bool:
         return any(gate(s.id, k) for k in s.art)
 
     pool = [s for s in index._by_id.values() if not s.jp and s.art and _has_safe_art(s)]
-    npcs = [s for s in pool if s.npc]
     wished = index.get(wish) if wish is not None else None
     if not (wished is not None and is_wishable(wished) and _has_safe_art(wished)):
         wished = None
     wid = wished.id if wished is not None else None
-    special = [s for s in pool if s.id in SPECIAL_SERVANTS and not s.npc and s.id != wid]
-    by_rarity: dict[int, list] = {}
-    for s in pool:
-        if not s.npc and s.id not in SPECIAL_SERVANTS and s.id != wid:
-            by_rarity.setdefault(s.rarity, []).append(s)
+    buckets, by_rarity = _summon_buckets(pool, wid)
     if force_5star and by_rarity.get(5):
         return random.choice(by_rarity[5])
-    tiers: list = []
-    weights: list[float] = []
-    if wished is not None:
-        tiers.append("wish")
-        weights.append(WISH_WEIGHT)
-    if npcs:
-        tiers.append("npc")
-        weights.append(NPC_WEIGHT)
-    if special:
-        tiers.append("special")
-        weights.append(SPECIAL_WEIGHT)
-    for rarity, weight in TIER_WEIGHTS.items():
-        if by_rarity.get(rarity):
-            tiers.append(rarity)
-            weights.append(weight)
-    tier = random.choices(tiers, weights=weights, k=1)[0]
-    if tier == "wish":
-        return wished
-    if tier == "npc":
-        return random.choice(npcs)
-    if tier == "special":
-        return random.choice(special)
-    return random.choice(by_rarity[tier])
+    if wished is not None:  # the wish gets its own personal tier
+        buckets = [("wish", WISH_WEIGHT, [wished])] + buckets
+    if not buckets:
+        return None
+    members = random.choices(
+        [m for _, _, m in buckets], weights=[w for _, w, _ in buckets], k=1
+    )[0]
+    return random.choice(members)
+
+
+def summon_rates(index, *, allow=None):
+    """The live summon rate table (for /summonodds), as (rows, total_weight). Each row is
+    (kind, label, weight, pct, count, per_each_pct) with kind in {'tier','custom'}. Uses the
+    same buckets as roll_servant minus the per-user wish tier, so the numbers match real pulls;
+    per_each_pct is one member's chance (pct / count)."""
+    gate = allow or (lambda _sid, _k: True)
+    pool = [
+        s for s in index._by_id.values()
+        if not s.jp and s.art and any(gate(s.id, k) for k in s.art)
+    ]
+    buckets, _ = _summon_buckets(pool, None)
+    total = sum(w for _, w, _ in buckets) or 1.0
+    rows = []
+    for label, weight, members in buckets:
+        pct = 100.0 * weight / total
+        count = len(members)
+        kind = "custom" if members and members[0].custom else "tier"
+        rows.append((kind, label, weight, pct, count, pct / count))
+    return rows, total
 
 
 # --- duels ---

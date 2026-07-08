@@ -748,11 +748,13 @@ class ContractsCog(commands.Cog):
 
     @app_commands.command(name="warstatus", description="Show the faction war standings.")
     @app_commands.guild_only()
-    async def warstatus(self, interaction: discord.Interaction) -> None:
+    @app_commands.describe(public="Mods only: post the standings publicly instead of just to you")
+    async def warstatus(self, interaction: discord.Interaction, public: bool = False) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
         if not await self.bot.wars.active(interaction.guild_id):
             return await interaction.response.send_message("No war is running right now.", ephemeral=True)
+        is_public, note = await self._resolve_public(interaction, public)
         standings = await self.bot.wars.standings(interaction.guild_id)
         leader = standings[0]["score"] if standings else 0
         avg_size = (sum(f["members"] for f in standings) / len(standings)) if standings else 0
@@ -768,11 +770,12 @@ class ContractsCog(commands.Cog):
                 f"**{i}.** {f['name']}  {bar}  {f['score']:,} pts \N{MIDDLE DOT} "
                 f"{f['members']} members \N{MIDDLE DOT} {reward}"
             )
-        mine = await self.bot.wars.member(interaction.guild_id, interaction.user.id)
-        if mine is not None:
-            lines.append(f"\nYour faction: **{mine['name']}** -- you've scored {mine['score']:,} pts")
-        else:
-            lines.append("\nYou haven't joined -- use /warjoin.")
+        if not is_public:  # the personal line is invoker-specific; omit it from a public post
+            mine = await self.bot.wars.member(interaction.guild_id, interaction.user.id)
+            if mine is not None:
+                lines.append(f"\nYour faction: **{mine['name']}** -- you've scored {mine['score']:,} pts")
+            else:
+                lines.append("\nYou haven't joined -- use /warjoin.")
         ends = await self.bot.wars.ends_at(interaction.guild_id)
         if ends:
             lines.append(f"Ends <t:{ends}:R>")
@@ -782,7 +785,10 @@ class ContractsCog(commands.Cog):
         if banner:
             embed.set_image(url="attachment://banner.png")
             file = discord.File(io.BytesIO(banner), filename="banner.png")
-        await interaction.response.send_message(embed=embed, file=file, ephemeral=True)
+        await interaction.response.send_message(
+            content=note, embed=embed, file=file, ephemeral=not is_public,
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
 
     @app_commands.command(name="warend", description="(Mods) End the faction war now and reward the winner.")
     @app_commands.guild_only()
@@ -989,6 +995,34 @@ class ContractsCog(commands.Cog):
                 gbits.append(f"**{tickets}** Summon Ticket{'s' if abs(tickets) != 1 else ''}")
             notice = f"**{mod}** granted you " + " and ".join(gbits) + "!"
         await self._notify_grant(interaction, target, notice, quiet)
+
+    @app_commands.command(name="summonodds", description="(Mods) Show the live summon rate table (tune custom-unit weights).")
+    @app_commands.guild_only()
+    async def summonodds(self, interaction: discord.Interaction) -> None:
+        if not (is_mod(interaction.user) or await self.bot.is_owner(interaction.user)):
+            return await interaction.response.send_message(
+                "You need moderator permissions to view summon odds.", ephemeral=True
+            )
+        allow = await self.bot.restrictions.build_allow()
+        rows, _ = contract_game.summon_rates(self.bot.servants, allow=allow)
+        tier_lines, custom_lines = [], []
+        for kind, label, weight, pct, count, each in rows:
+            if kind == "custom":
+                custom_lines.append(f"**{label}**: {pct:.3f}%  (weight {weight:g})")
+            elif count > 1:
+                tier_lines.append(f"**{label}**: {pct:.2f}%  ({count} servants, ~{each:.3f}% each)")
+            else:
+                tier_lines.append(f"**{label}**: {pct:.2f}%")
+        desc = "Chance per single summon.\n\n" + "\n".join(tier_lines)
+        if custom_lines:
+            desc += "\n\n__Custom units__\n" + "\n".join(custom_lines)
+        else:
+            desc += "\n\n_No custom units configured yet (add them in custom_servants.json)._"
+        embed = discord.Embed(title="Summon Odds", description=desc, color=discord.Color.blurple())
+        embed.set_footer(
+            text="Excludes the per-player wish tier (~1%). summon_weight is roughly the percent chance."
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.command(name="triggerevent", description="(Mods) Spawn a server event now.")
     @app_commands.guild_only()
