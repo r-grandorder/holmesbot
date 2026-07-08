@@ -366,27 +366,41 @@ class ContractsCog(commands.Cog):
             return await interaction.response.send_message(_DENY, ephemeral=True)
         target = member or interaction.user
         is_self = target.id == interaction.user.id
-        status, cap = await self.bot.contracts.apply_grail(
+        status, cap, servant_id = await self.bot.contracts.apply_grail(
             interaction.guild_id, interaction.user.id, target.id
         )
         if status == "no_contract":
             msg = ("You have no active contract. Use /summon first." if is_self
                    else f"{target.display_name} has no active contract.")
-        elif status == "not_max":
-            msg = (f"Your servant must be at its cap (level {cap}) to grail." if is_self
-                   else f"{target.display_name}'s servant must be at its cap (level {cap}) to grail.")
-        elif status == "no_grails":
-            msg = "You have no grails. Claim them from chat drops."
-        elif is_self:
-            msg = f"Grail used -- your servant's cap is now **{cap}**."
-        else:
-            msg = (f"{interaction.user.display_name} grailed {target.mention}'s servant -- "
-                   f"its cap is now **{cap}**!")
-        public = status == "ok" and not is_self
+            return await interaction.response.send_message(msg, ephemeral=True)
+        if status == "no_grails":
+            return await interaction.response.send_message(
+                "You have no grails. Claim them from chat drops.", ephemeral=True
+            )
+        servant = self.bot.servants.get(servant_id) if servant_id else None
+        if is_self:
+            who = f"your **{servant.name}**" if servant else "your servant"
+            return await interaction.response.send_message(
+                f"Grail used -- {who}'s cap is now **{cap}**.", ephemeral=True
+            )
+        # grailing another player's servant: a public, celebratory embed with its portrait
+        allow = await self.bot.restrictions.build_allow()
+        whose = f"**{servant.name}**" if servant else "servant"
+        embed = discord.Embed(
+            title="Grail Bestowed",
+            description=(
+                f"{interaction.user.mention} grailed {target.mention}'s {whose} -- "
+                f"its cap is now **{cap}**!"
+            ),
+            color=(_RARITY_COLOR.get(servant.rarity, discord.Color.blurple())
+                   if servant else discord.Color.blurple()),
+        )
+        if servant:
+            art = contract_game.display_art(servant, allow)
+            if art and servant.face:  # gate the portrait on safe art (fully restricted -> none)
+                embed.set_thumbnail(url=servant.face)
         await interaction.response.send_message(
-            msg,
-            ephemeral=not public,
-            allowed_mentions=discord.AllowedMentions(users=[target] if public else []),
+            embed=embed, allowed_mentions=discord.AllowedMentions(users=[target])
         )
 
     @app_commands.command(name="wish", description="Chase a servant: it gets boosted summon odds (NPC bosses excluded).")
@@ -794,6 +808,113 @@ class ContractsCog(commands.Cog):
         await interaction.response.send_message(
             f"Set {member.display_name}'s **{name}** to level **{level}** (cap {cap}).",
             ephemeral=True,
+        )
+
+    @app_commands.command(name="grantservant", description="(Mods) Grant a servant contract to a member.")
+    @app_commands.guild_only()
+    @app_commands.describe(
+        servant="The servant to grant (search by name)",
+        member="Who receives it (defaults to you)",
+        overwrite="Required to replace an existing active contract",
+    )
+    async def grantservant(
+        self,
+        interaction: discord.Interaction,
+        servant: int,
+        member: discord.Member | None = None,
+        overwrite: bool = False,
+    ) -> None:
+        if not (is_mod(interaction.user) or await self.bot.is_owner(interaction.user)):
+            return await interaction.response.send_message(
+                "You need moderator permissions to grant servants.", ephemeral=True
+            )
+        s = self.bot.servants.get(servant)
+        if s is None:
+            return await interaction.response.send_message("No such servant.", ephemeral=True)
+        target = member or interaction.user
+        current = await self.bot.contracts.active(interaction.guild_id, target.id)
+        if current is not None and current["servant_id"] != servant and not overwrite:
+            cur = self.bot.servants.get(current["servant_id"])
+            cur_name = cur.name if cur else f"ID {current['servant_id']}"
+            return await interaction.response.send_message(
+                f"{target.display_name} already has **{cur_name}** contracted. Re-run with "
+                f"overwrite: True to switch to {s.name} (their {cur_name} progress is saved and "
+                "resumes if re-contracted).",
+                ephemeral=True,
+            )
+        await self.bot.contracts.contract(interaction.guild_id, target.id, servant)
+        whose = "your" if target.id == interaction.user.id else f"{target.display_name}'s"
+        await interaction.response.send_message(
+            f"Granted **{s.name}** ({_stars(s.rarity)}) as {whose} active contract.",
+            ephemeral=True,
+        )
+
+    @grantservant.autocomplete("servant")
+    async def _grantservant_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[int]]:
+        return [
+            app_commands.Choice(name=f"{s.name[:90]} (#{s.id})", value=s.id)
+            for s in self.bot.servants.search(current, 25)
+        ]
+
+    @app_commands.command(name="grantitems", description="(Mods) Set or add a member's grails and Summon Tickets.")
+    @app_commands.guild_only()
+    @app_commands.describe(
+        member="Whose items to adjust (defaults to you)",
+        grails="Grail amount (omit to leave unchanged)",
+        tickets="Summon Ticket amount (omit to leave unchanged)",
+        mode="add (default) adjusts by the amount; set replaces the balance",
+    )
+    @app_commands.choices(
+        mode=[
+            app_commands.Choice(name="add", value="add"),
+            app_commands.Choice(name="set", value="set"),
+        ]
+    )
+    async def grantitems(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member | None = None,
+        grails: int | None = None,
+        tickets: int | None = None,
+        mode: app_commands.Choice[str] | None = None,
+    ) -> None:
+        if not (is_mod(interaction.user) or await self.bot.is_owner(interaction.user)):
+            return await interaction.response.send_message(
+                "You need moderator permissions to grant items.", ephemeral=True
+            )
+        if grails is None and tickets is None:
+            return await interaction.response.send_message(
+                "Specify grails and/or tickets to change.", ephemeral=True
+            )
+        setmode = (mode.value if mode else "add") == "set"
+        if setmode and ((grails is not None and grails < 0) or (tickets is not None and tickets < 0)):
+            return await interaction.response.send_message(
+                "A set amount can't be negative.", ephemeral=True
+            )
+        target = member or interaction.user
+        gid = interaction.guild_id
+        parts: list[str] = []
+        if grails is not None:
+            if setmode:
+                newg = await self.bot.contracts.set_grails(gid, target.id, grails)
+            else:
+                newg = await self.bot.contracts.grant_grails(gid, target.id, grails)
+                if newg < 0:
+                    newg = await self.bot.contracts.set_grails(gid, target.id, 0)
+            parts.append(f"grails: **{newg}**")
+        if tickets is not None:
+            if setmode:
+                newt = await self.bot.contracts.set_tickets(gid, target.id, tickets)
+            else:
+                newt = await self.bot.contracts.grant_tickets(gid, target.id, tickets)
+                if newt < 0:
+                    newt = await self.bot.contracts.set_tickets(gid, target.id, 0)
+            parts.append(f"tickets: **{newt}**")
+        whose = "your" if target.id == interaction.user.id else f"{target.display_name}'s"
+        await interaction.response.send_message(
+            f"Updated {whose} items -- " + ", ".join(parts) + ".", ephemeral=True
         )
 
     @app_commands.command(name="triggerevent", description="(Mods) Spawn a server event now.")

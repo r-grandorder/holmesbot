@@ -61,8 +61,12 @@ def level_cap(grails_used: int) -> int:
 
 
 def xp_to_next(level: int) -> int:
-    """XP required to go from `level` to level+1 (a gentle upward curve)."""
-    return 200 + 4 * level
+    """XP to go from `level` to level+1. Flat and cheap below BASE_CAP so the 1-60 climb stays
+    quick (~4 messages a level); only past the base cap (grail territory) does the cost ramp,
+    making post-cap levels the real grind."""
+    if level < BASE_CAP:
+        return 100
+    return 100 + 25 * (level - BASE_CAP + 1)
 
 
 def apply_xp(level: int, xp: int, cap: int) -> tuple[int, int]:

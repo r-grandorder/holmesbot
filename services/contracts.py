@@ -149,6 +149,17 @@ class ContractService:
             n,
         )
 
+    async def set_tickets(self, guild_id: int, user_id: int, n: int) -> int:
+        """Mod override: set the ticket balance to exactly n."""
+        await self.pool.execute(
+            "INSERT INTO grail_balance (guild_id, user_id, summon_tickets) VALUES ($1, $2, $3) "
+            "ON CONFLICT (guild_id, user_id) DO UPDATE SET summon_tickets = $3",
+            guild_id,
+            user_id,
+            n,
+        )
+        return n
+
     async def use_ticket(self, guild_id: int, user_id: int) -> bool:
         """Consume one Summon Ticket; returns True if one was spent."""
         async with self.pool.acquire() as conn:
@@ -186,32 +197,42 @@ class ContractService:
             n,
         )
 
+    async def set_grails(self, guild_id: int, user_id: int, n: int) -> int:
+        """Mod override: set the grail balance to exactly n."""
+        await self.pool.execute(
+            "INSERT INTO grail_balance (guild_id, user_id, balance) VALUES ($1, $2, $3) "
+            "ON CONFLICT (guild_id, user_id) DO UPDATE SET balance = $3",
+            guild_id,
+            user_id,
+            n,
+        )
+        return n
+
     async def apply_grail(
         self, guild_id: int, giver_id: int, target_id: int
-    ) -> "tuple[str, int | None]":
+    ) -> "tuple[str, int | None, int | None]":
         """Spend one of giver's grails to raise target's active servant cap by GRAIL_STEP
-        (giver == target for a self-grail). Returns a (status, cap) pair -- status in
-        {'ok','no_contract','not_max','no_grails'}."""
+        (giver == target for a self-grail). Allowed at any level -- it just banks another +5 of
+        headroom. Returns (status, new_cap, servant_id) -- status in
+        {'ok','no_contract','no_grails'}; cap is None unless 'ok', servant_id None only for
+        'no_contract'."""
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 row = await conn.fetchrow(
-                    "SELECT servant_id, level, grails_used FROM servant_contracts "
+                    "SELECT servant_id, grails_used FROM servant_contracts "
                     "WHERE guild_id = $1 AND user_id = $2 AND active = 1",
                     guild_id,
                     target_id,
                 )
                 if row is None:
-                    return "no_contract", None
-                cap = contract_game.level_cap(row["grails_used"])
-                if row["level"] < cap:
-                    return "not_max", cap
+                    return "no_contract", None, None
                 bal = await conn.fetchval(
                     "SELECT balance FROM grail_balance WHERE guild_id = $1 AND user_id = $2",
                     guild_id,
                     giver_id,
                 )
                 if not bal:
-                    return "no_grails", cap
+                    return "no_grails", None, row["servant_id"]
                 await conn.execute(
                     "UPDATE grail_balance SET balance = balance - 1 "
                     "WHERE guild_id = $1 AND user_id = $2",
@@ -226,7 +247,7 @@ class ContractService:
                     target_id,
                     row["servant_id"],
                 )
-                return "ok", cap + contract_game.GRAIL_STEP
+                return "ok", contract_game.level_cap(row["grails_used"] + 1), row["servant_id"]
 
     async def board(self, guild_id: int) -> "list[Row]":
         """All of the guild's contracts, ranked by level (then grails). The cog applies
