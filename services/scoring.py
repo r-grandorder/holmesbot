@@ -110,6 +110,19 @@ class ScoringService:
             amount,
         )
 
+    async def try_spend(self, guild_id: int, user_id: int, amount: int) -> bool:
+        """Atomically deduct `amount` from the spendable balance only if it's affordable.
+        Returns True if spent, False if the balance was insufficient (or no row). A single
+        conditional UPDATE, so rapid double-clicks (e.g. a shop button) can't overspend."""
+        row = await self.pool.fetchrow(
+            "UPDATE scores SET balance = balance - $3, updated_at = CURRENT_TIMESTAMP "
+            "WHERE guild_id = $1 AND user_id = $2 AND balance >= $3 RETURNING balance",
+            guild_id,
+            user_id,
+            amount,
+        )
+        return row is not None
+
     async def set_balance(self, guild_id: int, user_id: int, amount: int) -> int:
         amount = max(0, min(amount, MAX_QP))
         return await self.pool.fetchval(

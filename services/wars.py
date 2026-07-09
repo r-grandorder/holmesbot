@@ -23,30 +23,36 @@ class WarService:
         banner: "bytes | None" = None,
         ends_at: "int | None" = None,
         channel_id: "int | None" = None,
+        name: "str | None" = None,
+        description: "str | None" = None,
     ) -> None:
         """Open a season with the given faction names (2-4), resetting all scores and members.
         `banner` is an optional image shown on the war; `ends_at` (unix) auto-ends it, announced
-        in `channel_id`."""
+        in `channel_id`. `name`/`description` are an optional war title + blurb shown in
+        /warstatus and the announcements."""
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 await conn.execute("DELETE FROM war_factions WHERE guild_id = $1", guild_id)
                 await conn.execute("DELETE FROM war_members WHERE guild_id = $1", guild_id)
-                for slot, name in enumerate(names):
+                for slot, fname in enumerate(names):
                     await conn.execute(
                         "INSERT INTO war_factions (guild_id, slot, name, score) VALUES ($1, $2, $3, 0)",
                         guild_id,
                         slot,
-                        name,
+                        fname,
                     )
                 await conn.execute(
-                    "INSERT INTO war (guild_id, active, started_at, banner, ends_at, channel_id) "
-                    "VALUES ($1, 1, CURRENT_TIMESTAMP, $2, $3, $4) "
+                    "INSERT INTO war "
+                    "(guild_id, active, started_at, banner, ends_at, channel_id, name, description) "
+                    "VALUES ($1, 1, CURRENT_TIMESTAMP, $2, $3, $4, $5, $6) "
                     "ON CONFLICT (guild_id) DO UPDATE SET active = 1, started_at = CURRENT_TIMESTAMP, "
-                    "banner = $2, ends_at = $3, channel_id = $4",
+                    "banner = $2, ends_at = $3, channel_id = $4, name = $5, description = $6",
                     guild_id,
                     banner,
                     ends_at,
                     channel_id,
+                    name,
+                    description,
                 )
 
     async def banner(self, guild_id: int) -> "bytes | None":
@@ -54,6 +60,12 @@ class WarService:
 
     async def ends_at(self, guild_id: int) -> "int | None":
         return await self.pool.fetchval("SELECT ends_at FROM war WHERE guild_id = $1", guild_id)
+
+    async def name(self, guild_id: int) -> "str | None":
+        return await self.pool.fetchval("SELECT name FROM war WHERE guild_id = $1", guild_id)
+
+    async def description(self, guild_id: int) -> "str | None":
+        return await self.pool.fetchval("SELECT description FROM war WHERE guild_id = $1", guild_id)
 
     async def expired(self) -> "list[Row]":
         """Active wars past their end time -- (guild_id, channel_id) for the auto-end ticker."""

@@ -409,6 +409,17 @@ class ContractsCog(commands.Cog):
         embed.add_field(name="Summon Tickets", value=f"{tickets:,} {te}".strip() if te else str(tickets))
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+    @app_commands.command(name="shop", description="Visit Da Vinci's Workshop to spend QP on Holy Grails and Summon Tickets.")
+    @app_commands.guild_only()
+    async def shop(self, interaction: discord.Interaction) -> None:
+        if not self._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        view = ShopView(self, interaction.user.id)
+        await interaction.response.send_message(
+            embed=await view.render(interaction.guild_id), view=view, ephemeral=True
+        )
+        view.interaction = interaction
+
     @app_commands.command(name="grail", description="Spend a grail to raise a servant's cap (yours or another player's).")
     @app_commands.guild_only()
     @app_commands.describe(member="Whose servant to grail (defaults to yours)")
@@ -743,6 +754,8 @@ class ContractsCog(commands.Cog):
         faction_b="Second faction name",
         faction_c="Third faction (optional)",
         faction_d="Fourth faction (optional)",
+        name="War title shown in /warstatus and announcements (optional)",
+        description="Short flavor/rules blurb shown with the war (optional)",
         banner="Optional banner image shown on the war",
         days="Days until the war auto-ends (default 7)",
     )
@@ -753,6 +766,8 @@ class ContractsCog(commands.Cog):
         faction_b: str,
         faction_c: str | None = None,
         faction_d: str | None = None,
+        name: str | None = None,
+        description: str | None = None,
         banner: discord.Attachment | None = None,
         days: float | None = None,
     ) -> None:
@@ -760,7 +775,7 @@ class ContractsCog(commands.Cog):
             return await interaction.response.send_message(
                 "You need moderator permissions to start a war.", ephemeral=True
             )
-        names = [n.strip()[:40] for n in (faction_a, faction_b, faction_c, faction_d) if n and n.strip()]
+        names = [n.strip()[:80] for n in (faction_a, faction_b, faction_c, faction_d) if n and n.strip()]
         if len(names) < 2:
             return await interaction.response.send_message(
                 "A war needs at least 2 factions.", ephemeral=True
@@ -778,14 +793,20 @@ class ContractsCog(commands.Cog):
             banner_bytes = await banner.read()
         length = contract_game.WAR_DEFAULT_DAYS if days is None else max(0.01, days)
         ends_at = int(time.time() + length * 86400)
+        clean_name = name.strip()[:80] if name and name.strip() else None
+        clean_desc = description.strip()[:400] if description and description.strip() else None
         await self.bot.wars.start(
-            interaction.guild_id, names, banner_bytes, ends_at, interaction.channel_id
+            interaction.guild_id, names, banner_bytes, ends_at, interaction.channel_id,
+            name=clean_name, description=clean_desc,
         )
         embed = discord.Embed(
-            title="The War Begins!",
-            description="Factions: " + ", ".join(f"**{n}**" for n in names)
-            + ".\nPlayers, /warjoin a side -- every level you gain scores for your faction.\n"
-            + f"Ends <t:{ends_at}:R>.",
+            title=clean_name or "The War Begins!",
+            description=(
+                (f"*{clean_desc}*\n\n" if clean_desc else "")
+                + "Factions: " + ", ".join(f"**{n}**" for n in names)
+                + ".\nPlayers, /warjoin a side -- every level you gain scores for your faction.\n"
+                + f"Ends <t:{ends_at}:R>."
+            ),
             color=discord.Color.orange(),
         )
         file = discord.utils.MISSING
@@ -859,7 +880,12 @@ class ContractsCog(commands.Cog):
         ends = await self.bot.wars.ends_at(interaction.guild_id)
         if ends:
             lines.append(f"Ends <t:{ends}:R>")
-        embed = discord.Embed(title="Faction War", description="\n".join(lines))
+        war_name = await self.bot.wars.name(interaction.guild_id)
+        war_desc = await self.bot.wars.description(interaction.guild_id)
+        body = "\n".join(lines)
+        if war_desc:
+            body = f"*{war_desc}*\n\n" + body
+        embed = discord.Embed(title=war_name or "Faction War", description=body)
         banner = await self.bot.wars.banner(interaction.guild_id)
         file = discord.utils.MISSING
         if banner:
@@ -887,15 +913,17 @@ class ContractsCog(commands.Cog):
         None if no war is active. Shared by /warend and the auto-end ticker."""
         if not await self.bot.wars.active(guild_id):
             return None
+        war_name = await self.bot.wars.name(guild_id)
+        cap_label = war_name or "The war"  # capitalized for sentence starts
         standings = await self.bot.wars.standings(guild_id)
         await self.bot.wars.end(guild_id)
         if not standings or standings[0]["score"] == 0:
-            return "The war ends with no points scored -- no winner."
+            return f"{cap_label} ends with no points scored -- no winner."
         top = standings[0]["score"]
         winners = [f for f in standings if f["score"] == top]
         if len(winners) > 1:
             names = " and ".join(f"**{w['name']}**" for w in winners)
-            return f"The war ends in a tie between {names} at {top:,} pts! No payout."
+            return f"{cap_label} ends in a tie between {names} at {top:,} pts! No payout."
         win = winners[0]
         members = await self.bot.wars.faction_members(guild_id, win["slot"])
         avg_size = sum(f["members"] for f in standings) / len(standings)
@@ -909,7 +937,7 @@ class ContractsCog(commands.Cog):
         ticket_word = f"{tickets_each} Summon Ticket{'s' if tickets_each != 1 else ''}"
         bonus = " (outnumbered-win bonus!)" if factor > 1.0 else ""
         return (
-            f"**{win['name']}** wins the war with **{top:,} pts**!{bonus} Each of the "
+            f"**{win['name']}** wins {war_name or 'the war'} with **{top:,} pts**!{bonus} Each of the "
             f"{len(members)} member(s) earns **{ticket_word}**{' ' + te if te else ''} + {qp(qp_each)}."
         )
 
@@ -1260,6 +1288,99 @@ class ContractsCog(commands.Cog):
             )
         except (discord.HTTPException, OSError):
             pass
+
+
+_SHOP_HOST_ID = 403500  # Rider Da Vinci -- FGO's shopkeeper, hosts /shop
+_SHOP_HOST_LINES = [
+    "Welcome to my workshop! Now, what can I interest a master like you in?",
+    "A paying customer! Genius craftsmanship at reasonable-ish prices, just for you, Master.",
+    "QP burning a hole in your pocket, Master? Allow me to help with that.",
+    "Everything here is handcrafted by yours truly, a universal genius. What'll it be?",
+]
+
+
+class ShopView(discord.ui.View):
+    """Ephemeral QP shop (/shop): buy Holy Grails and Summon Tickets. Invoker-scoped; the embed
+    refreshes after each purchase so the running QP balance stays accurate. Purchases draw from
+    the spendable balance only, so they never touch the (lifetime) QP leaderboard."""
+
+    def __init__(self, cog, user_id: int) -> None:
+        super().__init__(timeout=180)
+        self.cog = cog
+        self.user_id = user_id
+        self.interaction: "discord.Interaction | None" = None
+        self.line = random.choice(_SHOP_HOST_LINES)  # host greeting, stable for this session
+        cfg = cog.bot.config
+        grail_btn = discord.ui.Button(
+            label=f"Grail ({cfg.shop_grail_cost:,} QP)", style=discord.ButtonStyle.primary
+        )
+        grail_btn.callback = self._buy_grail
+        self.add_item(grail_btn)
+        ticket_btn = discord.ui.Button(
+            label=f"Summon Ticket ({cfg.shop_ticket_cost:,} QP)", style=discord.ButtonStyle.success
+        )
+        ticket_btn.callback = self._buy_ticket
+        self.add_item(ticket_btn)
+
+    async def render(self, guild_id: int) -> discord.Embed:
+        cfg = self.cog.bot.config
+        bal = await self.cog.bot.scoring.get_balance(guild_id, self.user_id)
+        grails = await self.cog.bot.contracts.grail_balance(guild_id, self.user_id)
+        tickets = await self.cog.bot.contracts.summon_tickets(guild_id, self.user_id)
+        ge, te = cfg.grail_emote, cfg.summon_ticket_emote
+        host = self.cog.bot.servants.get(_SHOP_HOST_ID)
+        embed = discord.Embed(
+            title="QP Shop",
+            description=(
+                f'*"{self.line}"*\n\n'
+                f"Your QP: **{qp(bal)}**\n\n"
+                f"**Holy Grail** ({qp(cfg.shop_grail_cost)}) -- goes to your stash; spend it with /grail to raise a cap by 5.\n"
+                f"**Summon Ticket** ({qp(cfg.shop_ticket_cost)}) -- redeem with /redeem for a boosted pull."
+            ),
+            color=discord.Color.blurple(),
+        )
+        if host is not None and host.face:
+            embed.set_author(name=f"{host.name}'s Workshop", icon_url=host.face)
+        embed.add_field(
+            name="Your Holy Grails", value=f"{grails:,} {ge}".strip() if ge else str(grails)
+        )
+        embed.add_field(
+            name="Your Summon Tickets", value=f"{tickets:,} {te}".strip() if te else str(tickets)
+        )
+        return embed
+
+    async def _buy(self, interaction: discord.Interaction, cost: int, grant, label: str) -> None:
+        # The shop message is ephemeral, so only its invoker can see or click it -- no
+        # invoker-id guard needed (same as SummonView).
+        gid = interaction.guild_id
+        if not await self.cog.bot.scoring.try_spend(gid, self.user_id, cost):
+            bal = await self.cog.bot.scoring.get_balance(gid, self.user_id)
+            return await interaction.response.send_message(
+                f"Not enough QP for a {label}: it costs {qp(cost)}, you have {qp(bal)}.", ephemeral=True
+            )
+        await grant(gid, self.user_id, 1)
+        await interaction.response.edit_message(embed=await self.render(gid), view=self)
+
+    async def _buy_grail(self, interaction: discord.Interaction) -> None:
+        await self._buy(
+            interaction, self.cog.bot.config.shop_grail_cost,
+            self.cog.bot.contracts.grant_grails, "Holy Grail",
+        )
+
+    async def _buy_ticket(self, interaction: discord.Interaction) -> None:
+        await self._buy(
+            interaction, self.cog.bot.config.shop_ticket_cost,
+            self.cog.bot.contracts.grant_tickets, "Summon Ticket",
+        )
+
+    async def on_timeout(self) -> None:
+        for child in self.children:
+            child.disabled = True  # type: ignore[attr-defined]
+        if self.interaction is not None:
+            try:
+                await self.interaction.edit_original_response(view=self)
+            except discord.HTTPException:
+                pass
 
 
 class SummonView(discord.ui.View):

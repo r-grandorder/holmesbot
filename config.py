@@ -36,6 +36,9 @@ class Config:
     contract_open: bool
     contract_whitelist: frozenset[int]
     contract_summon_cost: int
+    # QP shop prices (/shop).
+    shop_grail_cost: int
+    shop_ticket_cost: int
     # A Summon Ticket's chance (0..1) to pull your /wish target, else a guaranteed 5-star.
     summon_ticket_wish_chance: float
     # How contract level-up pings behave: "off" | "milestones" (every Nth level + at cap) | "all".
@@ -78,6 +81,8 @@ class Config:
             contract_open=contract_open,
             contract_whitelist=contract_whitelist,
             contract_summon_cost=int(os.environ.get("CONTRACT_SUMMON_COST") or "100"),
+            shop_grail_cost=int(os.environ.get("SHOP_GRAIL_COST") or "10000"),
+            shop_ticket_cost=int(os.environ.get("SHOP_TICKET_COST") or "100000"),
             summon_ticket_wish_chance=float(os.environ.get("SUMMON_TICKET_WISH_CHANCE") or "0.15"),
             levelup_announce=levelup_announce,
         )
