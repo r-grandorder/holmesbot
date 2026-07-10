@@ -34,10 +34,10 @@ def _prefix(name: str, frac: float) -> str:
 
 
 def _ce_hints(ce) -> "list[tuple[str, str]]":
-    """CE hints are all name-based: rarity is useless (every CE is 5-star) and CEs carry no
-    class/gender. Progressive reveals -- masked initials (word count + lengths + first letters),
-    then a growing prefix of the name -- each drops the win via HINT_REWARD (0.7/0.5/0.3), so a
-    name reveal is decently penalized."""
+    """CE hints are all name-based: rarity barely narrows it (the pool is 5-star gacha CEs +
+    4-star bond CEs) and CEs carry no class/gender. Progressive reveals -- masked initials (word
+    count + lengths + first letters), then a growing prefix of the name -- each drops the win via
+    HINT_REWARD (0.7/0.5/0.3), so a name reveal is decently penalized."""
     name = ce.name
     initials = " ".join(w[0] + "-" * (len(w) - 1) for w in name.split())
     return [

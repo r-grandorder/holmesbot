@@ -1,6 +1,7 @@
 """Fetch the NA nice_equip export (Craft Essences) and write data/ce.json for the CE guessing
-game. Keeps 4-5* CEs that have charaGraph art -- the recognizable gacha/welfare ones -- and
-drops lower-rarity event fodder so the game stays guessable. Mirrors scripts/sync_atlas.py.
+game. Keeps the recognizable CEs -- 5-star gacha/welfare illustrations plus 4-star bond CEs
+(one iconic lore art per servant) -- and drops the generic 4-star campaign/event fodder so the
+game stays guessable. Mirrors scripts/sync_atlas.py.
 
     python scripts/sync_ce.py        (or: make sync-ce)
 """
@@ -15,8 +16,11 @@ REGION = "NA"
 EXPORT_URL = f"https://api.atlasacademy.io/export/{REGION}/nice_equip.json"
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 OUT_PATH = DATA_DIR / "ce.json"
-MIN_RARITY = 5  # 5-star CEs are the recognizable gacha illustrations; lower tiers are mostly
-#                 forgettable event fodder. Tunable -- drop to 4 for a much larger, harder pool.
+# The pool: 5-star gacha CEs (the classic illustrations) plus 4-star bond CEs, which are
+# character-tied and recognizable. Everything else at 4-star and below is campaign/event fodder
+# that would make the game unguessable, so it's dropped.
+KEEP_RARITY = 5
+BOND_FLAG = "svtEquipFriendShip"
 
 
 def _first_url(group: dict) -> "str | None":
@@ -38,7 +42,9 @@ def main() -> int:
 
     trimmed = []
     for e in equips:
-        if e.get("type") != "servantEquip" or e.get("rarity", 0) < MIN_RARITY:
+        if e.get("type") != "servantEquip":
+            continue
+        if e.get("rarity", 0) < KEEP_RARITY and e.get("flag") != BOND_FLAG:
             continue
         extra = e.get("extraAssets", {})
         art = _first_url(extra.get("charaGraph", {}))
