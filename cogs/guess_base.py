@@ -866,6 +866,12 @@ class ChatRound:
             embed.add_field(name="Rarity", value=f"{s.rarity}-star")
         if s.cv:
             embed.add_field(name="CV", value=s.cv)
+        # Bond CEs (guess_ce) carry their owner servant's id -- name them on the reveal.
+        owner_id = getattr(s, "bond_owner", None)
+        if owner_id:
+            owner = self.bot.servants.get(owner_id)
+            if owner:
+                embed.add_field(name="Bond CE for", value=owner.name)
         also = self._also_accepted()
         if also:
             embed.add_field(name="Also accepted", value=also, inline=False)

@@ -1,7 +1,8 @@
 """Craft Essences for the /guessce game. A CraftEssence deliberately duck-types the Servant
 fields the guessing framework touches (name, id, rarity, aliases, class_name, gender, art),
 so ChatRound / launch_round / reveals treat CEs exactly like servants with no changes. CEs
-have no class or gender, so those are blank and the hint sequence collapses to just rarity."""
+have no class or gender, so those are blank (hints are name-based instead); bond CEs carry
+their owner servant's id so the reveal can name them."""
 from __future__ import annotations
 
 import json
@@ -19,6 +20,7 @@ class CraftEssence:
     rarity: int
     art: dict[str, str]           # {"0": illustration URL}; one image per CE
     face: "str | None" = None
+    bond_owner: "int | None" = None  # bond CEs: owner servant's id, so the reveal names them
     cv: "str | None" = None       # CEs have no CV; present so the reveal's `if s.cv` stays safe
     aliases: tuple[str, ...] = ()
     class_name: str = ""          # CEs have no class -> class hints are skipped
@@ -53,6 +55,7 @@ class CeIndex:
                 rarity=it.get("rarity", 0),
                 art={str(k): v for k, v in (it.get("art") or {}).items() if v},
                 face=it.get("face"),
+                bond_owner=it.get("bond_owner"),
                 aliases=tuple(it.get("aliases", ())),
             )
             for it in json.loads(p.read_text())

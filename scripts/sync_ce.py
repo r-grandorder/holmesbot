@@ -57,6 +57,8 @@ def main() -> int:
                 "rarity": e.get("rarity", 0),
                 "art": {"0": art},
                 "face": _first_url(extra.get("faces", {})),
+                # Bond CEs carry their owner servant's id -> the reveal names the servant.
+                "bond_owner": e.get("bondEquipOwner") or None,
             }
         )
 
