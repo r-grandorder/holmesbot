@@ -11,6 +11,7 @@ from discord.ext import commands
 import branding
 from config import Config
 from data import host
+from data.ce import CeIndex
 from data.servants import ServantIndex
 from data.shadows import ShadowCatalog
 from db import Database
@@ -33,6 +34,7 @@ COGS = (
     "cogs.admin",
     "cogs.guess_random",
     "cogs.guess_skill",
+    "cogs.guess_ce",
 )
 
 
@@ -59,6 +61,7 @@ class HolmesBot(commands.Bot):
         self.db = Database(config.database_url)
         self.http_session: aiohttp.ClientSession | None = None
         self.servants: ServantIndex | None = None
+        self.ces: CeIndex | None = None
         self.shadows: ShadowCatalog | None = None
         self.scoring: ScoringService | None = None
         self.aliases: AliasService | None = None
@@ -73,9 +76,13 @@ class HolmesBot(commands.Bot):
         assert self.db.pool is not None
         self.http_session = aiohttp.ClientSession()
         self.servants = ServantIndex.load()
+        self.ces = CeIndex.load()
         self.shadows = ShadowCatalog.load()
         host.resolve_portraits(self.servants)
-        log.info("loaded %d servants, %d shadow assets", len(self.servants), len(self.shadows))
+        log.info(
+            "loaded %d servants, %d craft essences, %d shadow assets",
+            len(self.servants), len(self.ces), len(self.shadows),
+        )
 
         self.scoring = ScoringService(self.db.pool)
         self.restrictions = RestrictionService(self.db.pool)

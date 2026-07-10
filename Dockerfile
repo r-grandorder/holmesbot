@@ -14,9 +14,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Bake the trimmed servant index from Atlas Academy at build time so the running
-# container does no cold-start fetch. (Generated file is gitignored.)
+# Bake the trimmed servant index + Craft Essence pool from Atlas Academy at build time so the
+# running container does no cold-start fetch. (Generated files are gitignored.)
 RUN python scripts/sync_atlas.py
+RUN python scripts/sync_ce.py
 
 # The SQLite database lives on a mounted volume so it survives container
 # replacement (watchtower pulls a new image and recreates the container).

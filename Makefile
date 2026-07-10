@@ -1,4 +1,4 @@
-.PHONY: lock lock-check run migrate sync sync-jp sync-data sync-custom-assets install-hooks
+.PHONY: lock lock-check run migrate sync sync-jp sync-data sync-ce sync-custom-assets install-hooks
 
 lock:
 	pip-compile --quiet --output-file=requirements.txt requirements.in
@@ -27,6 +27,10 @@ sync-jp:
 sync-data:
 	python scripts/sync_atlas.py
 	python scripts/sync_atlas.py --jp
+
+# Refresh the Craft Essence pool for /guessce (5-star CEs with art) from Atlas.
+sync-ce:
+	python scripts/sync_ce.py
 
 # Custom-servant art: drop PNGs under custom-assets/<slug>/ (see custom-assets/README.md),
 # then push them to the public assets bucket under the custom/ prefix. Only adds/updates --

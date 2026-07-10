@@ -61,6 +61,16 @@ class Admin(commands.Cog):
         description="Summon feature configuration",
         guild_only=True,
     )
+    restrictce = app_commands.Group(
+        name="restrictce",
+        description="Exclude specific Craft Essences from the /guessce pool",
+        guild_only=True,
+    )
+    aliasce = app_commands.Group(
+        name="aliasce",
+        description="Manage accepted name aliases for Craft Essences",
+        guild_only=True,
+    )
 
     # --- restrictions ---
     @restrict.command(name="add", description="Restrict a servant or specific ascensions.")
@@ -115,11 +125,114 @@ class Admin(commands.Cog):
             return
         lines = []
         for r in rules:
-            servant = self.bot.servants.get(r["servant_id"])
-            name = servant.name if servant else f"ID {r['servant_id']}"
+            entity = self.bot.servants.get(r["servant_id"]) or self.bot.ces.get(r["servant_id"])
+            name = entity.name if entity else f"ID {r['servant_id']}"
             extra = f" {list(r['ascension_keys'])}" if r["ascension_keys"] else ""
             lines.append(f"#{r['id']} {name} [{r['scope']}{extra}]")
         await interaction.response.send_message("\n".join(lines[:50]), ephemeral=True)
+
+    # --- CE restrictions: exclude specific Craft Essences from /guessce (reuses the same
+    # restricted_servants table + build_allow gate; CE ids never collide with servant ids) ---
+    @restrictce.command(name="add", description="Exclude a Craft Essence from the /guessce pool.")
+    @app_commands.describe(ce="Search by name", reason="Why it's excluded (optional)")
+    async def restrictce_add(
+        self, interaction: discord.Interaction, ce: int, reason: str | None = None
+    ) -> None:
+        c = self.bot.ces.get(ce)
+        if c is None:
+            return await interaction.response.send_message("No such Craft Essence.", ephemeral=True)
+        rules = await self.bot.restrictions.list_all()
+        if any(r["servant_id"] == ce for r in rules):
+            return await interaction.response.send_message(
+                f"**{c.name}** is already excluded.", ephemeral=True
+            )
+        rule_id = await self.bot.restrictions.add(ce, "full", [], reason, interaction.user.id)
+        await interaction.response.send_message(
+            f"Excluded **{c.name}** from /guessce (rule #{rule_id}).", ephemeral=True
+        )
+
+    @restrictce.command(name="remove", description="Re-allow an excluded Craft Essence by rule ID.")
+    async def restrictce_remove(self, interaction: discord.Interaction, rule_id: int) -> None:
+        ok = await self.bot.restrictions.remove(rule_id)
+        await interaction.response.send_message(
+            "Removed." if ok else "No such rule.", ephemeral=True
+        )
+
+    @restrictce.command(name="list", description="List Craft Essences excluded from /guessce.")
+    async def restrictce_list(self, interaction: discord.Interaction) -> None:
+        rules = await self.bot.restrictions.list_all()
+        lines = [
+            f"#{r['id']} {c.name}"
+            for r in rules
+            if (c := self.bot.ces.get(r["servant_id"])) is not None
+        ]
+        await interaction.response.send_message(
+            "\n".join(lines[:50]) if lines else "No Craft Essences excluded.", ephemeral=True
+        )
+
+    def _ce_choices(self, current: str) -> list[app_commands.Choice[int]]:
+        return [
+            app_commands.Choice(name=f"{c.name[:90]} ({c.rarity}\N{BLACK STAR})", value=c.id)
+            for c in self.bot.ces.search(current, 25)
+        ]
+
+    @restrictce_add.autocomplete("ce")
+    async def _restrictce_add_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[int]]:
+        return self._ce_choices(current)
+
+    # --- CE aliases: accepted shorthand names for /guessce. Reuses AliasService (id-keyed),
+    #     so a CE alias keyed by its id is matched by the round exactly like a servant alias. ---
+    @aliasce.command(name="add", description="Add an accepted name for a Craft Essence.")
+    @app_commands.describe(ce="Search by name", alias="The accepted name to add")
+    async def aliasce_add(
+        self, interaction: discord.Interaction, ce: int, alias: str
+    ) -> None:
+        c = self.bot.ces.get(ce)
+        if c is None:
+            return await interaction.response.send_message("No such Craft Essence.", ephemeral=True)
+        ok = await self.bot.aliases.add(ce, alias, interaction.user.id)
+        if not ok:
+            return await interaction.response.send_message("That alias is empty.", ephemeral=True)
+        await interaction.response.send_message(
+            f"Added alias **{alias}** for {c.name}.", ephemeral=True
+        )
+
+    @aliasce.command(name="remove", description="Remove a Craft Essence alias by its ID.")
+    @app_commands.describe(alias_id="The alias ID from /aliasce list")
+    async def aliasce_remove(self, interaction: discord.Interaction, alias_id: int) -> None:
+        ok = await self.bot.aliases.remove(alias_id)
+        await interaction.response.send_message(
+            "Removed." if ok else "No such alias.", ephemeral=True
+        )
+
+    @aliasce.command(name="list", description="List a Craft Essence's aliases.")
+    @app_commands.describe(ce="Search by name")
+    async def aliasce_list(self, interaction: discord.Interaction, ce: int) -> None:
+        c = self.bot.ces.get(ce)
+        label = c.name if c else f"ID {ce}"
+        rows = await self.bot.aliases.list_for(ce)
+        if not rows:
+            return await interaction.response.send_message(
+                f"No aliases for {label}.", ephemeral=True
+            )
+        lines = [f"#{r['id']}  {r['alias']}" for r in rows]
+        await interaction.response.send_message(
+            f"**{label}**\n" + "\n".join(lines[:50]), ephemeral=True
+        )
+
+    @aliasce_add.autocomplete("ce")
+    async def _aliasce_add_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[int]]:
+        return self._ce_choices(current)
+
+    @aliasce_list.autocomplete("ce")
+    async def _aliasce_list_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[int]]:
+        return self._ce_choices(current)
 
     # --- QP admin ---
     @app_commands.command(name="qp_set", description="Set a member's QP balance.")

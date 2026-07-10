@@ -32,7 +32,9 @@ class GuildConfigService:
         return row
 
     def game_enabled(self, cfg: "Row", game_type: str) -> bool:
-        return bool(cfg["enabled"] and cfg[GAME_COLUMN[game_type]])
+        # A game without its own per-guild column (e.g. guess_ce) just rides the global toggle.
+        col = GAME_COLUMN.get(game_type)
+        return bool(cfg["enabled"] and (cfg[col] if col else True))
 
     async def is_channel_allowed(self, guild_id: int, channel_id: int) -> bool:
         cfg = await self.get(guild_id)

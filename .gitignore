@@ -26,6 +26,7 @@ venv/
 *.sqlite3-wal
 
 data/servants.json
+data/ce.json
 scripts/data/community_aliases_review.txt
 
 test_output/

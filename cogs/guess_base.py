@@ -51,6 +51,7 @@ NEXT_VOTE_TYPES = [
     ("guess_shadow", "Shadow"),
     ("guess_audio", "Voice"),
     ("guess_skill", "Skill"),
+    ("guess_ce", "CE"),
     ("random", "Random"),
 ]
 # type value -> (cog class, whether its _play takes a positional difficulty). "random"
@@ -60,6 +61,7 @@ _VOTE_DISPATCH = {
     "guess_shadow": ("GuessShadow", True),
     "guess_audio": ("GuessAudio", False),
     "guess_skill": ("GuessSkill", False),
+    "guess_ce": ("GuessCe", True),
 }
 NEXT_VOTE_TALLY_REFRESH = 2.0  # coalesce tally edits to this cadence, to spare the rate limit
 
@@ -569,7 +571,7 @@ class ChatRound:
         if bonus:
             embed.add_field(
                 name="First-guess bonus",
-                value=f"+{qp(bonus)}  ·  {round(FIRST_GUESS_BONUS * 100)}% for a clean first guess",
+                value=f"+{qp(bonus)}  ·  {round(FIRST_GUESS_BONUS * 100)}% first guess bonus",
                 inline=False,
             )
         await self._post_reveal(message.channel, embed, file, ping=message.author.mention, engaged=True)
