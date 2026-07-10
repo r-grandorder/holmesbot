@@ -8,14 +8,15 @@ from data import host, images
 
 from .guess_base import Media, launch_round
 
-# difficulty -> (crop size px, points). Smaller crop = harder = bigger reward. CE guessing is
-# niche/hard, so every tier out-rewards the servant tiers (10/18/30/150), and lunatic CE is
-# ~2.7x lunatic servant. Lunatic also grayscales + scrambles the slice. All tunable.
+# difficulty -> (crop size px or None for the whole CE, points). Smaller crop = harder = bigger
+# reward. CE tiers still out-reward servant (10/18/30/150), but trimmed a bit since CE art is
+# reverse-searchable (easy shows the whole thing); lunatic CE ~2x lunatic servant. Lunatic also
+# grayscales + scrambles the slice. Tunable.
 DIFFICULTY = {
-    "easy": (280, 50),
-    "medium": (200, 100),
-    "hard": (140, 200),
-    "lunatic": (90, 400),
+    "easy": (None, 40),
+    "medium": (280, 80),
+    "hard": (140, 160),
+    "lunatic": (90, 320),
 }
 
 _DIFF_CHOICES = [
@@ -51,7 +52,10 @@ class GuessCe(commands.Cog):
 
         async def build_prompt(session, ce, key):
             data = await images.fetch_bytes(session, ce.art[key])
-            png = images.crop_random(data, size, grayscale=lunatic, scramble=lunatic)
+            if size is None:  # easy: show the whole Craft Essence, trimmed like the reveal
+                png = images.trim_to_content(data)
+            else:
+                png = images.crop_random(data, size, grayscale=lunatic, scramble=lunatic)
             return Media(is_image=True, data=png, filename="prompt.png")
 
         async def build_reveal(session, ce, key):

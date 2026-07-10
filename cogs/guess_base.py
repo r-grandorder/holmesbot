@@ -29,6 +29,7 @@ TITLES = {
     "guess_shadow": "Guess the Shadow",
     "guess_audio": "Guess the Voice",
     "guess_skill": "Guess by Skills",
+    "guess_ce": "Guess the Craft Essence",
 }
 
 WIN_REACTION = "\N{WHITE HEAVY CHECK MARK}"
@@ -934,7 +935,7 @@ async def launch_round(
             when = f" (ends <t:{int(existing.expires_at.timestamp())}:R>)"
         await interaction.response.send_message(
             f"A round is already running in this channel{when}. "
-            "Just type the servant's name to play, or tag "
+            "Just type your guess to play, or tag "
             f"{bot.user.mention} with **forfeit** to start a give-up vote.",
             ephemeral=True,
         )
@@ -1055,6 +1056,8 @@ async def launch_round(
                 f"chat. Tag {bot.user.mention} with **hint** to reveal a skill name "
                 "(then rarity, then class)."
             )
+        elif game_type == "guess_ce":
+            how = "**Type the Craft Essence's name in chat** to answer."
         else:
             how = "**Type the servant's name in chat** to answer."
         embed = discord.Embed(
