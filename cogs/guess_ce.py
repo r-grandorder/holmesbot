@@ -9,14 +9,14 @@ from data import host, images
 from .guess_base import Media, launch_round
 
 # difficulty -> (crop size px or None for the whole CE, points). Smaller crop = harder = bigger
-# reward. CE tiers still out-reward servant (10/18/30/150), but trimmed a bit since CE art is
-# reverse-searchable (easy shows the whole thing); lunatic CE ~2x lunatic servant. Lunatic also
+# reward. CE is niche/hard (lunatic ~3x lunatic servant's 150), so base rewards run high; the
+# name hint below drops the payout via HINT_REWARD for players who need it. Lunatic also
 # grayscales + scrambles the slice. Tunable.
 DIFFICULTY = {
-    "easy": (None, 40),
-    "medium": (280, 80),
-    "hard": (140, 160),
-    "lunatic": (90, 320),
+    "easy": (None, 100),
+    "medium": (280, 180),
+    "hard": (140, 240),
+    "lunatic": (90, 500),
 }
 
 _DIFF_CHOICES = [
@@ -25,6 +25,26 @@ _DIFF_CHOICES = [
     app_commands.Choice(name="Hard", value="hard"),
     app_commands.Choice(name="Lunatic", value="lunatic"),
 ]
+
+
+def _prefix(name: str, frac: float) -> str:
+    """The first `frac` of the name, trimmed, marked as partial."""
+    cut = max(1, round(len(name) * frac))
+    return name[:cut].rstrip() + "..."
+
+
+def _ce_hints(ce) -> "list[tuple[str, str]]":
+    """CE hints are all name-based: rarity is useless (every CE is 5-star) and CEs carry no
+    class/gender. Progressive reveals -- masked initials (word count + lengths + first letters),
+    then a growing prefix of the name -- each drops the win via HINT_REWARD (0.7/0.5/0.3), so a
+    name reveal is decently penalized."""
+    name = ce.name
+    initials = " ".join(w[0] + "-" * (len(w) - 1) for w in name.split())
+    return [
+        ("Name shape", initials),
+        ("Partial name", _prefix(name, 0.5)),
+        ("Almost there", _prefix(name, 0.75)),
+    ]
 
 
 class GuessCe(commands.Cog):
@@ -71,6 +91,7 @@ class GuessCe(commands.Cog):
             picker=picker,
             build_prompt=build_prompt,
             build_reveal=build_reveal,
+            build_hints=_ce_hints,
             difficulty=diff,
             include_jp=include_jp,
             replay_override=replay_override,

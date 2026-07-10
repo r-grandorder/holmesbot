@@ -1057,7 +1057,10 @@ async def launch_round(
                 "(then rarity, then class)."
             )
         elif game_type == "guess_ce":
-            how = "**Type the Craft Essence's name in chat** to answer."
+            how = (
+                "**Type the Craft Essence's name in chat.** Tag "
+                f"{bot.user.mention} with **hint** for a name reveal (lowers the reward)."
+            )
         else:
             how = "**Type the servant's name in chat** to answer."
         embed = discord.Embed(
