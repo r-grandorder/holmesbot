@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import random
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable
@@ -50,12 +51,13 @@ class Servant:
 def class_display(class_name: str) -> str:
     """Human-facing class label. Atlas gives Beast-class bosses internal class names like
     'unBeastOlgaMarie' or 'beastEresh'; collapse anything Beast-flavored to plain 'Beast'.
-    Everything else is title-cased as before."""
+    camelCase classes (alterEgo, moonCancer) get a space before the capital so they read
+    'Alter Ego' / 'Moon Cancer'; everything else is title-cased."""
     if not class_name:
         return ""
     if "beast" in class_name.lower():
         return "Beast"
-    return class_name.title()
+    return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", class_name).title()
 
 
 # Curated display-name overrides for servants Atlas ships under an ambiguous/colliding name

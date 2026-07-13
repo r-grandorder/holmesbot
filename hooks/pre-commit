@@ -6,7 +6,7 @@ bucket="${ASSETS_BUCKET:-bunyanbot-assets-327760835875}"
 if [ -n "$(find custom-assets -mindepth 2 -type f 2>/dev/null)" ]; then
     echo "pre-commit: syncing custom-assets/ -> s3://$bucket/custom/"
     aws s3 sync custom-assets/ "s3://$bucket/custom/" \
-        --exclude "README.md" --exclude "*.DS_Store" --only-show-errors \
+        --exclude "README.md" --exclude "*.DS_Store" --exclude "*.swp" --only-show-errors \
         || echo "pre-commit: custom-assets sync skipped (aws failed; run 'make sync-custom-assets')"
 fi
 exit 0

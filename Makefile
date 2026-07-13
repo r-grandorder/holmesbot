@@ -36,7 +36,7 @@ sync-ce:
 # then push them to the public assets bucket under the custom/ prefix. Only adds/updates --
 # never deletes -- so it can't disturb the precomputed silhouettes. Uses default AWS creds.
 sync-custom-assets:
-	aws s3 sync custom-assets/ "s3://$${ASSETS_BUCKET:-bunyanbot-assets-327760835875}/custom/" --exclude "README.md" --exclude "*.DS_Store"
+	aws s3 sync custom-assets/ "s3://$${ASSETS_BUCKET:-bunyanbot-assets-327760835875}/custom/" --exclude "README.md" --exclude "*.DS_Store" --exclude "*.swp"
 
 # Install the git hooks (a pre-commit that syncs custom-assets/ to S3). One-time, per clone.
 install-hooks:
