@@ -234,6 +234,48 @@ class Admin(commands.Cog):
     ) -> list[app_commands.Choice[int]]:
         return self._ce_choices(current)
 
+    # --- Broadcast ---
+    @app_commands.command(name="say", description="Send a message as the bot.")
+    @app_commands.guild_only()
+    @app_commands.describe(
+        message="What the bot should say",
+        channel="Where to send it (defaults to this channel)",
+    )
+    async def say(
+        self,
+        interaction: discord.Interaction,
+        message: app_commands.Range[str, 1, 2000],
+        channel: discord.TextChannel | None = None,
+    ) -> None:
+        target = channel or interaction.channel
+        if target is None:
+            await interaction.response.send_message(
+                "Could not resolve a channel to post in.", ephemeral=True
+            )
+            return
+        # Block @everyone/@here so a bot broadcast can't carry an accidental mass ping; explicit
+        # user/role mentions still resolve so mods can address people.
+        try:
+            sent = await target.send(
+                message, allowed_mentions=discord.AllowedMentions(everyone=False)
+            )
+        except discord.Forbidden:
+            await interaction.response.send_message(
+                f"I can't post in {target.mention}. Check that I have permission to send "
+                "messages there.",
+                ephemeral=True,
+            )
+            return
+        except discord.HTTPException:
+            await interaction.response.send_message(
+                "Discord rejected that message (too long, or the target is not messageable).",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.send_message(
+            f"Sent to {target.mention}. ([jump]({sent.jump_url}))", ephemeral=True
+        )
+
     # --- QP admin ---
     @app_commands.command(name="qp_set", description="Set a member's QP balance.")
     @app_commands.guild_only()
