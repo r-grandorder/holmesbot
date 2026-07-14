@@ -92,6 +92,22 @@ def _progress_bar(have: int, need: int, length: int = 10) -> str:
     return f"[{'█' * filled}{'░' * (length - filled)}] {pct}%"
 
 
+_ROSTER_PAGE = 8  # contracted servants shown per /servants page
+
+
+def _acquired_ts(created_at: "str | None") -> "int | None":
+    """SQLite CURRENT_TIMESTAMP text (UTC) -> unix seconds, for a Discord <t:...> date."""
+    if not created_at:
+        return None
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f"):
+        try:
+            dt = datetime.datetime.strptime(created_at, fmt)
+            return int(dt.replace(tzinfo=datetime.timezone.utc).timestamp())
+        except ValueError:
+            continue
+    return None
+
+
 def _daily_reset_ts() -> int:
     """Unix time of the next UTC midnight -- when SQLite date('now') rolls over (the duel cap)."""
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -392,6 +408,42 @@ class ContractsCog(commands.Cog):
             content=note, embed=embed, ephemeral=not is_public,
             allowed_mentions=discord.AllowedMentions.none(),
         )
+
+    @app_commands.command(name="servants", description="Browse every servant you have contracted.")
+    @app_commands.guild_only()
+    @app_commands.describe(member="Whose roster to view (defaults to you)")
+    async def servants(
+        self, interaction: discord.Interaction, member: "discord.Member | None" = None
+    ) -> None:
+        if not self._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        target = member or interaction.user
+        rows = await self.bot.contracts.owned(interaction.guild_id, target.id)
+        if not rows:
+            own = target.id == interaction.user.id
+            return await interaction.response.send_message(
+                "You have not contracted any servants yet -- use /summon."
+                if own
+                else f"{target.display_name} has not contracted any servants.",
+                ephemeral=True,
+            )
+        entries = []
+        for r in rows:
+            s = self.bot.servants.get(r["servant_id"])
+            entries.append(
+                {
+                    "name": s.name if s else f"Servant #{r['servant_id']}",
+                    "class": class_display(s.class_name) if s else "?",
+                    "rarity": s.rarity if s else 0,
+                    "level": r["level"],
+                    "cap": contract_game.level_cap(r["grails_used"]),
+                    "power": contract_game.power(s, r["level"]) if s else None,
+                    "acquired": _acquired_ts(r["created_at"]),
+                    "active": bool(r["active"]),
+                }
+            )
+        view = RosterView(target, entries)
+        await interaction.response.send_message(embed=view.render(), view=view, ephemeral=True)
 
     @app_commands.command(name="items", description="See your QP and Holy Grails.")
     @app_commands.guild_only()
@@ -1297,6 +1349,56 @@ _SHOP_HOST_LINES = [
     "QP burning a hole in your pocket, Master? Allow me to help with that.",
     "Everything here is handcrafted by yours truly, a universal genius. What'll it be?",
 ]
+
+
+class RosterView(discord.ui.View):
+    """Ephemeral, paginated /servants roster. Entries are pre-resolved dicts (name/class/rarity/
+    level/cap/power/acquired/active), so the view is pure display. Ephemeral -> only the invoker
+    sees or drives it, so no invoker guard (same as SummonView/ShopView)."""
+
+    def __init__(self, target: "discord.abc.User", entries: list) -> None:
+        super().__init__(timeout=180)
+        self.target = target
+        self.entries = entries
+        self.page = 0
+        self.pages = max(1, (len(entries) + _ROSTER_PAGE - 1) // _ROSTER_PAGE)
+        self._sync()
+
+    def _sync(self) -> None:
+        self.go_prev.disabled = self.page <= 0
+        self.go_next.disabled = self.page >= self.pages - 1
+
+    def render(self) -> discord.Embed:
+        start = self.page * _ROSTER_PAGE
+        blocks = []
+        for e in self.entries[start : start + _ROSTER_PAGE]:
+            power = f"Power {e['power']:,}" if e["power"] is not None else "Power ?"
+            acq = f" · contracted <t:{e['acquired']}:D>" if e["acquired"] else ""
+            active = "  **(active)**" if e["active"] else ""
+            blocks.append(
+                f"**{e['name']}**{active}\n"
+                f"{e['class']} · {_stars(e['rarity'])} · Lv {e['level']}/{e['cap']} · {power}{acq}"
+            )
+        embed = discord.Embed(
+            title=f"{self.target.display_name}'s Servants ({len(self.entries)})",
+            description="\n\n".join(blocks),
+            color=discord.Color.blurple(),
+        )
+        embed.set_thumbnail(url=self.target.display_avatar.url)
+        embed.set_footer(text=f"Page {self.page + 1}/{self.pages}")
+        return embed
+
+    @discord.ui.button(label="Prev", style=discord.ButtonStyle.secondary)
+    async def go_prev(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        self.page = max(0, self.page - 1)
+        self._sync()
+        await interaction.response.edit_message(embed=self.render(), view=self)
+
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary)
+    async def go_next(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        self.page = min(self.pages - 1, self.page + 1)
+        self._sync()
+        await interaction.response.edit_message(embed=self.render(), view=self)
 
 
 class ShopView(discord.ui.View):

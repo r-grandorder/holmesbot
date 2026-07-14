@@ -262,9 +262,9 @@ class ContractService:
 
     async def owned(self, guild_id: int, user_id: int) -> "list[Row]":
         """Every servant this user has contracted (their roster), active first then by level.
-        Drives /switch (re-activating an owned servant) and its autocomplete."""
+        Drives /switch (re-activating an owned servant), its autocomplete, and /servants."""
         return await self.pool.fetch(
-            "SELECT servant_id, level, grails_used, active FROM servant_contracts "
+            "SELECT servant_id, level, grails_used, active, created_at FROM servant_contracts "
             "WHERE guild_id = $1 AND user_id = $2 ORDER BY active DESC, level DESC",
             guild_id,
             user_id,
