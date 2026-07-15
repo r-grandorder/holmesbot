@@ -1,253 +1,5 @@
 [
   {
-    "id": 3300200,
-    "name": "Ereshkigal",
-    "className": "beastEresh",
-    "rarity": 5,
-    "gender": "female",
-    "attribute": "beast",
-    "traits": [
-      "genderFemale",
-      "classBeastEresh",
-      "attributeBeast",
-      "alignmentChaotic",
-      "alignmentGood",
-      "fiveStarServant",
-      "servant",
-      "divine",
-      "humanoid",
-      "divineOrDemonOrUndead",
-      "king",
-      "immuneToPigify",
-      "canFlyInSpace",
-      "canBeInBattle",
-      "unknown"
-    ],
-    "art": {
-      "1": "https://static.atlasacademy.io/JP/CharaGraph/3300200/3300200a@1.png",
-      "2": "https://static.atlasacademy.io/JP/CharaGraph/3300200/3300200a@2.png",
-      "3": "https://static.atlasacademy.io/JP/CharaGraph/3300200/3300200b@1.png",
-      "4": "https://static.atlasacademy.io/JP/CharaGraph/3300200/3300200b@2.png"
-    },
-    "figure": {
-      "1": "https://static.atlasacademy.io/JP/CharaFigure/33002000/33002000_merged.png",
-      "2": "https://static.atlasacademy.io/JP/CharaFigure/33002001/33002001_merged.png",
-      "3": "https://static.atlasacademy.io/JP/CharaFigure/33002002/33002002_merged.png"
-    },
-    "face": "https://static.atlasacademy.io/JP/Faces/f_33002000.png",
-    "cv": "Kana Ueda",
-    "jp": true,
-    "aliases": [
-      "seresh",
-      "spaceereshkigal",
-      "summerereshkigal",
-      "beasteresh",
-      "spishtarsidegrade4"
-    ],
-    "skills": [
-      {
-        "num": 1,
-        "name": "Goddess Sugar A",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
-      },
-      {
-        "num": 2,
-        "name": "Beast Driver B",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00603.png"
-      },
-      {
-        "num": 3,
-        "name": "Missing Starling EX",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00403.png"
-      }
-    ]
-  },
-  {
-    "id": 2300900,
-    "name": "Mysterious Executor C.I.E.L",
-    "className": "moonCancer",
-    "rarity": 5,
-    "gender": "female",
-    "attribute": "human",
-    "traits": [
-      "genderFemale",
-      "classMoonCancer",
-      "attributeHuman",
-      "alignmentLawful",
-      "alignmentGood",
-      "fiveStarServant",
-      "servant",
-      "humanoid",
-      "weakToEnumaElish",
-      "brynhildsBeloved",
-      "hominidaeServant",
-      "livingHuman",
-      "hasCostume",
-      "summerModeServant",
-      "defender",
-      "canFlyInSpace",
-      "canBeInBattle",
-      "unknown"
-    ],
-    "art": {
-      "1": "https://static.atlasacademy.io/JP/CharaGraph/2300900/2300900a@1.png",
-      "2": "https://static.atlasacademy.io/JP/CharaGraph/2300900/2300900a@2.png",
-      "3": "https://static.atlasacademy.io/JP/CharaGraph/2300900/2300900b@1.png",
-      "4": "https://static.atlasacademy.io/JP/CharaGraph/2300900/2300900b@2.png"
-    },
-    "figure": {
-      "1": "https://static.atlasacademy.io/JP/CharaFigure/23009000/23009000_merged.png",
-      "2": "https://static.atlasacademy.io/JP/CharaFigure/23009001/23009001_merged.png",
-      "3": "https://static.atlasacademy.io/JP/CharaFigure/23009002/23009002_merged.png"
-    },
-    "face": "https://static.atlasacademy.io/JP/Faces/f_23009000.png",
-    "cv": "Hondo Kaede",
-    "jp": true,
-    "aliases": [
-      "ciel"
-    ],
-    "skills": [
-      {
-        "num": 1,
-        "name": "Human Magical Energy Factory A",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00607.png"
-      },
-      {
-        "num": 2,
-        "name": "Phasing Fluid Blade B+",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00315.png"
-      },
-      {
-        "num": 3,
-        "name": "Idea Blood B",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00703.png"
-      }
-    ]
-  },
-  {
-    "id": 305500,
-    "name": "Dobrynya Nikitich",
-    "className": "lancer",
-    "rarity": 4,
-    "gender": "female",
-    "attribute": "earth",
-    "traits": [
-      "genderFemale",
-      "classLancer",
-      "attributeEarth",
-      "alignmentNeutral",
-      "alignmentGood",
-      "fourStarServant",
-      "servant",
-      "humanoid",
-      "wildbeast",
-      "weakToEnumaElish",
-      "riding",
-      "skyOrEarthServant",
-      "brynhildsBeloved",
-      "skyOrEarthExceptPseudoAndDemiServant",
-      "demonicBeastServant",
-      "havingAnimalsCharacteristics",
-      "summerModeServant",
-      "standardClassServant",
-      "canBeInBattle",
-      "unknown"
-    ],
-    "art": {
-      "1": "https://static.atlasacademy.io/JP/CharaGraph/305500/305500a@1.png",
-      "2": "https://static.atlasacademy.io/JP/CharaGraph/305500/305500a@2.png",
-      "3": "https://static.atlasacademy.io/JP/CharaGraph/305500/305500b@1.png",
-      "4": "https://static.atlasacademy.io/JP/CharaGraph/305500/305500b@2.png"
-    },
-    "figure": {
-      "1": "https://static.atlasacademy.io/JP/CharaFigure/3055000/3055000_merged.png",
-      "2": "https://static.atlasacademy.io/JP/CharaFigure/3055001/3055001_merged.png",
-      "3": "https://static.atlasacademy.io/JP/CharaFigure/3055002/3055002_merged.png"
-    },
-    "face": "https://static.atlasacademy.io/JP/Faces/f_3055000.png",
-    "cv": "Mayu Mineda",
-    "jp": true,
-    "aliases": [
-      "summerdobrynya",
-      "sdobrynya"
-    ],
-    "skills": [
-      {
-        "num": 1,
-        "name": "Summer Belza Burko B",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00305.png"
-      },
-      {
-        "num": 2,
-        "name": "Anti-Dragon Combat Technique (Waterside)  EX",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
-      },
-      {
-        "num": 3,
-        "name": "Summertime Nikitich! B++",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00605.png"
-      }
-    ]
-  },
-  {
-    "id": 1101900,
-    "name": "Xu Fu",
-    "className": "avenger",
-    "rarity": 4,
-    "gender": "female",
-    "attribute": "human",
-    "traits": [
-      "genderFemale",
-      "classAvenger",
-      "attributeHuman",
-      "alignmentChaotic",
-      "alignmentBalanced",
-      "fourStarServant",
-      "servant",
-      "humanoid",
-      "weakToEnumaElish",
-      "hominidaeServant",
-      "summerModeServant",
-      "canBeInBattle",
-      "unknown"
-    ],
-    "art": {
-      "1": "https://static.atlasacademy.io/JP/CharaGraph/1101900/1101900a@1.png",
-      "2": "https://static.atlasacademy.io/JP/CharaGraph/1101900/1101900a@2.png",
-      "3": "https://static.atlasacademy.io/JP/CharaGraph/1101900/1101900b@1.png",
-      "4": "https://static.atlasacademy.io/JP/CharaGraph/1101900/1101900b@2.png"
-    },
-    "figure": {
-      "1": "https://static.atlasacademy.io/JP/CharaFigure/11019000/11019000_merged.png",
-      "2": "https://static.atlasacademy.io/JP/CharaFigure/11019001/11019001_merged.png",
-      "3": "https://static.atlasacademy.io/JP/CharaFigure/11019002/11019002_merged.png"
-    },
-    "face": "https://static.atlasacademy.io/JP/Faces/f_11019000.png",
-    "cv": "Misaki Watada",
-    "jp": true,
-    "aliases": [
-      "summerxufu",
-      "sxufu"
-    ],
-    "skills": [
-      {
-        "num": 1,
-        "name": "Taoist Arts (Doll Manipulation) A+",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00315.png"
-      },
-      {
-        "num": 2,
-        "name": "Encampment Evolution (Settlement) B++",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
-      },
-      {
-        "num": 3,
-        "name": "Collection of Over Ten Thousand Deaths A",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00522.png"
-      }
-    ]
-  },
-  {
     "id": 2300600,
     "name": "BB Dubai",
     "className": "moonCancer",
@@ -308,7 +60,8 @@
         "name": "Golden Capital on the Moon EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00609.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 2301000,
@@ -369,7 +122,8 @@
         "name": "Moon Rabbit​ EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00316.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 2501600,
@@ -433,7 +187,8 @@
         "name": "Villains Terminate A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00513.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 2300700,
@@ -490,7 +245,8 @@
         "name": "Ｃ³・パニッシュメント B+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00301.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 2300800,
@@ -547,7 +303,8 @@
         "name": "Ｃ³・パニッシュメント B+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00301.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 1001800,
@@ -608,7 +365,8 @@
         "name": "月の蛹 A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00608.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 205300,
@@ -670,7 +428,8 @@
         "name": "???",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00404.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 305600,
@@ -735,7 +494,8 @@
         "name": "太陽との決別 EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00402.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 705000,
@@ -790,7 +550,8 @@
         "name": "破滅の難題 B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 2800800,
@@ -853,7 +614,8 @@
         "name": "聖夜の贈り物 A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 2800900,
@@ -910,7 +672,8 @@
         "name": "ブルー・グラスムーン EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00603.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 305700,
@@ -973,7 +736,8 @@
         "name": "紋章の蛇 EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00403.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 106200,
@@ -1032,7 +796,8 @@
         "name": "黄金律（蛇＆体） B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00700.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 505800,
@@ -1093,7 +858,8 @@
         "name": "篁のむすめ B+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 2801000,
@@ -1150,7 +916,8 @@
         "name": "七罪の刻印 B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 901900,
@@ -1219,7 +986,8 @@
         "name": "絶対の代行者 EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 305800,
@@ -1281,7 +1049,8 @@
         "name": "転輪聖王 EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 705100,
@@ -1347,7 +1116,8 @@
         "name": "醜い恋のように C+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00312.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 2801100,
@@ -1418,7 +1188,8 @@
         "name": "罪なるかな。咎なるかな。悪なるかな EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 305900,
@@ -1482,7 +1253,8 @@
         "name": "ヴリトラハン EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 4000100,
@@ -1540,7 +1312,8 @@
         "name": "アルテミット・Ｕ EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00306.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 106300,
@@ -1609,7 +1382,8 @@
         "name": "プリンセス・オーダー EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00821.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 405800,
@@ -1673,7 +1447,8 @@
         "name": "令嬢応酬 B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00512.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 705200,
@@ -1739,7 +1514,8 @@
         "name": "連環馬（憑依） A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 2301100,
@@ -1797,7 +1573,8 @@
         "name": "月下逍遙／日輪午睡 A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 306000,
@@ -1860,7 +1637,8 @@
         "name": "イリヤズム EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00403.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 205400,
@@ -1929,7 +1707,8 @@
         "name": "サマー・ミラージュ B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00605.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 1001900,
@@ -1990,7 +1769,8 @@
         "name": "夏と自分に嘘はつけない B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00509.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 405700,
@@ -2052,7 +1832,8 @@
         "name": "ゾーハルの輝石 EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00305.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 605100,
@@ -2111,7 +1892,8 @@
         "name": "蝮蛇の眼 B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00512.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 1102100,
@@ -2170,7 +1952,8 @@
         "name": "砲術義肢 C",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 306100,
@@ -2231,7 +2014,8 @@
         "name": "無頼の槍 C",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 106400,
@@ -2296,7 +2080,8 @@
         "name": "至誠 EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 306200,
@@ -2356,7 +2141,8 @@
         "name": "エリザ粒子 A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 1102200,
@@ -2422,7 +2208,8 @@
         "name": "星を統べるもの B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00306.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 2801200,
@@ -2479,7 +2266,8 @@
         "name": "人王の灰 EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00315.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 106500,
@@ -2544,7 +2332,8 @@
         "name": "エニス・グイトリン -",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00419.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 505900,
@@ -2607,7 +2396,8 @@
         "name": "墓木の臼 A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00515.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 605200,
@@ -2673,7 +2463,8 @@
         "name": "三井の晩鐘 EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 1002000,
@@ -2735,7 +2526,8 @@
         "name": "プロセルピナの開花 EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00313.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 306400,
@@ -2755,6 +2547,7 @@
       "divine",
       "humanoid",
       "divineOrDemonOrUndead",
+      "hasCostume",
       "divineSpirit",
       "immuneToPigify",
       "hasGoddessMetamorphosis",
@@ -2796,7 +2589,8 @@
         "name": "嘆きの母 A+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 106600,
@@ -2857,7 +2651,8 @@
         "name": "巡礼の守護者 B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00404.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 505600,
@@ -2921,7 +2716,8 @@
         "name": "愚行の加護 B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00301.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 405600,
@@ -2987,7 +2783,8 @@
         "name": "月女神の巫女 A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
       }
-    ]
+    ],
+    "summon_line": null
   },
   {
     "id": 1102000,
@@ -3045,6 +2842,7 @@
         "name": "偽神転生 B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
-    ]
+    ],
+    "summon_line": null
   }
 ]
