@@ -110,15 +110,26 @@ class HolmesBot(commands.Bot):
             )
 
         if self.config.guild_ids:
-            # Register directly in our guild(s) for instant command updates.
+            # Register directly in our guild(s) for instant command updates. A guild the bot
+            # has NOT been invited to yet raises on sync -- skip it with a warning rather than
+            # crash startup and take down every other (valid) guild.
+            synced = 0
             for guild_id in self.config.guild_ids:
                 guild = discord.Object(id=guild_id)
-                self.tree.copy_global_to(guild=guild)
-                await self.tree.sync(guild=guild)
+                try:
+                    self.tree.copy_global_to(guild=guild)
+                    await self.tree.sync(guild=guild)
+                    synced += 1
+                except discord.HTTPException as exc:
+                    log.warning(
+                        "skipping command sync for guild %s (not invited or no access?): %s",
+                        guild_id,
+                        exc,
+                    )
             # Drop any lingering global registrations so commands don't appear twice.
             self.tree.clear_commands(guild=None)
             await self.tree.sync()
-            log.info("synced commands to %d guild(s)", len(self.config.guild_ids))
+            log.info("synced commands to %d/%d guild(s)", synced, len(self.config.guild_ids))
         else:
             await self.tree.sync()
             log.info("synced commands globally")
