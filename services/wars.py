@@ -100,8 +100,9 @@ class WarService:
         self, guild_id: int, user_id: int, choice: "str | None" = None
     ) -> "tuple[str | None, bool]":
         """Place the user on a faction, locked for the season. `choice` (a faction name) picks
-        that side; otherwise auto-place on the smallest. Returns (faction_name, already_joined);
-        name is None if there are no factions or `choice` matches none."""
+        that side; otherwise auto-place on the WEAKEST faction by points (score), breaking ties
+        by smallest roster. Returns (faction_name, already_joined); name is None if there are no
+        factions or `choice` matches none."""
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 existing = await conn.fetchrow(
@@ -114,7 +115,8 @@ class WarService:
                 if existing is not None:
                     return existing["name"], True
                 factions = await conn.fetch(
-                    "SELECT slot, name FROM war_factions WHERE guild_id = $1 ORDER BY slot", guild_id
+                    "SELECT slot, name, score FROM war_factions WHERE guild_id = $1 ORDER BY slot",
+                    guild_id,
                 )
                 if not factions:
                     return None, False
@@ -131,7 +133,12 @@ class WarService:
                         guild_id,
                     ):
                         counts[r["slot"]] = r["n"]
-                    target = min(factions, key=lambda f: counts[f["slot"]])
+                    # Weakest faction by points. When scores tie (e.g. war start, all 0) fall
+                    # back to the smallest roster, then slot, so early joiners spread out
+                    # instead of stacking onto slot 0.
+                    target = min(
+                        factions, key=lambda f: (f["score"], counts[f["slot"]], f["slot"])
+                    )
                 await conn.execute(
                     "INSERT INTO war_members (guild_id, user_id, slot, score) VALUES ($1, $2, $3, 0)",
                     guild_id,

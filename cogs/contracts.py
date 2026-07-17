@@ -867,9 +867,9 @@ class ContractsCog(commands.Cog):
             file = discord.File(io.BytesIO(banner_bytes), filename="banner.png")
         await interaction.response.send_message(embed=embed, file=file)
 
-    @app_commands.command(name="warjoin", description="Join the faction war (pick a side, or leave blank to auto-balance).")
+    @app_commands.command(name="warjoin", description="Join the faction war (pick a side, or leave blank to join the weakest by points).")
     @app_commands.guild_only()
-    @app_commands.describe(faction="Which faction to join (blank = placed on the smallest side)")
+    @app_commands.describe(faction="Which faction to join (blank = auto-placed on the weakest side by points)")
     async def warjoin(self, interaction: discord.Interaction, faction: str | None = None) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
