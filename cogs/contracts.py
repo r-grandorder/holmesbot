@@ -93,6 +93,7 @@ def _progress_bar(have: int, need: int, length: int = 10) -> str:
 
 
 _ROSTER_PAGE = 8  # contracted servants shown per /servants page
+_WAR_ROSTER_CAP = 20  # members listed per faction in /warteams and /warhistory before "+N more"
 
 
 def _acquired_ts(created_at: "str | None") -> "int | None":
@@ -948,6 +949,61 @@ class ContractsCog(commands.Cog):
             allowed_mentions=discord.AllowedMentions.none(),
         )
 
+    def _war_roster_embed(self, guild, factions, members, winner_slot, title, subtitle=None):
+        """Build a per-faction roster embed. `factions` rows have slot/name/score; `members`
+        rows have user_id/slot/score. Shared by /warteams (current) and /warhistory (past)."""
+        by_slot: "dict[int, list]" = {}
+        for m in members:
+            by_slot.setdefault(m["slot"], []).append((m["user_id"], m["score"]))
+        embed = discord.Embed(title=title, description=subtitle, color=discord.Color.orange())
+        for f in factions:
+            mem = by_slot.get(f["slot"], [])
+            rows = []
+            for uid, sc in mem[:_WAR_ROSTER_CAP]:
+                gm = guild.get_member(uid) if guild else None
+                nm = gm.display_name if gm else f"<@{uid}>"
+                rows.append(f"{nm} -- {sc:,}")
+            if len(mem) > _WAR_ROSTER_CAP:
+                rows.append(f"...and {len(mem) - _WAR_ROSTER_CAP} more")
+            won = " (winner)" if winner_slot == f["slot"] else ""
+            embed.add_field(
+                name=f"{f['name']} -- {f['score']:,} pts ({len(mem)}){won}",
+                value=("\n".join(rows) or "(no members)")[:1024],
+                inline=False,
+            )
+        return embed
+
+    @app_commands.command(name="warteams", description="See who is on each faction in the current war.")
+    @app_commands.guild_only()
+    async def warteams(self, interaction: discord.Interaction) -> None:
+        if not self._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        if not await self.bot.wars.active(interaction.guild_id):
+            return await interaction.response.send_message(
+                "No war is running right now. Use /warhistory to browse past wars.", ephemeral=True
+            )
+        factions = await self.bot.wars.standings(interaction.guild_id)
+        members = await self.bot.wars.roster(interaction.guild_id)
+        war_name = await self.bot.wars.name(interaction.guild_id)
+        embed = self._war_roster_embed(
+            interaction.guild, factions, members, None, war_name or "Faction War"
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @app_commands.command(name="warhistory", description="Browse past faction wars and who fought for each side.")
+    @app_commands.guild_only()
+    async def warhistory(self, interaction: discord.Interaction) -> None:
+        if not self._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        wars = await self.bot.wars.history(interaction.guild_id)
+        if not wars:
+            return await interaction.response.send_message(
+                "No past wars recorded yet -- history starts when a war ends.", ephemeral=True
+            )
+        view = WarHistoryView(self, interaction.guild, wars)
+        embed = await view.render(wars[0]["id"])
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
     @app_commands.command(name="warend", description="(Mods) End the faction war now and reward the winner.")
     @app_commands.guild_only()
     async def warend(self, interaction: discord.Interaction) -> None:
@@ -968,7 +1024,8 @@ class ContractsCog(commands.Cog):
         war_name = await self.bot.wars.name(guild_id)
         cap_label = war_name or "The war"  # capitalized for sentence starts
         standings = await self.bot.wars.standings(guild_id)
-        await self.bot.wars.end(guild_id)
+        if not await self.bot.wars.end(guild_id):
+            return None  # another caller (e.g. the auto-end ticker) already ended this war
         if not standings or standings[0]["score"] == 0:
             return f"{cap_label} ends with no points scored -- no winner."
         top = standings[0]["score"]
@@ -1349,6 +1406,44 @@ _SHOP_HOST_LINES = [
     "QP burning a hole in your pocket, Master? Allow me to help with that.",
     "Everything here is handcrafted by yours truly, a universal genius. What'll it be?",
 ]
+
+
+class WarHistoryView(discord.ui.View):
+    """Ephemeral /warhistory browser: a dropdown of past wars; picking one shows its factions
+    and who fought for each. Pure display over wars.history_* reads."""
+
+    def __init__(self, cog, guild, wars) -> None:
+        super().__init__(timeout=180)
+        self.cog = cog
+        self.guild = guild
+        self.wars = {w["id"]: w for w in wars}
+        options = []
+        for w in wars[:25]:
+            label = (w["name"] or "Faction War")[:90]
+            desc = f"ended {w['ended_at'][:10]}" if w["ended_at"] else None
+            options.append(discord.SelectOption(label=label, value=str(w["id"]), description=desc))
+        self._select = discord.ui.Select(placeholder="Pick a past war...", options=options)
+        self._select.callback = self._on_select
+        self.add_item(self._select)
+
+    async def _on_select(self, interaction: discord.Interaction) -> None:
+        embed = await self.render(int(self._select.values[0]))
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    async def render(self, war_id: int) -> discord.Embed:
+        w = self.wars[war_id]
+        factions = await self.cog.bot.wars.history_factions(war_id)
+        members = await self.cog.bot.wars.history_members(war_id)
+        parts = []
+        if w["description"]:
+            parts.append(f"*{w['description']}*")
+        ts = _acquired_ts(w["ended_at"])
+        if ts:
+            parts.append(f"Ended <t:{ts}:D>")
+        subtitle = "\n".join(parts) or None
+        return self.cog._war_roster_embed(
+            self.guild, factions, members, w["winner_slot"], w["name"] or "Faction War", subtitle
+        )
 
 
 class RosterView(discord.ui.View):
