@@ -65,6 +65,7 @@ _VOTE_DISPATCH = {
     "guess_ce": ("GuessCe", True),
 }
 NEXT_VOTE_TALLY_REFRESH = 2.0  # coalesce tally edits to this cadence, to spare the rate limit
+_VOTE_NAMES_CAP = 6  # voters listed per option in the next-game tally before "+N"
 
 _NO_PINGS = discord.AllowedMentions.none()
 _PING_USER = discord.AllowedMentions(everyone=False, roles=False, users=True)
@@ -716,14 +717,22 @@ class ChatRound:
         return leaders[0]
 
     def _vote_tally_text(self) -> str:
-        counts: dict[str, int] = {}
-        for v in self.next_votes.values():
-            counts[v] = counts.get(v, 0) + 1
-        parts = "   ".join(
-            f"{lbl} {counts[val]}" for val, lbl in self.vote_options if counts.get(val)
-        )
+        # Group voters by option and name them, so it's visible who is pushing a mode change
+        # (mentions in an embed field render the name but never ping).
+        voters_by_mode: "dict[str, list[int]]" = {}
+        for uid, v in self.next_votes.items():
+            voters_by_mode.setdefault(v, []).append(uid)
+        lines = []
+        for val, lbl in self.vote_options:
+            voters = voters_by_mode.get(val)
+            if not voters:
+                continue
+            shown = ", ".join(f"<@{u}>" for u in voters[:_VOTE_NAMES_CAP])
+            more = f" +{len(voters) - _VOTE_NAMES_CAP}" if len(voters) > _VOTE_NAMES_CAP else ""
+            lines.append(f"**{lbl}** ({len(voters)}): {shown}{more}")
         lead = dict(NEXT_VOTE_TYPES).get(self._next_winner(), self._next_winner())
-        return f"Leading: **{lead}**.\n{parts}" if parts else f"Leading: **{lead}**."
+        body = "\n".join(lines)
+        return f"Leading: **{lead}**.\n{body}"[:1024] if body else f"Leading: **{lead}**."
 
     async def record_next_vote(self, user_id: int, value: str) -> None:
         """Record a vote for the next game (cast on the prompt); throttled prompt refresh
