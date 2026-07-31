@@ -508,5 +508,22 @@
     "custom": true,
     "summon_weight": 0.025,
     "wishable": false
+  },
+  {
+    "id": -2300300,
+    "name": "Jinako Carigiri (Beginning of an Escape)",
+    "className": "moonCancer",
+    "rarity": 5,
+    "art": { "0": "https://bunyanbot-assets-327760835875.s3.us-east-1.amazonaws.com/custom/jinako_beginning_of_an_escape/art.png" },
+    "face": "https://bunyanbot-assets-327760835875.s3.us-east-1.amazonaws.com/custom/jinako_beginning_of_an_escape/face.png",
+    "figure": {},
+    "attribute": "sky",
+    "gender": "female",
+    "traits": [],
+    "aliases": ["jinako carigiri", "jinako", "carigiri", "beginning of an escape"],
+    "summon_line": "What fortune to have summoned me. \nI bring forth luck, offer riches, and I act as absolute comfort to others... \nIn other words, I am a Divine Spirit who promises you a vacation... \nPseudo-Servant, Moon Cancer, Ganesha. \nI bring you wealth with my presence alone... \nJust remember: don't bring me up ",
+    "custom": true,
+    "summon_weight": 0.025,
+    "wishable": false
   }
 ]
