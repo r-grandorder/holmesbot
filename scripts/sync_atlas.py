@@ -55,13 +55,15 @@ def _normalize(text: str) -> str:
     return _WS.sub(" ", _KEEP.sub(" ", base)).strip().replace(" ", "")
 
 
-def _assets(extra: dict) -> tuple[dict, dict, str | None]:
-    """(art, figure, face) trimmed from an Atlas extraAssets blob."""
+def _assets(extra: dict) -> tuple[dict, dict, str | None, dict]:
+    """(art, figure, face, commands) trimmed from an Atlas extraAssets blob. `commands` are the
+    command-card sprites the autobattle composite uses (the same images the legacy autochess did)."""
     art = {str(k): v for k, v in extra.get("charaGraph", {}).get("ascension", {}).items() if v}
     figure = {str(k): v for k, v in extra.get("charaFigure", {}).get("ascension", {}).items() if v}
     faces = extra.get("faces", {}).get("ascension", {})
     face = faces.get("1") or next(iter(faces.values()), None)
-    return art, figure, face
+    commands = {str(k): v for k, v in extra.get("commands", {}).get("ascension", {}).items() if v}
+    return art, figure, face, commands
 
 
 def _nick_aliases(raw: list[str], name: str) -> list[str]:
@@ -127,7 +129,7 @@ def main_na() -> int:
     for s in servants:
         if s.get("type") not in PLAYABLE_TYPES:
             continue
-        art, figure, face = _assets(s.get("extraAssets", {}))
+        art, figure, face, commands = _assets(s.get("extraAssets", {}))
         if not art and not figure:
             continue
         trimmed.append(
@@ -146,6 +148,7 @@ def main_na() -> int:
                 "art": art,
                 "figure": figure,
                 "face": face,
+                "commands": commands,
                 "cv": ((s.get("profile") or {}).get("cv") or "").strip() or None,
                 "skills": _active_skills(s),
                 "summon_line": _summon_line(s),
@@ -186,7 +189,7 @@ def main_jp() -> int:
         except Exception as e:  # noqa: BLE001 - one bad fetch shouldn't kill the run
             skipped.append((sid, s["name"], f"fetch failed: {e}"))
             continue
-        art, figure, face = _assets(nice.get("extraAssets", {}))
+        art, figure, face, commands = _assets(nice.get("extraAssets", {}))
         if not art:
             skipped.append((sid, s["name"], "no charaGraph art"))
             continue
@@ -206,6 +209,7 @@ def main_jp() -> int:
                 "art": art,
                 "figure": figure,
                 "face": face or s.get("face"),
+                "commands": commands,
                 "cv": ((nice.get("profile") or {}).get("cv") or "").strip() or None,
                 "jp": True,
                 "aliases": _nick_aliases(

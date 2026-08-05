@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import random
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Iterable
 
@@ -29,6 +29,7 @@ class Servant:
     art: dict[str, str]     # charaGraph ascension -> URL (guess_servant, reveals)
     figure: dict[str, str]  # charaFigure ascension -> URL (guess_shadow)
     face: str | None = None  # Atlas face portrait (host avatars)
+    commands: dict[str, str] = field(default_factory=dict)  # command-card sprites (autobattle image)
     cv: str | None = None    # seiyuu / voice actor (Atlas profile.cv)
     gender: str = ""         # Atlas gender (male/female/unknown); drives a guess hint
     attribute: str = ""      # Atlas attribute (sky/earth/human/star/beast); category filter
@@ -173,6 +174,7 @@ class ServantIndex:
             art={str(k): v for k, v in item.get("art", {}).items() if v},
             figure={str(k): v for k, v in item.get("figure", {}).items() if v},
             face=item.get("face"),
+            commands={str(k): v for k, v in item.get("commands", {}).items() if v},
             cv=item.get("cv"),
             gender=item.get("gender", ""),
             attribute=item.get("attribute", ""),

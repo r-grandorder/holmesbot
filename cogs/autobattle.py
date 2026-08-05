@@ -420,19 +420,32 @@ class Autobattle(commands.Cog):
             )
         return "\n\n".join(blocks) or "(none)"
 
-    async def _faces(self, session, servant_ids) -> "list[bytes]":
+    @staticmethod
+    def _sprite_url(servant) -> "str | None":
+        """The battle sprite for the composite: the command-card art (the same asset the legacy
+        used) when we have it, else the battle figure (charaFigure), else the face. Custom units
+        only have a face. NOTE: command cards populate after a servant-data resync; until then this
+        falls back to the figure sprite (still a real sprite, not the face crop)."""
+        if servant is None:
+            return None
+        for asset in (getattr(servant, "commands", None), servant.figure):
+            if asset:
+                return asset.get("1") or next(iter(asset.values()))
+        return servant.face
+
+    async def _sprites(self, session, servant_ids) -> "list[bytes]":
         out = []
         for sid in servant_ids:
-            s = self.bot.servants.get(sid)
-            if s and s.face:
+            url = self._sprite_url(self.bot.servants.get(sid))
+            if url:
                 try:
-                    out.append(await images.fetch_bytes(session, s.face))
-                except Exception:  # a face that won't fetch just drops from the composite
+                    out.append(await images.fetch_bytes(session, url))
+                except Exception:  # a sprite that won't fetch just drops from the composite
                     pass
         return out
 
     async def _battle_image(self, bg_url, left_ids, right_ids) -> "discord.File | None":
-        """Composite both teams' faces over the battle background -> a discord.File (battle.png),
+        """Composite both teams' sprites over the battle background -> a discord.File (battle.png),
         or None on any fetch/decode failure (the image is cosmetic; the caller falls back)."""
         session = self.bot.http_session
         if not session or not bg_url:
@@ -440,7 +453,7 @@ class Autobattle(commands.Cog):
         try:
             bg = await images.fetch_bytes(session, bg_url)
             png = images.battle_preview(
-                bg, await self._faces(session, left_ids), await self._faces(session, right_ids)
+                bg, await self._sprites(session, left_ids), await self._sprites(session, right_ids)
             )
             return discord.File(io.BytesIO(png), filename="battle.png")
         except Exception:
