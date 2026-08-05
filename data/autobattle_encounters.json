@@ -1,0 +1,233 @@
+{
+ "beginner_team_1": {
+  "name": "Fast Exp 1",
+  "difficulty": "beginner",
+  "description": "A team of low-level ember gathering servants",
+  "bg_image": "https://static.atlasacademy.io/NA/Back/back20803.png",
+  "servants": [
+   {
+    "servant_id": 100100,
+    "level": 10
+   },
+   {
+    "servant_id": 100200,
+    "level": 10
+   },
+   {
+    "servant_id": 100300,
+    "level": 10
+   }
+  ],
+  "xp_reward": 800
+ },
+ "beginner_team_2": {
+  "name": "Fast Exp 2",
+  "difficulty": "beginner",
+  "description": "Basic low-star servants at low levels",
+  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/chaldea.png",
+  "servants": [
+   {
+    "servant_id": 101300,
+    "level": 15
+   },
+   {
+    "servant_id": 200100,
+    "level": 15
+   },
+   {
+    "servant_id": 300500,
+    "level": 15
+   }
+  ],
+  "xp_reward": 800
+ },
+ "lizzes": {
+  "name": "Lizfest",
+  "difficulty": "intermediate",
+  "description": "Liz! Liz!",
+  "bg_image": "https://static.atlasacademy.io/NA/Back/back32200.png",
+  "servants": [
+   {
+    "servant_id": 502600,
+    "level": 80
+   },
+   {
+    "servant_id": 404600,
+    "level": 80
+   },
+   {
+    "servant_id": 300500,
+    "level": 80
+   }
+  ],
+  "xp_reward": 2000
+ },
+ "the_cus": {
+  "name": "Cu Hell",
+  "difficulty": "intermediate",
+  "description": "",
+  "bg_image": "https://static.atlasacademy.io/JP/Back/back20802.png",
+  "servants": [
+   {
+    "servant_id": 300700,
+    "level": 60
+   },
+   {
+    "servant_id": 300100,
+    "level": 60
+   },
+   {
+    "servant_id": 702000,
+    "level": 60
+   }
+  ],
+  "xp_reward": 2000
+ },
+ "apotheosis": {
+  "name": "Apotheosis in a Foreign Land",
+  "difficulty": "intermediate",
+  "description": "Get in the egg, Koyanskaya.",
+  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/heian_kyo.webp",
+  "servants": [
+   {
+    "servant_id": 404300,
+    "level": 90
+   },
+   {
+    "servant_id": 404400,
+    "level": 80
+   },
+   {
+    "servant_id": 2500900,
+    "level": 90
+   }
+  ],
+  "xp_reward": 2000
+ },
+ "yorokobe": {
+  "name": "Yorokobe",
+  "difficulty": "intermediate",
+  "description": "Yorokobe, shounen.",
+  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/olympus_coliseum.webp",
+  "servants": [
+   {
+    "servant_id": 1001500,
+    "level": 90
+   },
+   {
+    "servant_id": 1100100,
+    "level": 90
+   },
+   {
+    "servant_id": 200200,
+    "level": 90
+   }
+  ],
+  "xp_reward": 2000
+ },
+ "celtic_training": {
+  "name": "The Celts",
+  "difficulty": "hard",
+  "description": "",
+  "bg_image": "https://static.atlasacademy.io/JP/Back/back20702.png",
+  "servants": [
+   {
+    "servant_id": 401300,
+    "level": 90
+   },
+   {
+    "servant_id": 301300,
+    "level": 90
+   },
+   {
+    "servant_id": 702000,
+    "level": 90
+   }
+  ],
+  "xp_reward": 4000
+ },
+ "lilim_harlot": {
+  "name": "Lilim Harlot",
+  "difficulty": "hard",
+  "description": "Spiral proof world...",
+  "bg_image": "https://static.atlasacademy.io/NA/Back/back180900_1344_626.png",
+  "servants": [
+   {
+    "servant_id": 2800300,
+    "level": 90
+   },
+   {
+    "servant_id": 604800,
+    "level": 80
+   },
+   {
+    "servant_id": 3300100,
+    "level": 90
+   }
+  ],
+  "xp_reward": 4000
+ },
+ "tailors": {
+  "name": "Little Tailors",
+  "difficulty": "hard",
+  "description": "Who are they making outfits for...?",
+  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/avalon_fields.png",
+  "servants": [
+   {
+    "servant_id": 504600,
+    "level": 90
+   },
+   {
+    "servant_id": 404200,
+    "level": 80
+   },
+   {
+    "servant_id": 704700,
+    "level": 90
+   }
+  ],
+  "xp_reward": 4000
+ },
+ "mooncell": {
+  "name": "Mooncell",
+  "difficulty": "hard",
+  "description": "Not this again.",
+  "bg_image": "https://static.atlasacademy.io/NA/Back/back41300.png",
+  "servants": [
+   {
+    "servant_id": 2300100,
+    "level": 90
+   },
+   {
+    "servant_id": 1000900,
+    "level": 90
+   },
+   {
+    "servant_id": 1000200,
+    "level": 90
+   }
+  ],
+  "xp_reward": 4000
+ },
+ "mooncell2": {
+  "name": "Mooncell 2",
+  "difficulty": "hard",
+  "description": "Not this again.",
+  "bg_image": "https://static.atlasacademy.io/NA/Back/back41320.png",
+  "servants": [
+   {
+    "servant_id": 1000300,
+    "level": 90
+   },
+   {
+    "servant_id": 1000100,
+    "level": 90
+   },
+   {
+    "servant_id": 2300200,
+    "level": 90
+   }
+  ],
+  "xp_reward": 4000
+ }
+}

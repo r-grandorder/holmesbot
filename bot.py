@@ -12,6 +12,7 @@ import branding
 from config import Config
 from data import host
 from data.ce import CeIndex
+from data.kits import KitIndex
 from data.servants import ServantIndex
 from data.shadows import ShadowCatalog
 from db import Database
@@ -61,6 +62,7 @@ class HolmesBot(commands.Bot):
         self.db = Database(config.database_url)
         self.http_session: aiohttp.ClientSession | None = None
         self.servants: ServantIndex | None = None
+        self.kits: KitIndex | None = None
         self.ces: CeIndex | None = None
         self.shadows: ShadowCatalog | None = None
         self.scoring: ScoringService | None = None
@@ -110,8 +112,9 @@ class HolmesBot(commands.Bot):
             )
         # Autobattle is experimental; its cog only loads when AUTOBATTLE_ENABLED is set.
         if self.config.autobattle_enabled:
+            self.kits = KitIndex.load()
             await self.load_extension("cogs.autobattle")
-            log.info("autobattle feature enabled")
+            log.info("autobattle feature enabled (%d kits loaded)", len(self.kits))
 
         if self.config.guild_ids:
             # Register directly in our guild(s) for instant command updates. A guild the bot
