@@ -89,9 +89,12 @@ class LogPager(discord.ui.View):
 
     ENTRIES_PER_PAGE = 8
 
-    def __init__(self, base_embed: discord.Embed, battle_log: "list[str]") -> None:
+    def __init__(self, render, battle_log: "list[str]") -> None:
+        # render(log_name, log_text) -> a FRESH result embed with that log page as its last field.
+        # Rebuilding from scratch each page (rather than copying + appending to one embed) keeps
+        # the team status pinned at the top and guarantees the log replaces instead of piling up.
         super().__init__(timeout=600)
-        self.base = base_embed
+        self._render = render
         self.log = battle_log
         self.page = 0
         self.pages = max(1, (len(battle_log) + self.ENTRIES_PER_PAGE - 1) // self.ENTRIES_PER_PAGE)
@@ -102,16 +105,12 @@ class LogPager(discord.ui.View):
         self.next.disabled = self.page >= self.pages - 1
 
     def page_embed(self) -> discord.Embed:
-        embed = self.base.copy()
         start = self.page * self.ENTRIES_PER_PAGE
         chunk = self.log[start:start + self.ENTRIES_PER_PAGE]
         text = "\n".join(chunk) if chunk else "No battle log."
         if len(text) > 1024:
             text = text[:1021] + "..."
-        embed.add_field(
-            name=f"Battle Log (Page {self.page + 1}/{self.pages})", value=text, inline=False
-        )
-        return embed
+        return self._render(f"Battle Log (Page {self.page + 1}/{self.pages})", text)
 
     @discord.ui.button(emoji="◀️", style=discord.ButtonStyle.secondary)
     async def prev(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
@@ -474,9 +473,12 @@ class Autobattle(commands.Cog):
             lines.append(f"{_item_tag(was)} ({tail})")
         return lines
 
-    def _battle_embed(self, enc, state, item_lines, reward_line=None, has_image=False) -> discord.Embed:
-        """The base result embed (legacy layout): VICTORY/DEFEAT title, then team status with HP
-        bars at the TOP, then rewards. The battle log is added as a paginated field by LogPager."""
+    def _battle_embed(
+        self, enc, state, item_lines, reward_line=None, has_image=False, log_name=None, log_text=None
+    ) -> discord.Embed:
+        """A fresh result embed (legacy layout): VICTORY/DEFEAT title, then team status with HP bars
+        at the TOP, rewards, then the current battle-log page as the last field. Rebuilt per page by
+        LogPager so the log replaces (never piles up) and the status stays pinned at the top."""
         won, draw = state["victory"], state.get("draw")
         if draw:
             color, title = discord.Color.gold(), "⚔️ DRAW!"
@@ -497,6 +499,8 @@ class Autobattle(commands.Cog):
             embed.add_field(name="Reward", value=reward_line, inline=False)
         if item_lines:
             embed.add_field(name="Items used", value="\n".join(item_lines), inline=False)
+        if log_name is not None:
+            embed.add_field(name=log_name, value=log_text or "No battle log.", inline=False)
         return embed
 
     @ab.command(name="fight", description="Fight a preconfigured PvE boss stage with your team.")
@@ -558,8 +562,14 @@ class Autobattle(commands.Cog):
 
         enemy_ids = [m["servant_id"] for m in enc.get("servants", [])]
         battle_file = await self._battle_image(enc.get("bg_image"), team_ids, enemy_ids)
-        base = self._battle_embed(enc, state, item_lines, reward_line, has_image=battle_file is not None)
-        pager = LogPager(base, state["battle_log"])
+
+        def render(log_name, log_text):
+            return self._battle_embed(
+                enc, state, item_lines, reward_line,
+                has_image=battle_file is not None, log_name=log_name, log_text=log_text,
+            )
+
+        pager = LogPager(render, state["battle_log"])
         send_kwargs = {"file": battle_file or discord.utils.MISSING}
         if pager.pages > 1:
             send_kwargs["view"] = pager
@@ -602,10 +612,10 @@ class Autobattle(commands.Cog):
 
     def _pvp_embed(
         self, challenger, opponent, state, winner, item_lines, reward_line,
-        bg_url=None, has_image=False,
+        bg_url=None, has_image=False, log_name=None, log_text=None,
     ) -> discord.Embed:
-        """The base PvP result embed: winner title, both players' team status (HP bars) at the top,
-        rewards. LogPager adds the paginated battle log below."""
+        """A fresh PvP result embed: winner title, both players' team status (HP bars) at the top,
+        rewards, then the current battle-log page as the last field (rebuilt per page by LogPager)."""
         draw = state.get("draw")
         if draw:
             color, title = discord.Color.gold(), "⚔️ DRAW!"
@@ -630,6 +640,8 @@ class Autobattle(commands.Cog):
             embed.add_field(
                 name=f"{challenger.display_name}'s items used", value="\n".join(item_lines), inline=False
             )
+        if log_name is not None:
+            embed.add_field(name=log_name, value=log_text or "No battle log.", inline=False)
         return embed
 
     @ab.command(
@@ -705,11 +717,15 @@ class Autobattle(commands.Cog):
         bgs = autobattle.pvp_backgrounds()
         bg_url = random.choice(bgs).get("bg_image") if bgs else None
         battle_file = await self._battle_image(bg_url, my_team, opp_team)
-        base = self._pvp_embed(
-            interaction.user, opponent, state, winner, item_lines, reward_line,
-            bg_url=bg_url, has_image=battle_file is not None,
-        )
-        pager = LogPager(base, state["battle_log"])
+
+        def render(log_name, log_text):
+            return self._pvp_embed(
+                interaction.user, opponent, state, winner, item_lines, reward_line,
+                bg_url=bg_url, has_image=battle_file is not None,
+                log_name=log_name, log_text=log_text,
+            )
+
+        pager = LogPager(render, state["battle_log"])
         send_kwargs = {
             "file": battle_file or discord.utils.MISSING,
             "allowed_mentions": discord.AllowedMentions.none(),
