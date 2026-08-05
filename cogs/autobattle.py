@@ -83,29 +83,47 @@ class ShopView(discord.ui.View):
 
 
 class LogPager(discord.ui.View):
-    """Flips through a long battle log. Public -- anyone can page it, not just the fighter."""
+    """The paginated battle-log field on a result embed (ported from the legacy BattleLogView):
+    the team status + rewards stay fixed and the log flips 8 entries at a time. Public -- anyone
+    can page it, not just the fighter."""
 
-    def __init__(self, embeds: "list[discord.Embed]") -> None:
+    ENTRIES_PER_PAGE = 8
+
+    def __init__(self, base_embed: discord.Embed, battle_log: "list[str]") -> None:
         super().__init__(timeout=600)
-        self.embeds = embeds
-        self.i = 0
+        self.base = base_embed
+        self.log = battle_log
+        self.page = 0
+        self.pages = max(1, (len(battle_log) + self.ENTRIES_PER_PAGE - 1) // self.ENTRIES_PER_PAGE)
         self._sync()
 
     def _sync(self) -> None:
-        self.prev.disabled = self.i <= 0
-        self.next.disabled = self.i >= len(self.embeds) - 1
+        self.prev.disabled = self.page <= 0
+        self.next.disabled = self.page >= self.pages - 1
+
+    def page_embed(self) -> discord.Embed:
+        embed = self.base.copy()
+        start = self.page * self.ENTRIES_PER_PAGE
+        chunk = self.log[start:start + self.ENTRIES_PER_PAGE]
+        text = "\n".join(chunk) if chunk else "No battle log."
+        if len(text) > 1024:
+            text = text[:1021] + "..."
+        embed.add_field(
+            name=f"Battle Log (Page {self.page + 1}/{self.pages})", value=text, inline=False
+        )
+        return embed
 
     @discord.ui.button(emoji="◀️", style=discord.ButtonStyle.secondary)
     async def prev(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
-        self.i = max(0, self.i - 1)
+        self.page = max(0, self.page - 1)
         self._sync()
-        await interaction.response.edit_message(embed=self.embeds[self.i], view=self)
+        await interaction.response.edit_message(embed=self.page_embed(), view=self)
 
     @discord.ui.button(emoji="▶️", style=discord.ButtonStyle.secondary)
     async def next(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
-        self.i = min(len(self.embeds) - 1, self.i + 1)
+        self.page = min(self.pages - 1, self.page + 1)
         self._sync()
-        await interaction.response.edit_message(embed=self.embeds[self.i], view=self)
+        await interaction.response.edit_message(embed=self.page_embed(), view=self)
 
 
 class Autobattle(commands.Cog):
@@ -380,17 +398,27 @@ class Autobattle(commands.Cog):
         filled = max(0, min(length, round(length * max(0, cur) / mx)))
         return "\N{DARK SHADE}" * filled + "\N{LIGHT SHADE}" * (length - filled)
 
-    def _team_hp(self, combatants) -> str:
-        """Post-battle HP bars for a team: one line per servant (class emoji + name + bar + HP)."""
-        lines = []
+    @staticmethod
+    def _format_effects(c) -> str:
+        """Active buff/debuff emotes for a servant (the status line), like the legacy."""
+        icons = [engine.EFFECT_EMOJI.get(k, "✨") for k in c.get("active_buffs", {})]
+        icons += [engine.EFFECT_EMOJI.get(k, "❌") for k in c.get("active_debuffs", {})]
+        return " ".join(icons)
+
+    def _team_status(self, combatants) -> str:
+        """A team's status block (the legacy layout): alive/dead icon, class emote, name, level,
+        active-effect emotes, then an HP bar -- shown at the TOP of the result embed."""
+        blocks = []
         for c in combatants:
+            icon = "✅" if c["alive"] else "💀"
             cur = max(0, c["current_hp"])
-            ko = " (KO)" if not c["alive"] else ""
-            lines.append(
-                f"{engine.format_name(c)} `{self._hp_bar(cur, c['max_hp'])}` "
-                f"{cur:,}/{c['max_hp']:,}{ko}"
+            effects = self._format_effects(c)
+            eff = f" {effects}" if effects else ""
+            blocks.append(
+                f"{icon} {engine.class_emoji(c.get('className', ''))} **{c['name']}** Lv.{c['level']}{eff}\n"
+                f"`{self._hp_bar(cur, c['max_hp'])}` {cur:,}/{c['max_hp']:,} HP"
             )
-        return "\n".join(lines) or "(none)"
+        return "\n\n".join(blocks) or "(none)"
 
     async def _faces(self, session, servant_ids) -> "list[bytes]":
         out = []
@@ -433,45 +461,27 @@ class Autobattle(commands.Cog):
             lines.append(f"{_item_tag(was)} ({tail})")
         return lines
 
-    @staticmethod
-    def _paginate_log(lines, limit=2000) -> "list[str]":
-        """Split the full battle log into page-sized chunks on line boundaries -- nothing is lost,
-        the whole log is browsable via the pager. Returns at least one (possibly empty) page."""
-        pages, cur, length = [], [], 0
-        for ln in lines:
-            ln = ln if len(ln) <= limit else ln[:limit]
-            if cur and length + len(ln) + 1 > limit:
-                pages.append("\n".join(cur))
-                cur, length = [], 0
-            cur.append(ln)
-            length += len(ln) + 1
-        if cur:
-            pages.append("\n".join(cur))
-        return pages or [""]
-
-    def _battle_embed(self, member, enc, state, log_text, item_lines, reward_line=None, has_image=False) -> discord.Embed:
+    def _battle_embed(self, enc, state, item_lines, reward_line=None, has_image=False) -> discord.Embed:
+        """The base result embed (legacy layout): VICTORY/DEFEAT title, then team status with HP
+        bars at the TOP, then rewards. The battle log is added as a paginated field by LogPager."""
         won, draw = state["victory"], state.get("draw")
-        color = (
-            discord.Color.green() if won
-            else discord.Color.light_grey() if draw
-            else discord.Color.red()
-        )
-        outcome = "Victory!" if won else "Draw" if draw else "Defeat"
+        if draw:
+            color, title = discord.Color.gold(), "⚔️ DRAW!"
+        elif won:
+            color, title = discord.Color.green(), "🎉 VICTORY!"
+        else:
+            color, title = discord.Color.red(), "💔 DEFEAT"
         embed = discord.Embed(
-            title=f"{enc.get('difficulty', '?').title()}: {enc.get('name', 'Stage')}",
-            description=log_text,  # plain text so emojis + bold render
-            color=color,
+            title=title, description=f"Battle against **{enc.get('name', 'Stage')}**", color=color
         )
-        embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         if has_image:
             embed.set_image(url="attachment://battle.png")
         elif enc.get("bg_image"):
             embed.set_image(url=enc["bg_image"])
-        embed.add_field(name="Your team", value=self._team_hp(state["player_servants"]), inline=False)
-        embed.add_field(name="Enemy", value=self._team_hp(state["enemy_servants"]), inline=False)
-        embed.add_field(name="Result", value=outcome, inline=True)
+        embed.add_field(name="Your Team", value=self._team_status(state["player_servants"]), inline=True)
+        embed.add_field(name="Enemy Team", value=self._team_status(state["enemy_servants"]), inline=True)
         if reward_line:
-            embed.add_field(name="Reward", value=reward_line, inline=True)
+            embed.add_field(name="Reward", value=reward_line, inline=False)
         if item_lines:
             embed.add_field(name="Items used", value="\n".join(item_lines), inline=False)
         return embed
@@ -535,20 +545,12 @@ class Autobattle(commands.Cog):
 
         enemy_ids = [m["servant_id"] for m in enc.get("servants", [])]
         battle_file = await self._battle_image(enc.get("bg_image"), team_ids, enemy_ids)
-        pages = self._paginate_log(state["battle_log"])
-        embeds = []
-        for idx, page in enumerate(pages):
-            e = self._battle_embed(
-                interaction.user, enc, state, page, item_lines, reward_line,
-                has_image=battle_file is not None,
-            )
-            if len(pages) > 1:
-                e.set_footer(text=f"Log page {idx + 1}/{len(pages)}")
-            embeds.append(e)
+        base = self._battle_embed(enc, state, item_lines, reward_line, has_image=battle_file is not None)
+        pager = LogPager(base, state["battle_log"])
         send_kwargs = {"file": battle_file or discord.utils.MISSING}
-        if len(embeds) > 1:
-            send_kwargs["view"] = LogPager(embeds)
-        await interaction.followup.send(embed=embeds[0], **send_kwargs)
+        if pager.pages > 1:
+            send_kwargs["view"] = pager
+        await interaction.followup.send(embed=pager.page_embed(), **send_kwargs)
 
     async def _stage_autocomplete(self, interaction, current):
         q = current.strip().lower()
@@ -586,28 +588,29 @@ class Autobattle(commands.Cog):
         return f"\n+{cg.AB_PVP_WAR_POINTS} war points for **{wm['name']}**."
 
     def _pvp_embed(
-        self, challenger, opponent, state, winner, log_text, item_lines, reward_line,
+        self, challenger, opponent, state, winner, item_lines, reward_line,
         bg_url=None, has_image=False,
     ) -> discord.Embed:
+        """The base PvP result embed: winner title, both players' team status (HP bars) at the top,
+        rewards. LogPager adds the paginated battle log below."""
         draw = state.get("draw")
-        color = (
-            discord.Color.light_grey() if draw
-            else discord.Color.green() if winner is not None and winner.id == challenger.id
-            else discord.Color.red()
-        )
-        outcome = "Draw." if draw else f"{winner.display_name} wins!"
+        if draw:
+            color, title = discord.Color.gold(), "⚔️ DRAW!"
+        elif winner is not None and winner.id == challenger.id:
+            color, title = discord.Color.green(), f"🎉 {challenger.display_name} wins!"
+        else:
+            color, title = discord.Color.red(), f"🎉 {opponent.display_name} wins!"
         embed = discord.Embed(
-            title=f"{challenger.display_name} vs {opponent.display_name}",
-            description=log_text,  # plain text so emojis + bold render
+            title=title,
+            description=f"**{challenger.display_name}** vs **{opponent.display_name}**",
             color=color,
         )
         if has_image:
             embed.set_image(url="attachment://battle.png")
         elif bg_url:
             embed.set_image(url=bg_url)
-        embed.add_field(name=challenger.display_name, value=self._team_hp(state["player_servants"]), inline=False)
-        embed.add_field(name=opponent.display_name, value=self._team_hp(state["enemy_servants"]), inline=False)
-        embed.add_field(name="Result", value=outcome, inline=True)
+        embed.add_field(name=challenger.display_name, value=self._team_status(state["player_servants"]), inline=True)
+        embed.add_field(name=opponent.display_name, value=self._team_status(state["enemy_servants"]), inline=True)
         if reward_line:
             embed.add_field(name="Reward", value=reward_line, inline=False)
         if item_lines:
@@ -689,23 +692,18 @@ class Autobattle(commands.Cog):
         bgs = autobattle.pvp_backgrounds()
         bg_url = random.choice(bgs).get("bg_image") if bgs else None
         battle_file = await self._battle_image(bg_url, my_team, opp_team)
-        pages = self._paginate_log(state["battle_log"])
-        embeds = []
-        for idx, page in enumerate(pages):
-            e = self._pvp_embed(
-                interaction.user, opponent, state, winner, page, item_lines, reward_line,
-                bg_url=bg_url, has_image=battle_file is not None,
-            )
-            if len(pages) > 1:
-                e.set_footer(text=f"Log page {idx + 1}/{len(pages)}")
-            embeds.append(e)
+        base = self._pvp_embed(
+            interaction.user, opponent, state, winner, item_lines, reward_line,
+            bg_url=bg_url, has_image=battle_file is not None,
+        )
+        pager = LogPager(base, state["battle_log"])
         send_kwargs = {
             "file": battle_file or discord.utils.MISSING,
             "allowed_mentions": discord.AllowedMentions.none(),
         }
-        if len(embeds) > 1:
-            send_kwargs["view"] = LogPager(embeds)
-        await interaction.followup.send(embed=embeds[0], **send_kwargs)
+        if pager.pages > 1:
+            send_kwargs["view"] = pager
+        await interaction.followup.send(embed=pager.page_embed(), **send_kwargs)
 
 
 async def setup(bot) -> None:

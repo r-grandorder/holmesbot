@@ -29,23 +29,97 @@ from data.autobattle_items import get_item
 BATTLE_START, ON_ENTER, ON_DEFEAT, ON_KILL = "battle_start", "on_enter", "on_defeat", "on_kill"
 
 
-# Class icons for the battle log. Unicode placeholders that render anywhere; swap the values for
-# the r/grandorder server's custom class emoji (<:saber:id>, ...) when we have the ids.
+# Custom Discord emotes, ported verbatim from the legacy bot (the r/grandorder server's emoji the
+# bot renders in the log + status). If any id is wrong for this server, fix it here.
 CLASS_EMOJI = {
-    "saber": "⚔️", "archer": "🏹", "lancer": "🔱", "rider": "🐎",
-    "caster": "🎩", "assassin": "🗡️", "berserker": "🪓", "ruler": "⚖️",
-    "avenger": "🩸", "alterego": "🎭", "mooncancer": "🌙", "foreigner": "👁️",
-    "pretender": "🃏", "beast": "👹", "shielder": "🛡️",
+    "saber": "<:saber:1440481539673817198>",
+    "archer": "<:archer:1440481136206938214>",
+    "lancer": "<:lancer:1440481416126402681>",
+    "rider": "<:rider:1440481497999212614>",
+    "assassin": "<:assassin:1440481168540827668>",
+    "caster": "<:caster:1440481367459627111>",
+    "alterego": "<:alterego:1440481092170809355>",
+    "avenger": "<:avenger:1440481199717093378>",
+    "ruler": "<:ruler:1440481520581083167>",
+    "mooncancer": "<:mooncancer:1440481441874972743>",
+    "foreigner": "<:foreigner:1440481391447117874>",
+    "pretender": "<:pretender:1440481473336578130>",
+    "beast": "<:beast:1440481328540815450>",
+    "shielder": "<:shielder:1440481559294509086>",
+    "berserker": "<:berserker:1440481348644114432>",
+}
+_UNKNOWN_CLASS = "<:unknown:1440481579704258671>"
+
+# Buff/debuff emotes (keys are EffectType values). Used in the log + the team-status effect line.
+EFFECT_EMOJI = {
+    "attack_up": "<:AtkUp:1440521246944268308>",
+    "defense_up": "<:DefUp:1440521367534567484>",
+    "evade": "<:Evade:1440521385658028062>",
+    "anti_purge": "<:antipurgedefense:1279519626379788419>",
+    "guts": "<:Guts:1440521420818878502>",
+    "instant_kill": "<:IK:1440521470060003368>",
+    "ignore_evade": "<:IgnoreEvade:1440521726218862643>",
+    "piercing": "<:TeamPierce:1440525339687129088>",
+    "pass_buffs": "<:PassBuffOnDeath:1440523078915461221>",
+    "heal": "<:Heal:1440928092993622076>",
+    "cleanse": "✨",
+    "healing_per_turn": "<:HPPerTurn:1440521453949943898>",
+    "heal_on_damage": "<:HPAbsorb:1440521436002254979>",
+    "atk_up_on_damage": "<:AtkUpOnKill:1440523055091683439>",
+    "atk_up_on_hurt": "<:AtkUpOnKill:1440523055091683439>",
+    "atk_up_on_kill": "<:AtkUpOnKill:1440523055091683439>",
+    "def_up_on_kill": "<:DefUpOnKill:1440525315922198579>",
+    "order_change": "<:OrderChange:1440521485495173150>",
+    "max_hp_up": "<:MaxHPUp:1440622720244256868>",
+    "stun": "<:Stun:1440521536762019991>",
+    "sleep": "<:Sleep:1440521519221444708>",
+    "skill_seal": "<:SkillSeal:1440523028349063238>",
+    "poison": "<:Poison:1440521502792613950>",
+    "curse": "<:Curse:1440521337167937657>",
+    "burn": "<:Burn:1440521276040024116>",
+    "defense_down": "<:DefDown:1440521352200060938>",
+    "attack_down": "<:AtkDown:1440521208561926144>",
+    "sacrifice": "<:IKSelf:1440614431187931178>",
+    "buff_removal": "🌀",
+    "curse_immunity": "🛡️",
+    "skill_seal_resist": "<:SkillSeal:1440523028349063238>",
 }
 
 
 def class_emoji(class_name: str) -> str:
-    return CLASS_EMOJI.get((class_name or "").lower(), "")
+    return CLASS_EMOJI.get((class_name or "").lower(), _UNKNOWN_CLASS)
 
 
 def format_name(s: dict) -> str:
-    emoji = class_emoji(s.get("className", ""))
-    return f"{emoji} {s['name']}".strip() if emoji else s["name"]
+    return f"{class_emoji(s.get('className', ''))} {s['name']}"
+
+
+def format_effect_description(effect_type: str, value: float, duration: int) -> str:
+    """Human-readable effect line for the battle log (ported from the legacy)."""
+    emoji = EFFECT_EMOJI.get(effect_type, "✨")
+    effect_name = effect_type.replace("_", " ").title()
+    if effect_type in ("attack_up", "defense_up", "attack_down", "defense_down"):
+        value_str = f"{int(value * 100)}%"
+    elif effect_type in ("max_hp_up", "healing_per_turn") and value <= 10.0:
+        value_str = f"{int(value * 100)}% HP"
+    elif effect_type == "order_change":
+        if value == -1:
+            return f"{emoji} moves to back"
+        if value == 1:
+            return f"{emoji} moves to front"
+        return f"{emoji} swaps position"
+    elif effect_type in ("heal", "max_hp_up", "healing_per_turn"):
+        value_str = f"{int(value)} HP"
+    elif effect_type == "guts":
+        value_str = f"{int(value)} lives"
+    else:
+        value_str = ""
+    duration_str = (
+        "permanent" if duration == -1 else "1 turn" if duration == 1 else f"{duration} turns"
+    )
+    if value_str:
+        return f"{emoji} {effect_name} ({value_str}) for {duration_str}"
+    return f"{emoji} {effect_name} for {duration_str}"
 
 
 def _skill_has_effect(skill, effect_type: str) -> bool:
@@ -121,8 +195,8 @@ def _skill_targets(target: str, user: dict, user_team: list, enemy_team: list) -
 
 
 def execute_skill(skill, user: dict, user_team: list, enemy_team: list, battle_log: list):
-    """Apply a kit's effects to their targets and mark it used (once per battle)."""
-    battle_log.append(f"{format_name(user)} activates {skill.name}!")
+    """Apply a kit's effects to their targets, logging each one, and mark it used (once/battle)."""
+    battle_log.append(f"✨ {user['name']} activates skill: **{skill.name}**!")
     for se in skill.effects:
         try:
             etype = EffectType(se.effect_type)
@@ -137,7 +211,14 @@ def execute_skill(skill, user: dict, user_team: list, enemy_team: list, battle_l
             unremovable=se.unremovable,
         )
         for target in _skill_targets(se.target, user, user_team, enemy_team):
-            apply_effect(target, effect, battle_log)
+            applied = apply_effect(target, effect, battle_log)
+            # Persisting effects get a "gains ..." line; instant ones (heal/cleanse/max_hp_up)
+            # speak for themselves, buff_removal gets its own line. (Matches the legacy log.)
+            if se.effect_type not in ("heal", "cleanse", "buff_removal", "max_hp_up"):
+                desc = format_effect_description(se.effect_type, se.value, se.duration)
+                battle_log.append(f"  \N{RIGHTWARDS ARROW} {target['name']} gains {desc}")
+            elif se.effect_type == "buff_removal" and applied:
+                battle_log.append(f"  🌀 {target['name']}'s buffs are removed!")
     if user.get("skill_state"):
         user["skill_state"]["activated_this_battle"] = True
 
