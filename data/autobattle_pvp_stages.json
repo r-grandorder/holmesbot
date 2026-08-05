@@ -1,0 +1,62 @@
+{
+ "town": {
+  "name": "Town",
+  "bg_image": "https://static.atlasacademy.io/JP/Back/back20502.png"
+ },
+ "dungeon": {
+  "name": "Dungeon",
+  "bg_image": "https://static.atlasacademy.io/JP/Back/back21402.png"
+ },
+ "america_flats": {
+  "name": "America Flats",
+  "bg_image": "https://static.atlasacademy.io/JP/Back/back20702.png"
+ },
+ "forest": {
+  "name": "Forest",
+  "bg_image": "https://static.atlasacademy.io/JP/Back/back20802.png"
+ },
+ "chaldea": {
+  "name": "Chaldea Room",
+  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/chaldea.png"
+ },
+ "frozen_chaldea": {
+  "name": "Chaldea – Frozen",
+  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/frozen_chaldea.webp"
+ },
+ "bleached_earth": {
+  "name": "Bleached Earth",
+  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/bleached_earth.webp"
+ },
+ "avalon": {
+  "name": "Avalon",
+  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/avalon.png"
+ },
+ "avalon_fields": {
+  "name": "Avalon Fields",
+  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/avalon_fields.png"
+ },
+ "avalon_camps": {
+  "name": "Avalon Camps",
+  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/avalon_camps.png"
+ },
+ "avalon_bell": {
+  "name": "Avalon Bell",
+  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/avalon_bell.png"
+ },
+ "atlantis": {
+  "name": "Atlantis",
+  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/atlantis.webp"
+ },
+ "area_51": {
+  "name": "Area 51",
+  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/area_51.webp"
+ },
+ "agartha": {
+  "name": "Agartha",
+  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/agartha.webp"
+ },
+ "csejte": {
+  "name": "Demon Castle Csejte",
+  "bg_image": "https://static.atlasacademy.io/NA/Back/back32200.png"
+ }
+}

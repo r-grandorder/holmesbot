@@ -412,3 +412,26 @@ class ContractService:
             guild_id,
             user_id,
         )
+
+    async def ab_reward_count(self, guild_id: int, user_id: int, kind: str) -> int:
+        """Reward-earning autobattle wins today for a mode ('pve'|'pvp'); drives that mode's cap."""
+        val = await self.pool.fetchval(
+            "SELECT count FROM autobattle_daily "
+            "WHERE guild_id = $1 AND user_id = $2 AND day = date('now') AND kind = $3",
+            guild_id,
+            user_id,
+            kind,
+        )
+        return val or 0
+
+    async def bump_ab_reward(self, guild_id: int, user_id: int, kind: str) -> int:
+        """Record a reward-earning autobattle win today for a mode; returns the new daily count."""
+        return await self.pool.fetchval(
+            "INSERT INTO autobattle_daily (guild_id, user_id, day, kind, count) "
+            "VALUES ($1, $2, date('now'), $3, 1) "
+            "ON CONFLICT (guild_id, user_id, day, kind) DO UPDATE SET count = count + 1 "
+            "RETURNING count",
+            guild_id,
+            user_id,
+            kind,
+        )

@@ -246,6 +246,15 @@ DUEL_COOLDOWN = 20        # seconds between a challenger's duels (anti-flood)
 DUEL_PAIR_COOLDOWN = 180  # seconds before the same two players can duel again (anti-targeting)
 CLASS_ADVANTAGE = 1.5     # effective-power multiplier when your class beats the opponent's
 
+# --- autobattle (/ab): PvE stage wins + PvP team duels. Both caps are separate from /duel's. ---
+AB_PVE_REWARD = {"beginner": 10, "intermediate": 20, "hard": 40}  # QP per PvE stage win, by difficulty
+AB_PVE_DAILY_CAP = 5        # reward-earning PvE wins per player per day
+AB_PVP_QP = 40              # QP to the /ab duel winner
+AB_PVP_WAR_POINTS = 8       # war points for a cross-faction /ab duel win (vs WAR_DUEL_POINTS = 3)
+AB_PVP_DAILY_CAP = 5        # reward-earning /ab duel wins per player per day
+AB_PVP_COOLDOWN = 20        # seconds between a challenger's /ab duels (anti-flood)
+AB_PVP_PAIR_COOLDOWN = 180  # seconds before the same two players can /ab duel again
+
 # --- switching the active contract to an already-owned servant ---
 SWITCH_COST = 50           # QP to switch (re-activate a servant you already contracted)
 SWITCH_COOLDOWN = 30 * 60  # seconds between switches per user (also blocks duel counter-picking)

@@ -3,14 +3,16 @@ ships dark.
 
 Everything lives under one /ab group:
   /ab team   -- set/view your 1-3 servant team + loadout
-  /ab fight  -- fight a preconfigured PvE boss stage with your team (free)
+  /ab fight  -- fight a preconfigured PvE boss stage; small capped QP on a win
+  /ab duel   -- battle another player's team (PvP); cross-faction wins score war points, own cap
   /ab shop   -- spend QP on consumable battle items (the QP sink)
   /ab equip  -- equip/unequip an item to one of your team's servants
 
 Uses the contract feature's roster (servant_contracts) + QP (scores), so it shares the
-contract-access gate. Battling is free; shop items are the only QP sink. Every item is a
-per-battle consumable: one copy is spent for each fight it's equipped for (win or lose, whether
-or not it triggered). If you own more it stays equipped (auto-re-equip), otherwise it auto-unequips.
+contract-access gate. PvE and PvP each pay a small, separately-capped QP reward (PvP also scores
+war points), but shop items are the real QP sink: every item is a per-battle consumable spent for
+each fight it's equipped for (win or lose, whether or not it triggered). If you own more it stays
+equipped (auto-re-equip), otherwise it auto-unequips. In PvP only the challenger's items are spent.
 """
 from __future__ import annotations
 
@@ -25,6 +27,7 @@ from branding import qp
 from data import autobattle
 from data import autobattle_engine as engine
 from data import autobattle_items as items
+from data import contract_game as cg
 from data.servants import class_display
 
 _DENY = "The autobattle feature isn't open to you yet."
@@ -80,7 +83,9 @@ class ShopView(discord.ui.View):
 class Autobattle(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
-        self._cooldowns: dict[tuple[int, int], float] = {}
+        self._cooldowns: dict[tuple[int, int], float] = {}  # PvE fight cooldown
+        self._pvp_cd: dict[tuple[int, int], float] = {}  # (guild, challenger) -> last /ab duel
+        self._pvp_pair_cd: dict = {}  # (guild, frozenset{a,b}) -> last /ab duel between them
 
     ab = app_commands.Group(name="ab", description="Autobattle (experimental).", guild_only=True)
 
@@ -329,6 +334,17 @@ class Autobattle(commands.Cog):
             pos += 1
         return team
 
+    async def _side(self, gid, uid, team_ids) -> "list[dict]":
+        """A player's combatants: their battle_team at current levels, with only owned items equipped."""
+        levels = await self._owned_levels(gid, uid)
+        inv = {r["item_id"]: r["quantity"] for r in await self.bot.contracts.inventory(gid, uid)}
+        equips = {
+            sid: iid
+            for sid, iid in (await self.bot.contracts.equips(gid, uid)).items()
+            if inv.get(iid, 0) > 0
+        }
+        return self._build_team([(sid, levels.get(sid, 1)) for sid in team_ids], equips)
+
     async def _consume_items(self, gid, uid, player_team, initial) -> "list[str]":
         """Every item equipped for the fight is spent afterward -- one copy each, win or lose,
         whether or not it triggered. Auto-unequip when the last copy is gone. Returns display lines."""
@@ -356,7 +372,7 @@ class Autobattle(commands.Cog):
             text = "..." + text[nl:] if nl != -1 else text
         return text
 
-    def _battle_embed(self, member, enc, state, item_lines) -> discord.Embed:
+    def _battle_embed(self, member, enc, state, item_lines, reward_line=None) -> discord.Embed:
         won, draw = state["victory"], state.get("draw")
         color = (
             discord.Color.green() if won
@@ -373,6 +389,8 @@ class Autobattle(commands.Cog):
         if enc.get("bg_image"):
             embed.set_image(url=enc["bg_image"])
         embed.add_field(name="Result", value=outcome, inline=True)
+        if reward_line:
+            embed.add_field(name="Reward", value=reward_line, inline=True)
         if item_lines:
             embed.add_field(name="Items used", value="\n".join(item_lines), inline=False)
         return embed
@@ -408,14 +426,7 @@ class Autobattle(commands.Cog):
 
         await interaction.response.defer()
 
-        levels = await self._owned_levels(gid, uid)
-        inv = {r["item_id"]: r["quantity"] for r in await self.bot.contracts.inventory(gid, uid)}
-        equips = {
-            sid: iid
-            for sid, iid in (await self.bot.contracts.equips(gid, uid)).items()
-            if inv.get(iid, 0) > 0
-        }
-        player_team = self._build_team([(sid, levels.get(sid, 1)) for sid in team_ids], equips)
+        player_team = await self._side(gid, uid, team_ids)
         if not player_team:
             return await interaction.followup.send("Your team's servants are unavailable.")
         enemy_team = self._build_team(
@@ -429,8 +440,20 @@ class Autobattle(commands.Cog):
         engine.resolve(state)
         item_lines = await self._consume_items(gid, uid, player_team, initial)
 
+        reward_line = None
+        if state["victory"]:
+            amount = cg.AB_PVE_REWARD.get(enc.get("difficulty", ""), 0)
+            if amount > 0:
+                count = await self.bot.contracts.ab_reward_count(gid, uid, "pve")
+                if count < cg.AB_PVE_DAILY_CAP:
+                    await self.bot.scoring.add_qp(gid, uid, amount)
+                    await self.bot.contracts.bump_ab_reward(gid, uid, "pve")
+                    reward_line = f"+{qp(amount)}"
+                else:
+                    reward_line = f"Daily PvE cap reached ({cg.AB_PVE_DAILY_CAP})"
+
         await interaction.followup.send(
-            embed=self._battle_embed(interaction.user, enc, state, item_lines)
+            embed=self._battle_embed(interaction.user, enc, state, item_lines, reward_line)
         )
 
     async def _stage_autocomplete(self, interaction, current):
@@ -452,6 +475,121 @@ class Autobattle(commands.Cog):
     @fight.autocomplete("stage")
     async def _ac_stage(self, interaction, current):
         return await self._stage_autocomplete(interaction, current)
+
+    # --- /ab duel (PvP) --------------------------------------------------------------------------
+
+    async def _ab_war_points(self, gid, winner, loser) -> str:
+        """A cross-faction /ab duel win scores for the winner's faction during an active war.
+        Returns a line for the embed, or '' if it doesn't apply (no war / not both in factions /
+        same faction)."""
+        if not await self.bot.wars.active(gid):
+            return ""
+        wm = await self.bot.wars.member(gid, winner.id)
+        lm = await self.bot.wars.member(gid, loser.id)
+        if wm is None or lm is None or wm["slot"] == lm["slot"]:
+            return ""
+        await self.bot.wars.add_points(gid, winner.id, cg.AB_PVP_WAR_POINTS)
+        return f"\n+{cg.AB_PVP_WAR_POINTS} war points for **{wm['name']}**."
+
+    def _pvp_embed(self, challenger, opponent, state, winner, item_lines, reward_line) -> discord.Embed:
+        draw = state.get("draw")
+        color = (
+            discord.Color.light_grey() if draw
+            else discord.Color.green() if winner is not None and winner.id == challenger.id
+            else discord.Color.red()
+        )
+        outcome = "Draw." if draw else f"{winner.display_name} wins!"
+        embed = discord.Embed(
+            title=f"{challenger.display_name} vs {opponent.display_name}",
+            description=f"```\n{self._trim_log(state['battle_log'])}\n```",
+            color=color,
+        )
+        bgs = autobattle.pvp_backgrounds()
+        if bgs:
+            embed.set_image(url=random.choice(bgs).get("bg_image", ""))
+        embed.add_field(name="Result", value=outcome, inline=True)
+        if reward_line:
+            embed.add_field(name="Reward", value=reward_line, inline=False)
+        if item_lines:
+            embed.add_field(
+                name=f"{challenger.display_name}'s items used", value="\n".join(item_lines), inline=False
+            )
+        return embed
+
+    @ab.command(
+        name="duel",
+        description="Battle another player's autobattle team. Cross-faction wins score war points.",
+    )
+    @app_commands.describe(opponent="The player to challenge")
+    async def duel(self, interaction: discord.Interaction, opponent: discord.Member) -> None:
+        if not self._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        if opponent.bot or opponent.id == interaction.user.id:
+            return await interaction.response.send_message("Pick another player to duel.", ephemeral=True)
+        if not self._allowed(opponent.id):
+            return await interaction.response.send_message(
+                f"{opponent.display_name} isn't in the autobattle feature yet.", ephemeral=True
+            )
+        gid, uid = interaction.guild_id, interaction.user.id
+        my_team = await self.bot.contracts.battle_team(gid, uid)
+        if not my_team:
+            return await interaction.response.send_message("Set a team first with /ab team.", ephemeral=True)
+        opp_team = await self.bot.contracts.battle_team(gid, opponent.id)
+        if not opp_team:
+            return await interaction.response.send_message(
+                f"{opponent.display_name} has no autobattle team set.", ephemeral=True
+            )
+
+        now = time.monotonic()
+        if now - self._pvp_cd.get((gid, uid), 0.0) < cg.AB_PVP_COOLDOWN:
+            return await interaction.response.send_message(
+                "You're dueling too fast -- give it a moment.", ephemeral=True
+            )
+        pair = (gid, frozenset((uid, opponent.id)))
+        pair_wait = cg.AB_PVP_PAIR_COOLDOWN - (now - self._pvp_pair_cd.get(pair, 0.0))
+        if pair_wait > 0:
+            return await interaction.response.send_message(
+                f"You dueled {opponent.display_name} recently -- try again in {int(pair_wait)}s.",
+                ephemeral=True,
+            )
+        self._pvp_cd[(gid, uid)] = now
+        self._pvp_pair_cd[pair] = now
+
+        await interaction.response.defer()
+
+        challenger_team = await self._side(gid, uid, my_team)
+        defender_team = await self._side(gid, opponent.id, opp_team)
+        if not challenger_team or not defender_team:
+            return await interaction.followup.send("A team's servants are unavailable.")
+
+        state = engine.build_state(challenger_team, defender_team)
+        # attacker-only consumption: only the challenger spends items on a fight they started.
+        initial = {c["servant_id"]: c.get("equipped_item") for c in challenger_team}
+        engine.resolve(state)
+        item_lines = await self._consume_items(gid, uid, challenger_team, initial)
+
+        if state.get("draw"):
+            winner = loser = None
+        elif state["victory"]:
+            winner, loser = interaction.user, opponent
+        else:
+            winner, loser = opponent, interaction.user
+
+        reward_line = None
+        if winner is not None:
+            count = await self.bot.contracts.ab_reward_count(gid, winner.id, "pvp")
+            if count < cg.AB_PVP_DAILY_CAP:
+                await self.bot.scoring.add_qp(gid, winner.id, cg.AB_PVP_QP)
+                await self.bot.contracts.bump_ab_reward(gid, winner.id, "pvp")
+                reward_line = f"{winner.display_name} earns {qp(cg.AB_PVP_QP)}."
+                reward_line += await self._ab_war_points(gid, winner, loser)
+            else:
+                reward_line = f"{winner.display_name} hit the daily PvP cap ({cg.AB_PVP_DAILY_CAP}) -- no reward."
+
+        await interaction.followup.send(
+            embed=self._pvp_embed(interaction.user, opponent, state, winner, item_lines, reward_line),
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
 
 
 async def setup(bot) -> None:

@@ -104,3 +104,21 @@ def load_encounters() -> dict:
         except FileNotFoundError:
             _encounters_cache = {}
     return _encounters_cache
+
+
+# --- PvP backdrops (ported from the legacy autochess pvp_stages; just {name, bg_image} used as
+#     the /ab duel result background, since PvP has no fixed enemy stage).
+_PVP_STAGES_PATH = Path(__file__).parent / "autobattle_pvp_stages.json"
+_pvp_stages_cache: "list | None" = None
+
+
+def pvp_backgrounds() -> "list[dict]":
+    """List of {name, bg_image} PvP backdrops (empty if the file is missing)."""
+    global _pvp_stages_cache
+    if _pvp_stages_cache is None:
+        try:
+            with open(_PVP_STAGES_PATH, encoding="utf-8") as f:
+                _pvp_stages_cache = list(json.load(f).values())
+        except FileNotFoundError:
+            _pvp_stages_cache = []
+    return _pvp_stages_cache
