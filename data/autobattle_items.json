@@ -1,0 +1,199 @@
+{
+  "ampoule": {
+    "name": "Ampoule",
+    "description": "Increases ATK by 20% but decreases Max HP by 20%",
+    "price": 50000,
+    "trigger": "on_enter",
+    "effects": [
+      {
+        "type": "ATTACK_UP",
+        "value": 0.2,
+        "duration": -1
+      },
+      {
+        "type": "HP_DOWN",
+        "value": 0.2,
+        "duration": -1
+      }
+    ],
+    "consumable": true,
+    "emoji": "💉"
+  },
+  "divine_wine": {
+    "name": "Mysterious Divine Wine",
+    "description": "Heals 10% of Max HP per turn",
+    "price": 50000,
+    "trigger": "on_enter",
+    "effect": {
+      "type": "HEAL_PER_TURN",
+      "value": 0.1,
+      "duration": -1
+    },
+    "consumable": true,
+    "emoji": "🍷"
+  },
+  "bronze_apple": {
+    "name": "Bronze Apple",
+    "description": "Heals 20% HP when taking damage if HP is below 50% (one-time use, doesn't trigger on lethal damage)",
+    "price": 10000,
+    "trigger": "on_hurt",
+    "effect": {
+      "type": "CONDITIONAL_HEAL",
+      "value": 0.2,
+      "duration": 1,
+      "condition": "hp_below_50"
+    },
+    "consumable": true,
+    "emoji": "🍷"
+  },
+  "small_bell": {
+    "name": "Small Bell of Absolution",
+    "description": "Wake from stun/sleep once when afflicted",
+    "price": 15000,
+    "trigger": "on_debuff",
+    "effect": {
+      "type": "CLEANSE_STUN_SLEEP",
+      "value": 1,
+      "duration": 1
+    },
+    "consumable": true,
+    "emoji": "🔔"
+  },
+  "fruit_of_eternity": {
+    "name": "Fruit of Eternity",
+    "description": "Revive with 1 HP when defeated (one-time, does not stack with existing guts)",
+    "price": 500000,
+    "trigger": "on_enter",
+    "effect": {
+      "type": "GUTS",
+      "value": 1,
+      "duration": -1
+    },
+    "consumable": true,
+    "emoji": "🍒"
+  },
+  "black_grail": {
+    "name": "Black Grail",
+    "description": "Increases ATK by 50%, but take 5000 HP damage per turn (lasts indefinitely)",
+    "price": 1000000,
+    "trigger": "on_enter",
+    "effects": [
+      {
+        "type": "ATTACK_UP",
+        "value": 0.5,
+        "duration": -1
+      },
+      {
+        "type": "DAMAGE_PER_TURN",
+        "value": 5000,
+        "duration": -1
+      }
+    ],
+    "consumable": true,
+    "emoji": "🏆"
+  },
+  "hero_shield": {
+    "name": "Hero's Shield",
+    "description": "Increases DEF by 40% for 3 turns",
+    "price": 200000,
+    "trigger": "on_enter",
+    "effect": {
+      "type": "DEFENSE_UP",
+      "value": 0.4,
+      "duration": 3
+    },
+    "consumable": true,
+    "emoji": "🛡️"
+  },
+  "eject_button": {
+    "name": "Eject Button",
+    "description": "Move to the back of the line when hit while in front position (one-time, doesn't trigger on DoT)",
+    "price": 1000000,
+    "trigger": "on_hurt",
+    "effect": {
+      "type": "ORDER_CHANGE_BACK",
+      "value": -1,
+      "duration": 1,
+      "condition": "position_0_only"
+    },
+    "consumable": true,
+    "emoji": "📤"
+  },
+  "poison_apple": {
+    "name": "Poison Apple",
+    "description": "Inflicts stun on this servant upon entering battle",
+    "price": 10000,
+    "trigger": "on_enter",
+    "effect": {
+      "type": "SELF_STUN",
+      "value": 1,
+      "duration": 1
+    },
+    "consumable": true,
+    "emoji": "🍏"
+  },
+  "thanatos_blade": {
+    "name": "Thanatos Piercing Blade",
+    "description": "Grants ability to pierce through Guts effects, preventing enemy revival (lasts 3 turns)",
+    "price": 1000000,
+    "trigger": "on_enter",
+    "effect": {
+      "type": "GUTS_PIERCE",
+      "value": 1,
+      "duration": 3
+    },
+    "consumable": true,
+    "emoji": "⚔️"
+  },
+  "sealbreaker_sigil": {
+    "name": "Sealbreaker's Sigil",
+    "description": "Negates one Skill Seal effect when it would be applied (one-time use)",
+    "price": 100000,
+    "trigger": "on_debuff",
+    "effect": {
+      "type": "CLEANSE_SKILL_SEAL",
+      "value": 1,
+      "duration": 1
+    },
+    "consumable": true,
+    "emoji": "🔖"
+  },
+  "tsukumo_mirror": {
+    "name": "Tsukumo Mirror",
+    "description": "Protects from buff removal effects once",
+    "price": 150000,
+    "trigger": "on_debuff",
+    "effect": {
+      "type": "CLEANSE_BUFF_REMOVAL",
+      "value": 1,
+      "duration": 1
+    },
+    "consumable": true,
+    "emoji": "🪞"
+  },
+  "divine_lens": {
+    "name": "Divine Lens",
+    "description": "Increases Max HP by 500% for 5 turns, but lowers defense by 20% permanently",
+    "price": 50000000000000,
+    "trigger": "on_enter",
+    "effects": [
+      {
+        "type": "ATTACK_DOWN",
+        "value": 0.2,
+        "duration": -1
+      },
+      {
+        "type": "DEFENSE_DOWN",
+        "value": 0.2,
+        "duration": -1
+      },
+      {
+        "type": "MAX_HP_UP",
+        "value": 5.0,
+        "duration": 5
+      }
+    ],
+    "consumable": true,
+    "emoji": "🔍"
+  }
+}

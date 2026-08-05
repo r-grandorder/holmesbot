@@ -38,3 +38,47 @@ def battle_stats(servant, level: int) -> "tuple[int, int]":
         return _scale(servant.atk_base, atk_max, level), _scale(servant.hp_base, hp_max, level)
     fa, fh = _FALLBACK_MAX.get(getattr(servant, "rarity", 0), _FALLBACK_MAX[3])
     return _scale(fa * 0.1, fa, level), _scale(fh * 0.1, fh, level)
+
+
+# --- class advantage (ported from the legacy autochess; FGO triangles at 1.2x, Berserker 1.1x,
+#     the Foreigner<>Berserker and U-Olga Marie special affinities). Disadvantage is the inverse.
+_CLASS_ADVANTAGES = {
+    ("saber", "lancer"): 1.2, ("lancer", "archer"): 1.2, ("archer", "saber"): 1.2,
+    ("rider", "caster"): 1.2, ("caster", "assassin"): 1.2, ("assassin", "rider"): 1.2,
+    ("ruler", "mooncancer"): 1.2, ("mooncancer", "avenger"): 1.2, ("avenger", "ruler"): 1.2,
+    ("alterego", "foreigner"): 1.2, ("foreigner", "pretender"): 1.2, ("pretender", "alterego"): 1.2,
+    ("berserker", "saber"): 1.1, ("berserker", "archer"): 1.1, ("berserker", "lancer"): 1.1,
+    ("berserker", "rider"): 1.1, ("berserker", "caster"): 1.1, ("berserker", "assassin"): 1.1,
+    ("berserker", "berserker"): 1.1, ("berserker", "ruler"): 1.1, ("berserker", "avenger"): 1.1,
+    ("berserker", "alterego"): 1.1, ("berserker", "mooncancer"): 1.1, ("berserker", "pretender"): 1.1,
+    ("saber", "berserker"): 1.1, ("archer", "berserker"): 1.1, ("lancer", "berserker"): 1.1,
+    ("rider", "berserker"): 1.1, ("caster", "berserker"): 1.1, ("assassin", "berserker"): 1.1,
+    ("ruler", "berserker"): 1.1, ("avenger", "berserker"): 1.1, ("alterego", "berserker"): 1.1,
+    ("mooncancer", "berserker"): 1.1, ("pretender", "berserker"): 1.1,
+    ("berserker", "foreigner"): 0.83, ("foreigner", "berserker"): 1.2,
+    ("alterego", "rider"): 1.1, ("alterego", "caster"): 1.1, ("alterego", "assassin"): 1.1,
+    ("pretender", "saber"): 1.1, ("pretender", "archer"): 1.1, ("pretender", "lancer"): 1.1,
+    ("unbeastolgamarie", "mooncancer"): 1.2, ("unbeastolgamarie", "foreigner"): 1.2,
+    ("unbeastolgamarie", "berserker"): 1.1, ("unbeastolgamarie", "avenger"): 0.8,
+    ("unbeastolgamarie", "saber"): 1.0, ("unbeastolgamarie", "archer"): 1.0,
+    ("unbeastolgamarie", "lancer"): 1.0, ("unbeastolgamarie", "rider"): 1.0,
+    ("unbeastolgamarie", "caster"): 1.0, ("unbeastolgamarie", "assassin"): 1.0,
+    ("avenger", "unbeastolgamarie"): 1.2, ("foreigner", "unbeastolgamarie"): 1.2,
+    ("berserker", "unbeastolgamarie"): 1.1,
+    ("saber", "unbeastolgamarie"): 0.8, ("archer", "unbeastolgamarie"): 0.8,
+    ("lancer", "unbeastolgamarie"): 0.8, ("rider", "unbeastolgamarie"): 0.8,
+    ("caster", "unbeastolgamarie"): 0.8, ("assassin", "unbeastolgamarie"): 0.8,
+    ("mooncancer", "unbeastolgamarie"): 0.8,
+}
+
+
+def class_advantage(attacker_class: str, defender_class: str) -> float:
+    """Damage multiplier from the class matchup. 1.0 neutral; Shielder always takes neutral."""
+    atk = (attacker_class or "").lower()
+    dfn = (defender_class or "").lower()
+    if dfn == "shielder":
+        return 1.0
+    if (atk, dfn) in _CLASS_ADVANTAGES:
+        return _CLASS_ADVANTAGES[(atk, dfn)]
+    reverse = _CLASS_ADVANTAGES.get((dfn, atk))
+    return 1.0 / reverse if reverse else 1.0
