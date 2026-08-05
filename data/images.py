@@ -130,17 +130,17 @@ def duel_banner(left: bytes, right: bytes, *, side: int = 120, gap: int = 32, pa
 def battle_preview(bg: bytes, left_sprites, right_sprites) -> bytes:
     """The /ab result image (ported from the legacy autochess preview): each team's servant
     sprites laid over the battle background -- the player team on the left (mirrored to face in),
-    the enemy team on the right, bottom-aligned to a common ground line.
+    the enemy team on the right.
 
-    Each team is a list of (png_bytes, is_face) pairs. Regular sprites (command cards / figures)
-    scale to full sprite height; only `is_face` sprites -- the square custom-unit face portraits --
-    scale to a shorter height so they don't balloon wider than everyone else. Everything else keeps
-    the size it always had."""
+    Each team is a list of (png_bytes, is_face) pairs. Regular full-body sprites (command cards /
+    figures) scale to full height and stand on a common ground line; only `is_face` sprites -- the
+    square custom-unit face portraits -- scale to a shorter height (so they don't balloon wider than
+    everyone else) and are centered vertically within the card band rather than sunk to the ground."""
     base = Image.open(io.BytesIO(bg)).convert("RGBA")
     bw, bh = base.size
     card_h = max(1, int(bh * 0.30))       # regular command-card / figure sprites (unchanged)
-    face_h = max(1, int(card_h * 0.6))    # square custom faces, shrunk so they don't dominate
-    baseline = bh - int(bh * 0.05)        # shared ground line near the bottom
+    face_h = max(1, int(card_h * 0.72))   # square custom faces: smaller than a card, centered
+    baseline = bh - int(bh * 0.05)        # ground line the full-body sprites stand on
 
     def _place(sprites, x0: int, width: int, mirror: bool) -> None:
         tiles = []
@@ -155,13 +155,15 @@ def battle_preview(bg: bytes, left_sprites, right_sprites) -> bytes:
                 img = img.resize((max(1, int(img.width * scale)), target), Image.LANCZOS)
             if mirror:
                 img = img.transpose(Image.FLIP_LEFT_RIGHT)
-            tiles.append(img)
+            tiles.append((img, is_face))
         if not tiles:
             return
         spacing = width // (len(tiles) + 1)
-        for i, img in enumerate(tiles):
+        for i, (img, is_face) in enumerate(tiles):
             x = x0 + spacing * (i + 1) - img.width // 2
-            base.paste(img, (x, baseline - img.height), img)  # bottom-align; paste clips off-canvas
+            # full-body sprites stand on the ground line; shorter faces center within the card band
+            y = baseline - card_h + (card_h - img.height) // 2 if is_face else baseline - img.height
+            base.paste(img, (x, y), img)  # paste clips off-canvas
 
     half = bw // 2
     # player: left half, reversed so the frontmost sits nearest the middle, mirrored to face right
