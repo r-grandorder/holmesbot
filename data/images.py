@@ -130,12 +130,15 @@ def duel_banner(left: bytes, right: bytes, *, side: int = 120, gap: int = 32, pa
 def battle_preview(bg: bytes, left_sprites: list[bytes], right_sprites: list[bytes]) -> bytes:
     """The /ab result image (ported from the legacy autochess preview): each team's servant
     sprites laid over the battle background -- the player team on the left (mirrored to face in),
-    the enemy team on the right, both bottom-anchored. Sprites scale to ~30% of the background
-    height, preserving aspect (works for tall command-card/figure sprites or square faces)."""
+    the enemy team on the right. Each sprite is fit into a command-card-shaped box (tall + narrow)
+    preserving aspect, so tall command-card/figure sprites fill it while square face portraits
+    (custom units) get width-limited instead of ballooning wider than everyone else. All sprites
+    are bottom-aligned to a common ground line so shorter ones don't float."""
     base = Image.open(io.BytesIO(bg)).convert("RGBA")
     bw, bh = base.size
     max_h = max(1, int(bh * 0.30))
-    y = bh - max_h - int(bh * 0.05)  # bottom third
+    max_w = max(1, int(max_h * 0.62))  # command-card aspect; caps wide (square) faces
+    baseline = bh - int(bh * 0.05)  # shared ground line near the bottom
 
     def _place(sprites: list[bytes], x0: int, width: int, mirror: bool) -> None:
         tiles = []
@@ -144,9 +147,8 @@ def battle_preview(bg: bytes, left_sprites: list[bytes], right_sprites: list[byt
                 img = Image.open(io.BytesIO(sb)).convert("RGBA")
             except Exception:  # a bad/undecodable sprite just drops out
                 continue
-            if img.height > max_h:
-                scale = max_h / img.height
-                img = img.resize((max(1, int(img.width * scale)), max_h), Image.LANCZOS)
+            scale = min(max_h / img.height, max_w / img.width, 1.0)  # fit in box, never upscale
+            img = img.resize((max(1, int(img.width * scale)), max(1, int(img.height * scale))), Image.LANCZOS)
             if mirror:
                 img = img.transpose(Image.FLIP_LEFT_RIGHT)
             tiles.append(img)
@@ -155,7 +157,7 @@ def battle_preview(bg: bytes, left_sprites: list[bytes], right_sprites: list[byt
         spacing = width // (len(tiles) + 1)
         for i, img in enumerate(tiles):
             x = x0 + spacing * (i + 1) - img.width // 2
-            base.paste(img, (x, y), img)  # paste (not alpha_composite) so it clips off-canvas
+            base.paste(img, (x, baseline - img.height), img)  # bottom-align; paste clips off-canvas
 
     half = bw // 2
     # player: left half, reversed so the frontmost sits nearest the middle, mirrored to face right
