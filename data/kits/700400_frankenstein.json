@@ -1,0 +1,16 @@
+{
+  "id": 700400,
+  "servant_name": "Frankenstein",
+  "class_name": "berserker",
+  "name": "Overload",
+  "description": "Grants Burn to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "burn",
+      "value": 800,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

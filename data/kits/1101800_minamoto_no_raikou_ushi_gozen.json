@@ -1,0 +1,16 @@
+{
+  "id": 1101800,
+  "servant_name": "Minamoto-no-Raikou/Ushi Gozen",
+  "class_name": "avenger",
+  "name": "Doujigiri Yasutsuna",
+  "description": "",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "stun",
+      "value": 1,
+      "duration": 1,
+      "target": "enemy"
+    }
+  ]
+}

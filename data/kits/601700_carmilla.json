@@ -1,0 +1,22 @@
+{
+  "id": 601700,
+  "servant_name": "Carmilla",
+  "class_name": "assassin",
+  "name": "Vampirism",
+  "description": "Grants Defense Down to enemy and Heal On Damage to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "defense_down",
+      "value": 0.15,
+      "duration": 3,
+      "target": "enemy"
+    },
+    {
+      "effect_type": "heal_on_damage",
+      "value": 800,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

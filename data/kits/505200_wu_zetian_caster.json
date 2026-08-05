@@ -1,0 +1,28 @@
+{
+  "id": 505200,
+  "servant_name": "Wu Zetian (Caster)",
+  "class_name": "caster",
+  "name": "Consort's Charisma (Summer)",
+  "description": "Grants Attack Up and Cleanse to all allies and Stun to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "cleanse",
+      "value": 1.0,
+      "duration": 1,
+      "target": "party"
+    },
+    {
+      "effect_type": "stun",
+      "value": 1.0,
+      "duration": 1,
+      "target": "enemy"
+    }
+  ]
+}

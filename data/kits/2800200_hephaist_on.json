@@ -1,0 +1,22 @@
+{
+  "id": 2800200,
+  "servant_name": "Hephaistíon",
+  "class_name": "pretender",
+  "name": "Nameless's Blessing",
+  "description": "Grants Attack Up and Curse to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "curse",
+      "value": 500,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

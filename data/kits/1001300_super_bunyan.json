@@ -1,0 +1,22 @@
+{
+  "id": 1001300,
+  "servant_name": "Super Bunyan",
+  "class_name": "alterego",
+  "name": "Vision Quest",
+  "description": "Grants Attack Up and Max Hp Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "max_hp_up",
+      "value": 1500,
+      "duration": 5,
+      "target": "self"
+    }
+  ]
+}

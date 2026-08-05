@@ -1,0 +1,22 @@
+{
+  "id": 704400,
+  "servant_name": "Sen-no-Rikyu",
+  "class_name": "berserker",
+  "name": "Finest Wabi",
+  "description": "Grants Evade to self and Curse to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "curse",
+      "value": 1000,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

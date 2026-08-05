@@ -1,0 +1,22 @@
+{
+  "id": 604600,
+  "servant_name": "Huyan Zhuo",
+  "class_name": "assassin",
+  "name": "Sensitive Mentality",
+  "description": "Grants Evade and Attack Up on Damage to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "atk_up_on_damage",
+      "value": 0.15,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

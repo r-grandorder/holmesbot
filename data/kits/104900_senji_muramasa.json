@@ -1,0 +1,22 @@
+{
+  "id": 104900,
+  "servant_name": "Senji Muramasa",
+  "class_name": "saber",
+  "name": "Karmic Eye",
+  "description": "Grants Ignore Evade to self and Burn to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "ignore_evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "burn",
+      "value": 1500,
+      "duration": 3,
+      "target": "enemy"
+    }
+  ]
+}

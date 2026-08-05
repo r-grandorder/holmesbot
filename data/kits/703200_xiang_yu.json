@@ -1,0 +1,22 @@
+{
+  "id": 703200,
+  "servant_name": "Xiang Yu",
+  "class_name": "berserker",
+  "name": "Foresight",
+  "description": "Grants Defense Down to enemy and Ignore Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "defense_down",
+      "value": 0.2,
+      "duration": 3,
+      "target": "enemy"
+    },
+    {
+      "effect_type": "ignore_evade",
+      "value": 1.0,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

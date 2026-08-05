@@ -1,0 +1,16 @@
+{
+  "id": 302800,
+  "servant_name": "Jaguar Warrior",
+  "class_name": "lancer",
+  "name": "Jaguar Punch",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

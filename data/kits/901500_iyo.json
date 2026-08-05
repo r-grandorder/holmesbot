@@ -1,0 +1,16 @@
+{
+  "id": 901500,
+  "servant_name": "Iyo",
+  "class_name": "ruler",
+  "name": "Kidou (Destruction)",
+  "description": "Grants Curse to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "curse",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

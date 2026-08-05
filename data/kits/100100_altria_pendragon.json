@@ -1,0 +1,22 @@
+{
+  "id": 100100,
+  "servant_name": "Altria Pendragon",
+  "class_name": "saber",
+  "name": "Charisma",
+  "description": "Grants Attack Up to all allies and Attack Up on Hurt to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "atk_up_on_hurt",
+      "value": 0.15,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

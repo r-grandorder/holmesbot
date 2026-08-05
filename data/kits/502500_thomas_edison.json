@@ -1,0 +1,16 @@
+{
+  "id": 502500,
+  "servant_name": "Thomas Edison",
+  "class_name": "caster",
+  "name": "Mass Production",
+  "description": "Grants Max Hp Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "max_hp_up",
+      "value": 1000,
+      "duration": -1,
+      "target": "party"
+    }
+  ]
+}

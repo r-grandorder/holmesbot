@@ -1,0 +1,16 @@
+{
+  "id": 503300,
+  "servant_name": "Circe",
+  "class_name": "caster",
+  "name": "Poisoned Meal",
+  "description": "Grants Poison to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "poison",
+      "value": 0.08,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

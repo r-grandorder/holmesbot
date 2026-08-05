@@ -1,0 +1,16 @@
+{
+  "id": 200500,
+  "servant_name": "Atalante",
+  "class_name": "archer",
+  "name": "Calydonian Hunt",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

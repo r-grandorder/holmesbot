@@ -1,0 +1,16 @@
+{
+  "id": 404700,
+  "servant_name": "Kōnstantînos XI",
+  "class_name": "rider",
+  "name": "Hagia Sophia's Prayer C-",
+  "description": "Grants Defense Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "defense_up",
+      "value": 0.3,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

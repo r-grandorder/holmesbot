@@ -1,0 +1,16 @@
+{
+  "id": 203300,
+  "servant_name": "Aśvatthāman",
+  "class_name": "archer",
+  "name": "Mystic Gem of Mani",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": 202900,
+  "servant_name": "Asagami Fujino",
+  "class_name": "archer",
+  "name": "Remaining Sense of Pain",
+  "description": "Grants Guts to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": 704000,
+  "servant_name": "Morgan",
+  "class_name": "berserker",
+  "name": "From the World's End",
+  "description": "Grants Guts to self and Attack Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

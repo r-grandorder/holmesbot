@@ -1,0 +1,22 @@
+{
+  "id": 302900,
+  "servant_name": "Minamoto-no-Raikou (Lancer)",
+  "class_name": "lancer",
+  "name": "The Shadow Prefect",
+  "description": "Grants Attack Up to self and Stun to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.25,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "stun",
+      "value": 1,
+      "duration": 1,
+      "target": "enemy"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": 2501100,
+  "servant_name": "Kukulcan",
+  "class_name": "foreigner",
+  "name": "We Are the Winged Serpent",
+  "description": "Grants Evade and Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.3,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

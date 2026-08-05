@@ -1,0 +1,22 @@
+{
+  "id": 100700,
+  "servant_name": "Gawain",
+  "class_name": "saber",
+  "name": "Nightless Charisma",
+  "description": "Grants Attack Up to all other allies and Burn to all enemies (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party_others"
+    },
+    {
+      "effect_type": "burn",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

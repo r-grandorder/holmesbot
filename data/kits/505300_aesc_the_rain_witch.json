@@ -1,0 +1,22 @@
+{
+  "id": 505300,
+  "servant_name": "Aesc the Rain Witch",
+  "class_name": "caster",
+  "name": "Last Resort",
+  "description": "Grants Attack Up on Hurt and Guts to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "atk_up_on_hurt",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

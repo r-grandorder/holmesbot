@@ -1,0 +1,16 @@
+{
+  "id": 704800,
+  "servant_name": "Nagakura Shinpachi",
+  "class_name": "berserker",
+  "name": "Gamushin",
+  "description": "",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

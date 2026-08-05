@@ -1,0 +1,22 @@
+{
+  "id": 602400,
+  "servant_name": "Scáthach (Assassin)",
+  "class_name": "assassin",
+  "name": "Primeval Rune",
+  "description": "Grants Defense Up and Healing Per Turn to next ally (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "defense_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 1500,
+      "duration": 3,
+      "target": "next_ally"
+    }
+  ]
+}

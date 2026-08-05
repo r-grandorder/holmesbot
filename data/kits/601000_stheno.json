@@ -1,0 +1,16 @@
+{
+  "id": 601000,
+  "servant_name": "Stheno",
+  "class_name": "assassin",
+  "name": "Vampirism",
+  "description": "Grants Instant Kill to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "instant_kill",
+      "value": 0.1,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

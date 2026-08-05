@@ -1,0 +1,22 @@
+{
+  "id": 101200,
+  "servant_name": "Bedivere",
+  "class_name": "saber",
+  "name": "Airgetlám",
+  "description": "Grants Attack Up and HP Sacrifice to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.5,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "sacrifice",
+      "value": 0.2,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

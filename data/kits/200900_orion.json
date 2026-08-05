@@ -1,0 +1,22 @@
+{
+  "id": 200900,
+  "servant_name": "Orion",
+  "class_name": "archer",
+  "name": "Moon Goddess's Pressure",
+  "description": "Grants Evade and Defense Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "defense_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": 502100,
+  "servant_name": "Cú Chulainn",
+  "class_name": "caster",
+  "name": "Ath nGabla",
+  "description": "Grants Evade and Attack Up on Hurt to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "atk_up_on_hurt",
+      "value": 0.25,
+      "duration": 3,
+      "buff_duration": 3,
+      "target": "self"
+    }
+  ]
+}

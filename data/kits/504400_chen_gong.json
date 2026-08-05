@@ -1,0 +1,22 @@
+{
+  "id": 504400,
+  "servant_name": "Chen Gong",
+  "class_name": "caster",
+  "name": "Scapegoat",
+  "description": "Grants HP Sacrifice to next ally and Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "sacrifice",
+      "value": 1.0,
+      "duration": 1,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 3.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

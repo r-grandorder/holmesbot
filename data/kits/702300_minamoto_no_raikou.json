@@ -1,0 +1,22 @@
+{
+  "id": 702300,
+  "servant_name": "Minamoto-no-Raikou",
+  "class_name": "berserker",
+  "name": "Mana Burst (Lightning)",
+  "description": "Grants Evade and Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.1,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

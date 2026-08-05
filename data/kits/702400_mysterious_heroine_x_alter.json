@@ -1,0 +1,16 @@
+{
+  "id": 702400,
+  "servant_name": "Mysterious Heroine X (Alter)",
+  "class_name": "berserker",
+  "name": "∞ Black Bean Paste",
+  "description": "Grants Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.25,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

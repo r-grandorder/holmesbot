@@ -1,0 +1,22 @@
+{
+  "id": 205100,
+  "servant_name": "Sugitani Zenjubou",
+  "class_name": "archer",
+  "name": "Camouflaged Sniping",
+  "description": "Grants Evade and Healing Per Turn to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 500,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

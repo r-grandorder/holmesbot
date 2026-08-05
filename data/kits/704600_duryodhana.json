@@ -1,0 +1,22 @@
+{
+  "id": 704600,
+  "servant_name": "Duryodhana",
+  "class_name": "berserker",
+  "name": "Wicked Charisma",
+  "description": "Grants Attack Up to all allies and Curse to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "curse",
+      "value": 300,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

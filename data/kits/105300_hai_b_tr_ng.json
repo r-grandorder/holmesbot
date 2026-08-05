@@ -1,0 +1,16 @@
+{
+  "id": 105300,
+  "servant_name": "Hai Bà Trưng",
+  "class_name": "saber",
+  "name": "Rebel Charisma",
+  "description": "Grants Attack Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

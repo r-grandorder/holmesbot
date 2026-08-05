@@ -1,0 +1,22 @@
+{
+  "id": 106000,
+  "servant_name": "Miyamoto Iori",
+  "class_name": "saber",
+  "name": "Hidden Sword",
+  "description": "",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.08,
+      "duration": 2,
+      "target": "self"
+    },
+    {
+      "effect_type": "burn",
+      "value": 0.15,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

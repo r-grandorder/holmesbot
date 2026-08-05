@@ -1,0 +1,34 @@
+{
+  "id": 901400,
+  "servant_name": "Scáthach-Skadi (Ruler)",
+  "class_name": "ruler",
+  "name": "Primordial Rune",
+  "description": "Grants Attack Up and Defense Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.5,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "defense_up",
+      "value": 0.33,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "max_hp_up",
+      "value": 0.5,
+      "duration": -1,
+      "target": "party"
+    },
+    {
+      "effect_type": "skill_seal_resist",
+      "value": 0.5,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

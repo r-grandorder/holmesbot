@@ -1,0 +1,22 @@
+{
+  "id": 103500,
+  "servant_name": "Diarmuid Ua Duibhne",
+  "class_name": "saber",
+  "name": "Mana Burst (Jump)",
+  "description": "Grants Evade and Instant Kill to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "instant_kill",
+      "value": 0.05,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

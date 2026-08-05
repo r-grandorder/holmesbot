@@ -1,0 +1,22 @@
+{
+  "id": 2300200,
+  "servant_name": "BB",
+  "class_name": "moonCancer",
+  "name": "Aurea Pork Poculum",
+  "description": "Grants Attack Up on Damage and Heal On Damage to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "atk_up_on_damage",
+      "value": 0.15,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "heal_on_damage",
+      "value": 500,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

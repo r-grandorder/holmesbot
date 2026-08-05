@@ -1,0 +1,22 @@
+{
+  "id": 105000,
+  "servant_name": "Barghest",
+  "class_name": "saber",
+  "name": "Black Dog",
+  "description": "Grants Attack Up and Heal On Damage to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "heal_on_damage",
+      "value": 1000,
+      "duration": 5,
+      "target": "self"
+    }
+  ]
+}

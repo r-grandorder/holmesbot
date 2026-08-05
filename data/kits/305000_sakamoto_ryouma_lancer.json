@@ -1,0 +1,22 @@
+{
+  "id": 305000,
+  "servant_name": "Sakamoto Ryouma (Lancer)",
+  "class_name": "lancer",
+  "name": "Dragon of Reform",
+  "description": "Grants Attack Up and Healing Per Turn to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.12,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.05,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

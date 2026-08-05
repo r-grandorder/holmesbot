@@ -1,0 +1,16 @@
+{
+  "id": 102900,
+  "servant_name": "Arthur Pendragon (Prototype)",
+  "class_name": "saber",
+  "name": "Mana Burst",
+  "description": "Grants Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.3,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

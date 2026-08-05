@@ -1,0 +1,34 @@
+{
+  "id": 2801200,
+  "servant_name": "Solomon",
+  "class_name": "Pretender",
+  "name": "Ars Almadel Salomonis",
+  "description": "",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.6,
+      "duration": 5,
+      "target": "party"
+    },
+    {
+      "effect_type": "skill_seal_resist",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "buff_removal",
+      "value": 1.0,
+      "duration": -1,
+      "target": "enemy"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 5,
+      "target": "party"
+    }
+  ]
+}

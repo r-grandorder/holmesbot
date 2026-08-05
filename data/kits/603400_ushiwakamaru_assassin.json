@@ -1,0 +1,16 @@
+{
+  "id": 603400,
+  "servant_name": "Ushiwakamaru (Assassin)",
+  "class_name": "assassin",
+  "name": "Tengu's Play (Summer)",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

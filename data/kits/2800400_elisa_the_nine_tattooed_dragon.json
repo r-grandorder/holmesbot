@@ -1,0 +1,16 @@
+{
+  "id": 2800400,
+  "servant_name": "Elisa the Nine-Tattooed Dragon",
+  "class_name": "pretender",
+  "name": "War Cry, Mount Liang",
+  "description": "Grants Attack Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

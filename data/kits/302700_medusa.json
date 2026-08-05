@@ -1,0 +1,22 @@
+{
+  "id": 302700,
+  "servant_name": "Medusa",
+  "class_name": "lancer",
+  "name": "Distant Thoughts",
+  "description": "Grants Evade and Guts to next ally (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    }
+  ]
+}

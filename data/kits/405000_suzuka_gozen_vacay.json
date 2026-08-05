@@ -1,0 +1,22 @@
+{
+  "id": 405000,
+  "servant_name": "Suzuka Gozen (Vacay)",
+  "class_name": "rider",
+  "name": "BF, Super Summer",
+  "description": "Grants Attack Up and Attack Up on Hurt to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "atk_up_on_hurt",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

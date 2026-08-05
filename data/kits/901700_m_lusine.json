@@ -1,0 +1,22 @@
+{
+  "id": 901700,
+  "servant_name": "Mélusine",
+  "class_name": "ruler",
+  "name": "Faerie Pack",
+  "description": "Grants Attack Up and Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

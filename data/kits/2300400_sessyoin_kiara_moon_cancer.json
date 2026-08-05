@@ -1,0 +1,22 @@
+{
+  "id": 2300400,
+  "servant_name": "Sessyoin Kiara (Moon Cancer)",
+  "class_name": "moonCancer",
+  "name": "Mermaid's Flesh",
+  "description": "Grants Evade and Guts to next ally (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    }
+  ]
+}

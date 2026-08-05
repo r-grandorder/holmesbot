@@ -1,0 +1,22 @@
+{
+  "id": 304100,
+  "servant_name": "Caenis",
+  "class_name": "lancer",
+  "name": "Poseidon's Blessing",
+  "description": "Grants Attack Up on Damage and Guts to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "atk_up_on_damage",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

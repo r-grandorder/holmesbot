@@ -1,0 +1,28 @@
+{
+  "id": 2300500,
+  "servant_name": "Archetype: EARTH",
+  "class_name": "moonCancer",
+  "name": "Rainbow Mystic Eyes",
+  "description": "Grants Attack Up and Defense Down to self and Skill Seal to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "defense_down",
+      "value": 0.1,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "skill_seal",
+      "value": 1,
+      "duration": 1,
+      "target": "enemy"
+    }
+  ]
+}

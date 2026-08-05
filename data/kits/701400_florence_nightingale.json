@@ -1,0 +1,16 @@
+{
+  "id": 701400,
+  "servant_name": "Florence Nightingale",
+  "class_name": "berserker",
+  "name": "Nurse of Steel",
+  "description": "Grants Healing Per Turn to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 5,
+      "target": "party"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": 300700,
+  "servant_name": "Cú Chulainn (Prototype)",
+  "class_name": "lancer",
+  "name": "Protection from Arrows",
+  "description": "Grants Evade and Instant Kill to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "instant_kill",
+      "value": 0.1,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

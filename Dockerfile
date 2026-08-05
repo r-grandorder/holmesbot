@@ -18,6 +18,8 @@ COPY . .
 # running container does no cold-start fetch. (Generated files are gitignored.)
 RUN python scripts/sync_atlas.py
 RUN python scripts/sync_ce.py
+# Compile the autobattle kits (validates against the servant data synced above).
+RUN python scripts/build_kits.py
 
 # The SQLite database lives on a mounted volume so it survives container
 # replacement (watchtower pulls a new image and recreates the container).

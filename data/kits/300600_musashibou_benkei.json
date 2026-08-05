@@ -1,0 +1,22 @@
+{
+  "id": 300600,
+  "servant_name": "Musashibou Benkei",
+  "class_name": "lancer",
+  "name": "Vengeful Spirit Exorcism",
+  "description": "Grants Curse to all enemies and Skill Seal to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "curse",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    },
+    {
+      "effect_type": "skill_seal",
+      "value": 1.0,
+      "duration": 1,
+      "target": "enemy"
+    }
+  ]
+}

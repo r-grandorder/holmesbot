@@ -1,0 +1,22 @@
+{
+  "id": 401900,
+  "servant_name": "Martha",
+  "class_name": "rider",
+  "name": "Protection of the Faith",
+  "description": "Grants Healing Per Turn and Defense Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "defense_up",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

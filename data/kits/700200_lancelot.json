@@ -1,0 +1,23 @@
+{
+  "id": 700200,
+  "servant_name": "Lancelot",
+  "class_name": "berserker",
+  "name": "Knight of Owner",
+  "description": "Grants Attack Up and Curse to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.3,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "curse",
+      "value": 500,
+      "duration": 3,
+      "target": "self",
+      "unremovable": true
+    }
+  ]
+}

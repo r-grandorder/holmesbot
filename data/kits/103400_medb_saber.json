@@ -1,0 +1,22 @@
+{
+  "id": 103400,
+  "servant_name": "Medb (Saber)",
+  "class_name": "saber",
+  "name": "One Shot, My Love",
+  "description": "Grants Stun to enemy and Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "stun",
+      "value": 1,
+      "duration": 1,
+      "target": "enemy"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

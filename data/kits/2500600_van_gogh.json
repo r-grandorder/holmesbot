@@ -1,0 +1,53 @@
+{
+  "id": 2500600,
+  "servant_name": "Van Gogh",
+  "class_name": "foreigner",
+  "name": "Void Space Art",
+  "description": "Grants Evade, Attack Up, Curse, and Guts to self and Stun to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "curse_immunity",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "stun",
+      "value": 1,
+      "duration": 1,
+      "target": "enemy"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.1,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "atk_up_on_damage",
+      "value": 0.1,
+      "duration": 3,
+      "buff_duration": 2,
+      "target": "self"
+    },
+    {
+      "effect_type": "curse",
+      "value": 1000,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

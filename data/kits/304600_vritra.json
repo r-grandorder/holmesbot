@@ -1,0 +1,28 @@
+{
+  "id": 304600,
+  "servant_name": "Vritra",
+  "class_name": "lancer",
+  "name": "Indestructible Demon",
+  "description": "Grants Defense Down to all enemies and Stun and Skill Seal to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "defense_down",
+      "value": 0.15,
+      "duration": 3,
+      "target": "all_enemies"
+    },
+    {
+      "effect_type": "stun",
+      "value": 1.0,
+      "duration": 1,
+      "target": "enemy"
+    },
+    {
+      "effect_type": "skill_seal",
+      "value": 1,
+      "duration": 1,
+      "target": "enemy"
+    }
+  ]
+}

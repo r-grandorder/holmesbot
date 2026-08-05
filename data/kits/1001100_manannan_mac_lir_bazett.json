@@ -1,0 +1,23 @@
+{
+  "id": 1001100,
+  "servant_name": "Manannan mac Lir (Bazett)",
+  "class_name": "alterEgo",
+  "name": "Fragarach",
+  "description": "Grants Attack Up On Hurt to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "atk_up_on_hurt",
+      "value": 1.2,
+      "duration": 5,
+      "buff_duration": 2,
+      "target": "self"
+    },
+    {
+      "effect_type": "skill_seal_resist",
+      "value": 0.6,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

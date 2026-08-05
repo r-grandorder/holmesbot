@@ -1,0 +1,22 @@
+{
+  "id": 900900,
+  "servant_name": "Altria Pendragon (Ruler)",
+  "class_name": "ruler",
+  "name": "Royal Bunny",
+  "description": "Grants Attack Up and Defense Up to random ally (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.3,
+      "duration": 1,
+      "target": "random_ally"
+    },
+    {
+      "effect_type": "defense_up",
+      "value": 0.33,
+      "duration": 1,
+      "target": "random_ally"
+    }
+  ]
+}

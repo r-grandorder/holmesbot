@@ -1,0 +1,22 @@
+{
+  "id": 500900,
+  "servant_name": "Leonardo da Vinci",
+  "class_name": "caster",
+  "name": "Inherent Wisdom",
+  "description": "Grants Defense Up and Guts to next ally (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "defense_up",
+      "value": 0.3,
+      "duration": 3,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": 1100700,
+  "servant_name": "Demon King Nobunaga",
+  "class_name": "avenger",
+  "name": "Can't Be Helped",
+  "description": "Grants Evade to self and Burn to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "burn",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

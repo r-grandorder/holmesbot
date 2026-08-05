@@ -1,0 +1,28 @@
+{
+  "id": 2800300,
+  "servant_name": "Lady Avalon",
+  "class_name": "pretender",
+  "name": "Light Be in Your Hands",
+  "description": "Grants Healing Per Turn, Max Hp Up, and Attack Up on Hurt to all allies (on enter)",
+  "trigger": "battle_start",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.2,
+      "duration": -1,
+      "target": "party"
+    },
+    {
+      "effect_type": "max_hp_up",
+      "value": 0.6,
+      "duration": -1,
+      "target": "party"
+    },
+    {
+      "effect_type": "atk_up_on_hurt",
+      "value": 0.1,
+      "duration": -1,
+      "target": "party"
+    }
+  ]
+}

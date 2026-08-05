@@ -1,0 +1,22 @@
+{
+  "id": 302400,
+  "servant_name": "Tamamo-no-Mae (Lancer)",
+  "class_name": "lancer",
+  "name": "Midsummer Curse",
+  "description": "Grants Attack Up to self and Curse to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 2,
+      "target": "self"
+    },
+    {
+      "effect_type": "curse",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

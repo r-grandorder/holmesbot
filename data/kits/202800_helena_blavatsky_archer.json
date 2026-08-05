@@ -1,0 +1,16 @@
+{
+  "id": 202800,
+  "servant_name": "Helena Blavatsky (Archer)",
+  "class_name": "archer",
+  "name": "Summer Vacation",
+  "description": "Grants Attack Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

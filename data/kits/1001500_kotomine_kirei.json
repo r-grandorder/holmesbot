@@ -1,0 +1,28 @@
+{
+  "id": 1001500,
+  "servant_name": "Kotomine Kirei",
+  "class_name": "alterEgo",
+  "name": "Bahloo the Undying",
+  "description": "Grants Guts, Atk Up On Kill, and Healing Per Turn to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "atk_up_on_kill",
+      "value": 0.25,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 500,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": 102000,
+  "servant_name": "Lancelot",
+  "class_name": "saber",
+  "name": "Knight of the Lake",
+  "description": "Grants Attack Up and Defense Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "defense_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

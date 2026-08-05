@@ -1,0 +1,16 @@
+{
+  "id": 102800,
+  "servant_name": "Ryougi Shiki (Saber)",
+  "class_name": "saber",
+  "name": "Mystic Eyes of Death Perception",
+  "description": "Grants Instant Kill to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "instant_kill",
+      "value": 0.4,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

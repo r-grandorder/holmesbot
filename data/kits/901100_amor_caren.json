@@ -1,0 +1,22 @@
+{
+  "id": 901100,
+  "servant_name": "Amor (Caren)",
+  "class_name": "ruler",
+  "name": "Shroud of Valentinus",
+  "description": "Grants Stun and Defense Down to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "stun",
+      "value": 1.0,
+      "duration": 1,
+      "target": "enemy"
+    },
+    {
+      "effect_type": "defense_down",
+      "value": 0.15,
+      "duration": 1,
+      "target": "enemy"
+    }
+  ]
+}

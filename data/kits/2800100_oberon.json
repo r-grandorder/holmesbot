@@ -1,0 +1,28 @@
+{
+  "id": 2800100,
+  "servant_name": "Oberon",
+  "class_name": "pretender",
+  "name": "Evening Shroud",
+  "description": "Grants Sleep to all enemies, Attack Up to all allies, and Stun to random ally (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "sleep",
+      "value": 1.0,
+      "duration": 2,
+      "target": "all_enemies"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.5,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "stun",
+      "value": 1,
+      "duration": 2,
+      "target": "random_ally"
+    }
+  ]
+}

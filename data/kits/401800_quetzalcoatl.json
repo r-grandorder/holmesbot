@@ -1,0 +1,22 @@
+{
+  "id": 401800,
+  "servant_name": "Quetzalcoatl",
+  "class_name": "rider",
+  "name": "Wisdom of the Benevolent God",
+  "description": "Grants Attack Up to next ally and Burn to all enemies (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": -1,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "burn",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

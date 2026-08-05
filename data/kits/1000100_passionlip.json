@@ -1,0 +1,22 @@
+{
+  "id": 1000100,
+  "servant_name": "Passionlip",
+  "class_name": "alterEgo",
+  "name": "Breast Valley",
+  "description": "Grants Instant Kill to self and Stun to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "instant_kill",
+      "value": 0.15,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "stun",
+      "value": 1,
+      "duration": 1,
+      "target": "enemy"
+    }
+  ]
+}

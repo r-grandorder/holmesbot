@@ -1,0 +1,16 @@
+{
+  "id": 703800,
+  "servant_name": "Brynhild (Berserker)",
+  "class_name": "berserker",
+  "name": "Swan Dress (Summer)",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

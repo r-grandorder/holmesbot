@@ -1,0 +1,22 @@
+{
+  "id": 105500,
+  "servant_name": "Yamanami Keisuke",
+  "class_name": "saber",
+  "name": "Kind One",
+  "description": "Grants Evade to self and Healing Per Turn to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

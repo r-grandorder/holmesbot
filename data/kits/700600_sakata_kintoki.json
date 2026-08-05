@@ -1,0 +1,22 @@
+{
+  "id": 700600,
+  "servant_name": "Sakata Kintoki",
+  "class_name": "berserker",
+  "name": "Monstrous Strength",
+  "description": "Grants Atk Up On Kill and Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "atk_up_on_kill",
+      "value": 0.5,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

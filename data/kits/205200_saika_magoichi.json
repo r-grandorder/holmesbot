@@ -1,0 +1,16 @@
+{
+  "id": 205200,
+  "servant_name": "Saika Magoichi",
+  "class_name": "archer",
+  "name": "Yatagarasu",
+  "description": "",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

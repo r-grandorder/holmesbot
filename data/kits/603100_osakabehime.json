@@ -1,0 +1,22 @@
+{
+  "id": 603100,
+  "servant_name": "Osakabehime",
+  "class_name": "assassin",
+  "name": "Morph",
+  "description": "Grants Defense Up to all allies and Buff Removal to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "defense_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "buff_removal",
+      "value": 1.0,
+      "duration": 1,
+      "target": "enemy"
+    }
+  ]
+}

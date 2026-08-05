@@ -1,0 +1,16 @@
+{
+  "id": 600700,
+  "servant_name": "Henry Jekyll & Hyde",
+  "class_name": "assassin",
+  "name": "Monstrous Strength",
+  "description": "Grants Healing Per Turn to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": 505100,
+  "servant_name": "Zhang Jue",
+  "class_name": "caster",
+  "name": "Taipingjing",
+  "description": "Grants Burn to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "burn",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": 201300,
+  "servant_name": "Arash",
+  "class_name": "archer",
+  "name": "Stella",
+  "description": "Grants Attack Up and HP Sacrifice to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 1.5,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "sacrifice",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

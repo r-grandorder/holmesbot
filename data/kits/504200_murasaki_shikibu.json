@@ -1,0 +1,22 @@
+{
+  "id": 504200,
+  "servant_name": "Murasaki Shikibu",
+  "class_name": "caster",
+  "name": "Tale of Genji",
+  "description": "Grants Curse to all enemies and Healing Per Turn to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "curse",
+      "value": 300,
+      "duration": 3,
+      "target": "all_enemies"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.08,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

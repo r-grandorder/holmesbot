@@ -1,0 +1,16 @@
+{
+  "id": 103100,
+  "servant_name": "Frankenstein (Saber)",
+  "class_name": "saber",
+  "name": "Barely Loads",
+  "description": "Grants Burn to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "burn",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

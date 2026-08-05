@@ -1,0 +1,22 @@
+{
+  "id": 501100,
+  "servant_name": "Charles Babbage",
+  "class_name": "caster",
+  "name": "Overload",
+  "description": "Grants Evade to self and Burn to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "burn",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

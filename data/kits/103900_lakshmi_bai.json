@@ -1,0 +1,22 @@
+{
+  "id": 103900,
+  "servant_name": "Lakshmi Bai",
+  "class_name": "saber",
+  "name": "Gwalior's Resistance",
+  "description": "Grants Evade to random ally and Guts to next ally (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "random_ally"
+    },
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    }
+  ]
+}

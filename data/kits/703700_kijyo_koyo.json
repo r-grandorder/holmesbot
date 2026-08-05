@@ -1,0 +1,22 @@
+{
+  "id": 703700,
+  "servant_name": "Kijyo Koyo",
+  "class_name": "berserker",
+  "name": "Morph (Dinosaur)",
+  "description": "Grants Healing Per Turn to all allies and Burn to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "burn",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

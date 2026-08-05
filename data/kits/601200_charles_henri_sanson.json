@@ -1,0 +1,22 @@
+{
+  "id": 601200,
+  "servant_name": "Charles-Henri Sanson",
+  "class_name": "assassin",
+  "name": "Executioner",
+  "description": "Grants Healing Per Turn to next ally and Instant Kill to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "instant_kill",
+      "value": 0.1,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

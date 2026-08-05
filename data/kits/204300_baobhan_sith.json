@@ -1,0 +1,22 @@
+{
+  "id": 204300,
+  "servant_name": "Baobhan Sith",
+  "class_name": "archer",
+  "name": "Grimalkin",
+  "description": "Grants Heal On Damage and Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "heal_on_damage",
+      "value": 1000,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

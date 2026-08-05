@@ -1,0 +1,22 @@
+{
+  "id": 201100,
+  "servant_name": "Nikola Tesla",
+  "class_name": "archer",
+  "name": "Inherent Wisdom",
+  "description": "Grants Attack Up to self and Guts to next ally (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": 5,
+      "target": "next_ally"
+    }
+  ]
+}

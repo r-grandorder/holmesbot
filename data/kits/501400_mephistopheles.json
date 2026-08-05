@@ -1,0 +1,16 @@
+{
+  "id": 501400,
+  "servant_name": "Mephistopheles",
+  "class_name": "caster",
+  "name": "Clown's Laughter",
+  "description": "Grants Curse to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "curse",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

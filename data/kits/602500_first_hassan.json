@@ -1,0 +1,34 @@
+{
+  "id": 602500,
+  "servant_name": "\"First Hassan\"",
+  "class_name": "assassin",
+  "name": "Abyss of Death",
+  "description": "Grants Guts, Instant Kill, and Attack Up on Damage to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "instant_kill",
+      "value": 0.6,
+      "duration": 5,
+      "target": "self"
+    },
+    {
+      "effect_type": "instant_kill",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "atk_up_on_damage",
+      "value": 0.1,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

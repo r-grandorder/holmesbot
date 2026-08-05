@@ -1,0 +1,22 @@
+{
+  "id": 504800,
+  "servant_name": "Charlotte Corday (Caster)",
+  "class_name": "caster",
+  "name": "Illusionist (Imposter)",
+  "description": "Grants Evade to self and Skill Seal to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "skill_seal",
+      "value": 1.0,
+      "duration": 1,
+      "target": "enemy"
+    }
+  ]
+}

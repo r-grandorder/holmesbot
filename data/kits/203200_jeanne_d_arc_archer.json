@@ -1,0 +1,22 @@
+{
+  "id": 203200,
+  "servant_name": "Jeanne d'Arc (Archer)",
+  "class_name": "archer",
+  "name": "Enjoying Endless Summer!",
+  "description": "Grants Attack Up to all allies and Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

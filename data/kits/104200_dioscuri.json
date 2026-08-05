@@ -1,0 +1,22 @@
+{
+  "id": 104200,
+  "servant_name": "Dioscuri",
+  "class_name": "saber",
+  "name": "Mana Burst (Light/Ancient)",
+  "description": "Grants Evade and Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

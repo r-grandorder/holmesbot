@@ -1,0 +1,16 @@
+{
+  "id": 203400,
+  "servant_name": "William Tell",
+  "class_name": "archer",
+  "name": "Perseverance Leads to Opportunity",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

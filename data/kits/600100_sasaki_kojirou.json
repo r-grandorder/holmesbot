@@ -1,0 +1,28 @@
+{
+  "id": 600100,
+  "servant_name": "Sasaki Kojirou",
+  "class_name": "assassin",
+  "name": "Knowledge of the Sōwa",
+  "description": "Grants Evade, Ignore Evade, and Instant Kill to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "ignore_evade",
+      "value": 1.0,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "instant_kill",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

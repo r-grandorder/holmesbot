@@ -1,0 +1,28 @@
+{
+  "id": 402800,
+  "servant_name": "Ivan the Terrible",
+  "class_name": "rider",
+  "name": "Mental Schism",
+  "description": "Grants Max Hp Up, Attack Up on Damage, and Sleep to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "max_hp_up",
+      "value": 2000,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "atk_up_on_damage",
+      "value": 0.15,
+      "duration": 2,
+      "target": "self"
+    },
+    {
+      "effect_type": "sleep",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

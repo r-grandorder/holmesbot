@@ -1,0 +1,16 @@
+{
+  "id": 604100,
+  "servant_name": "Kiichi Hogen",
+  "class_name": "assassin",
+  "name": "Famed Blade",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

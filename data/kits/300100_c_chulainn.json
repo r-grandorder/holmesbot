@@ -1,0 +1,16 @@
+{
+  "id": 300100,
+  "servant_name": "Cú Chulainn",
+  "class_name": "lancer",
+  "name": "Battle Continuation",
+  "description": "Grants Guts to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

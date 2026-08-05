@@ -1,0 +1,16 @@
+{
+  "id": 105800,
+  "servant_name": "Thēseus",
+  "class_name": "saber",
+  "name": "Labyrinth Tactics",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

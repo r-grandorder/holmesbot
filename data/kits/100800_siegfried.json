@@ -1,0 +1,16 @@
+{
+  "id": 100800,
+  "servant_name": "Siegfried",
+  "class_name": "saber",
+  "name": "Dragon Slayer",
+  "description": "Grants Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

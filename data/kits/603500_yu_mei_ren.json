@@ -1,0 +1,22 @@
+{
+  "id": 603500,
+  "servant_name": "Yu Mei-ren",
+  "class_name": "assassin",
+  "name": "Incarnated Elemental",
+  "description": "Grants Healing Per Turn to all allies and Curse to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "curse",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

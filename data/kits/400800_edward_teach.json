@@ -1,0 +1,22 @@
+{
+  "id": 400800,
+  "servant_name": "Edward Teach",
+  "class_name": "rider",
+  "name": "Pirate's Glory",
+  "description": "Grants Guts to self and Healing Per Turn to all other allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party_others"
+    }
+  ]
+}

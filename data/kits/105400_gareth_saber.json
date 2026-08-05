@@ -1,0 +1,22 @@
+{
+  "id": 105400,
+  "servant_name": "Gareth (Saber)",
+  "class_name": "saber",
+  "name": "Gareth Like the Sun",
+  "description": "Grants Guts to next ally and Burn to all enemies (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "burn",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

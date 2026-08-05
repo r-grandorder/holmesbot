@@ -1,0 +1,16 @@
+{
+  "id": 100200,
+  "servant_name": "Altria Pendragon (Alter)",
+  "class_name": "saber",
+  "name": "Mana Burst",
+  "description": "Grants Attack Up to self (on kill)",
+  "trigger": "on_kill",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.25,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

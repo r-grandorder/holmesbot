@@ -1,0 +1,16 @@
+{
+  "id": 604200,
+  "servant_name": "Koyanskaya of Light",
+  "class_name": "assassin",
+  "name": "Innovator Bunny",
+  "description": "Grants Attack Up to next ally (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.5,
+      "duration": 3,
+      "target": "next_ally"
+    }
+  ]
+}

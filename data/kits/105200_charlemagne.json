@@ -1,0 +1,16 @@
+{
+  "id": 105200,
+  "servant_name": "Charlemagne",
+  "class_name": "saber",
+  "name": "Kingship Traversal",
+  "description": "Grants Attack Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

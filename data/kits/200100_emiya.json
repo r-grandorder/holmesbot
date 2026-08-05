@@ -1,0 +1,16 @@
+{
+  "id": 200100,
+  "servant_name": "Emiya",
+  "class_name": "archer",
+  "name": "Mind's Eye (True)",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

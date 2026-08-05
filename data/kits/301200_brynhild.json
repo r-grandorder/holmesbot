@@ -1,0 +1,22 @@
+{
+  "id": 301200,
+  "servant_name": "Brynhild",
+  "class_name": "lancer",
+  "name": "Mana Burst (Flame)",
+  "description": "Grants Attack Up to self and Burn to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "burn",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

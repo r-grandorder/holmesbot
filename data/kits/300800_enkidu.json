@@ -1,0 +1,22 @@
+{
+  "id": 300800,
+  "servant_name": "Enkidu",
+  "class_name": "lancer",
+  "name": "Presence Detection",
+  "description": "Grants Max Hp Up to self and Healing Per Turn to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "max_hp_up",
+      "value": 2000,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

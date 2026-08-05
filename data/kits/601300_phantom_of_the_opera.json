@@ -1,0 +1,16 @@
+{
+  "id": 601300,
+  "servant_name": "Phantom of the Opera",
+  "class_name": "assassin",
+  "name": "Siren Song",
+  "description": "Grants Stun to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "stun",
+      "value": 1,
+      "duration": 1,
+      "target": "enemy"
+    }
+  ]
+}

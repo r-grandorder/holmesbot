@@ -1,0 +1,16 @@
+{
+  "id": 303000,
+  "servant_name": "Pārvatī",
+  "class_name": "lancer",
+  "name": "Imaginary Around",
+  "description": "Grants Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

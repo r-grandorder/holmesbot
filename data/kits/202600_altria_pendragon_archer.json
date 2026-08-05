@@ -1,0 +1,16 @@
+{
+  "id": 202600,
+  "servant_name": "Altria Pendragon (Archer)",
+  "class_name": "archer",
+  "name": "Summer Splash!",
+  "description": "Grants Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": 600900,
+  "servant_name": "Hassan of the Serenity",
+  "class_name": "assassin",
+  "name": "Poison Blade",
+  "description": "Grants Instant Kill to self and Poison to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "instant_kill",
+      "value": 0.1,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "poison",
+      "value": 0.085,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

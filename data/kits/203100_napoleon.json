@@ -1,0 +1,22 @@
+{
+  "id": 203100,
+  "servant_name": "Napoleon",
+  "class_name": "archer",
+  "name": "Charisma of Triumphant Return",
+  "description": "Grants Attack Up to all allies and Ignore Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "ignore_evade",
+      "value": 1.0,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

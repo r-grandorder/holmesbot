@@ -1,0 +1,22 @@
+{
+  "id": 501700,
+  "servant_name": "Medea (Lily)",
+  "class_name": "caster",
+  "name": "Poison Resistance",
+  "description": "Grants Healing Per Turn to all allies and Poison to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "poison",
+      "value": 0.05,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

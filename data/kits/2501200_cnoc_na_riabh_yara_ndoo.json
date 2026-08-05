@@ -1,0 +1,16 @@
+{
+  "id": 2501200,
+  "servant_name": "Cnoc na Riabh Yaraändoo",
+  "class_name": "foreigner",
+  "name": "Queen's Grave",
+  "description": "Grants Healing Per Turn to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

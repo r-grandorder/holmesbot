@@ -1,0 +1,16 @@
+{
+  "id": 701100,
+  "servant_name": "Darius III",
+  "class_name": "berserker",
+  "name": "Battle Continuation",
+  "description": "Grants Guts to next ally (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    }
+  ]
+}

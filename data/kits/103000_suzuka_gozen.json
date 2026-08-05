@@ -1,0 +1,16 @@
+{
+  "id": 103000,
+  "servant_name": "Suzuka Gozen",
+  "class_name": "saber",
+  "name": "Mystic Eyes",
+  "description": "Grants Stun to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "stun",
+      "value": 1,
+      "duration": 1,
+      "target": "enemy"
+    }
+  ]
+}

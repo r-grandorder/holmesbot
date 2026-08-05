@@ -1,0 +1,16 @@
+{
+  "id": 101300,
+  "servant_name": "Gaius Julius Caesar",
+  "class_name": "saber",
+  "name": "Tactics",
+  "description": "Grants Attack Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.12,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

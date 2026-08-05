@@ -1,0 +1,22 @@
+{
+  "id": 204700,
+  "servant_name": "Takasugi Shinsaku",
+  "class_name": "archer",
+  "name": "The Yamato Spirit Lives On",
+  "description": "Grants Attack Up and Guts to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

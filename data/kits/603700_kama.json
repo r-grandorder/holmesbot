@@ -1,0 +1,28 @@
+{
+  "id": 603700,
+  "servant_name": "Kama",
+  "class_name": "assassin",
+  "name": "Ananga",
+  "description": "Grants Guts and Attack Up to self and Stun to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "stun",
+      "value": 1.0,
+      "duration": 1,
+      "target": "all_enemies"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

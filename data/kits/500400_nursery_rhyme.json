@@ -1,0 +1,16 @@
+{
+  "id": 500400,
+  "servant_name": "Nursery Rhyme",
+  "class_name": "caster",
+  "name": "Self-Modification",
+  "description": "Grants Healing Per Turn to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "id": 4000100,
+  "servant_name": "U Olga Marie",
+  "class_name": "Unbeast (Olga)",
+  "name": "Planet Olga Marie",
+  "description": "",
+  "trigger": "battle_start",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.3,
+      "duration": -1,
+      "target": "party"
+    },
+    {
+      "effect_type": "skill_seal_resist",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "piercing",
+      "value": 0.25,
+      "duration": 1,
+      "target": "party"
+    }
+  ]
+}

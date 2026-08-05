@@ -1,0 +1,23 @@
+{
+  "id": 702500,
+  "servant_name": "Hijikata Toshizo",
+  "class_name": "berserker",
+  "name": "Harsh Road To Travel",
+  "description": "Grants Attack Up on Damage and Guts to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "atk_up_on_damage",
+      "value": 0.25,
+      "duration": 3,
+      "buff_duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

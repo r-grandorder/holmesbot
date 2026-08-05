@@ -1,0 +1,28 @@
+{
+  "id": 403900,
+  "servant_name": "Mandricardo",
+  "class_name": "rider",
+  "name": "Armor of Nine Worthies",
+  "description": "Grants HP Sacrifice and Attack Up to self and Buff Removal to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "sacrifice",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.33,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "buff_removal",
+      "value": 1.0,
+      "duration": 3,
+      "target": "enemy"
+    }
+  ]
+}

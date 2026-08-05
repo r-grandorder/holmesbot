@@ -1,0 +1,22 @@
+{
+  "id": 604800,
+  "servant_name": "Locusta",
+  "class_name": "assassin",
+  "name": "Poison Mixing",
+  "description": "Grants Guts to next ally and Poison to all enemies (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "poison",
+      "value": 0.085,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

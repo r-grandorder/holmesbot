@@ -1,0 +1,16 @@
+{
+  "id": 901000,
+  "servant_name": "Himiko",
+  "class_name": "ruler",
+  "name": "Shrine Maiden's Charisma",
+  "description": "Grants Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.5,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

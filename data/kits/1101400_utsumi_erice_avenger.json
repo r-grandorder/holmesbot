@@ -1,0 +1,22 @@
+{
+  "id": 1101400,
+  "servant_name": "Utsumi Erice (Avenger)",
+  "class_name": "avenger",
+  "name": "Evil Spirit Medium",
+  "description": "Grants Evade and Instant Kill to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "instant_kill",
+      "value": 0.1,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

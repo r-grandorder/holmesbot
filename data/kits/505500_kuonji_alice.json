@@ -1,0 +1,46 @@
+{
+  "id": 505500,
+  "servant_name": "Kuonji Alice",
+  "class_name": "caster",
+  "name": "Great Three, Wandersnatch",
+  "description": "",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "ignore_evade",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "skill_seal",
+      "value": 1.0,
+      "duration": 3,
+      "target": "all_enemies"
+    },
+    {
+      "effect_type": "stun",
+      "value": 1,
+      "duration": 1,
+      "target": "enemy"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 2,
+      "target": "self"
+    },
+    {
+      "effect_type": "defense_up",
+      "value": 0.2,
+      "duration": 2,
+      "target": "self"
+    },
+    {
+      "effect_type": "anti_purge",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

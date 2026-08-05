@@ -1,0 +1,22 @@
+{
+  "id": 304400,
+  "servant_name": "Yu Mei-ren (Lancer)",
+  "class_name": "lancer",
+  "name": "Summer Incarnated Elemental",
+  "description": "Grants Guts to next ally and Curse to all enemies (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "curse",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

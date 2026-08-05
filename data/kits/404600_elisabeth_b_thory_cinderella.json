@@ -1,0 +1,22 @@
+{
+  "id": 404600,
+  "servant_name": "Elisabeth Báthory (Cinderella)",
+  "class_name": "rider",
+  "name": "Snow White Princess",
+  "description": "Grants Attack Up to self and Poison to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.1,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "poison",
+      "value": 0.05,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

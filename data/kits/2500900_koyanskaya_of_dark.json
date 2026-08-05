@@ -1,0 +1,22 @@
+{
+  "id": 2500900,
+  "servant_name": "Koyanskaya of Dark",
+  "class_name": "foreigner",
+  "name": "Dominator Fox",
+  "description": "Grants Attack Up to self and Burn to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.3,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "burn",
+      "value": 1000,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

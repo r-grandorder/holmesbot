@@ -1,0 +1,16 @@
+{
+  "id": 104500,
+  "servant_name": "Tomoe Gozen (Saber)",
+  "class_name": "saber",
+  "name": "Midnight of Summer Side",
+  "description": "Grants Burn to all enemies (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "burn",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

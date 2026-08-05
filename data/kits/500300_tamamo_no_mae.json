@@ -1,0 +1,22 @@
+{
+  "id": 500300,
+  "servant_name": "Tamamo-no-Mae",
+  "class_name": "caster",
+  "name": "Curse",
+  "description": "Grants Healing Per Turn and Cleanse to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "cleanse",
+      "value": 1.0,
+      "duration": 1,
+      "target": "party"
+    }
+  ]
+}

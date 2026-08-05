@@ -1,0 +1,22 @@
+{
+  "id": 2300100,
+  "servant_name": "BB",
+  "class_name": "moonCancer",
+  "name": "Domina Cornam",
+  "description": "Grants Buff Removal to enemy and Cleanse to next ally (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "buff_removal",
+      "value": 1,
+      "duration": 1,
+      "target": "enemy"
+    },
+    {
+      "effect_type": "cleanse",
+      "value": 1,
+      "duration": 1,
+      "target": "next_ally"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": 103200,
+  "servant_name": "Yagyu Tajima-no-kami Munenori",
+  "class_name": "saber",
+  "name": "Suigetsu",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

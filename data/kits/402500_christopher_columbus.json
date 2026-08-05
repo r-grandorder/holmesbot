@@ -1,0 +1,16 @@
+{
+  "id": 402500,
+  "servant_name": "Christopher Columbus",
+  "class_name": "rider",
+  "name": "Unyielding Will",
+  "description": "Grants Guts to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

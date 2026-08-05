@@ -1,0 +1,22 @@
+{
+  "id": 202100,
+  "servant_name": "Tomoe Gozen",
+  "class_name": "archer",
+  "name": "Lineage Excitation",
+  "description": "Grants Guts to next ally and Burn to all enemies (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "burn",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

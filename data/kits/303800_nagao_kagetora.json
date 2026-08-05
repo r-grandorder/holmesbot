@@ -1,0 +1,16 @@
+{
+  "id": 303800,
+  "servant_name": "Nagao Kagetora",
+  "class_name": "lancer",
+  "name": "Armor Strengthened by Heart",
+  "description": "Grants Defense Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "defense_up",
+      "value": 0.2,
+      "duration": 2,
+      "target": "self"
+    }
+  ]
+}

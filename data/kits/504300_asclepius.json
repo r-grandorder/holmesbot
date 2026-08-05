@@ -1,0 +1,28 @@
+{
+  "id": 504300,
+  "servant_name": "Asclepius",
+  "class_name": "caster",
+  "name": "God of Medicine",
+  "description": "Grants Cleanse, Healing Per Turn, and Defense Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "cleanse",
+      "value": 1.0,
+      "duration": 1,
+      "target": "party"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.2,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "defense_up",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

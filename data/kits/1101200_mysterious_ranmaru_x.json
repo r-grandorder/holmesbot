@@ -1,0 +1,22 @@
+{
+  "id": 1101200,
+  "servant_name": "Mysterious Ranmaru X",
+  "class_name": "avenger",
+  "name": "Ranmaru Hand",
+  "description": "Grants Attack Up and Ignore Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.3,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "ignore_evade",
+      "value": 1,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

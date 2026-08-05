@@ -1,0 +1,22 @@
+{
+  "id": 504100,
+  "servant_name": "Miyu Edelfelt",
+  "class_name": "caster",
+  "name": "Girl's Willpower",
+  "description": "Grants Guts to next ally and Healing Per Turn to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

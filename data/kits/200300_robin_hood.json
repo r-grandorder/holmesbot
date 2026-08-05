@@ -1,0 +1,22 @@
+{
+  "id": 200300,
+  "servant_name": "Robin Hood",
+  "class_name": "archer",
+  "name": "Sabotage",
+  "description": "Grants Evade to self and Poison to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "poison",
+      "value": 0.05,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

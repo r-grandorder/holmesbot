@@ -1,0 +1,23 @@
+{
+  "id": 104600,
+  "servant_name": "Ibuki-Douji",
+  "class_name": "saber",
+  "name": "Strength of Mountains and Rivers",
+  "description": "Grants Evade and Attack Up On Kill to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "atk_up_on_kill",
+      "value": 0.2,
+      "duration": 3,
+      "buff_duration": 3,
+      "target": "self"
+    }
+  ]
+}

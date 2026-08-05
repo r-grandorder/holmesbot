@@ -1,0 +1,22 @@
+{
+  "id": 602700,
+  "servant_name": "Wu Zetian",
+  "class_name": "assassin",
+  "name": "Torture Technique",
+  "description": "Grants Healing Per Turn to all allies and Poison to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "poison",
+      "value": 0.085,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

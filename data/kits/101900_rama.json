@@ -1,0 +1,22 @@
+{
+  "id": 101900,
+  "servant_name": "Rama",
+  "class_name": "saber",
+  "name": "Curse of Separation",
+  "description": "Grants Guts to next ally and Healing Per Turn to all other allies (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party_others"
+    }
+  ]
+}

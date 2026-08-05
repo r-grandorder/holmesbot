@@ -1,4 +1,4 @@
-.PHONY: lock lock-check run migrate sync sync-jp sync-data sync-ce sync-custom-assets install-hooks
+.PHONY: lock lock-check run migrate sync sync-jp sync-data sync-ce kits sync-custom-assets install-hooks
 
 lock:
 	pip-compile --quiet --output-file=requirements.txt requirements.in
@@ -31,6 +31,11 @@ sync-data:
 # Refresh the Craft Essence pool for /guessce (5-star CEs with art) from Atlas.
 sync-ce:
 	python scripts/sync_ce.py
+
+# Compile the per-servant autobattle kits (data/kits/*.json) into data/kits.json, validating
+# every effect/target/trigger + dedup so a hand-authoring typo fails here, not at battle time.
+kits:
+	python scripts/build_kits.py
 
 # Custom-servant art: drop PNGs under custom-assets/<slug>/ (see custom-assets/README.md),
 # then push them to the public assets bucket under the custom/ prefix. Only adds/updates --

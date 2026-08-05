@@ -1,0 +1,16 @@
+{
+  "id": 405200,
+  "servant_name": "Takeda Harunobu",
+  "class_name": "archer",
+  "name": "Tiger of Kai",
+  "description": "Grants Attack Up",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": 1001400,
+  "servant_name": "Xu Fu",
+  "class_name": "alterEgo",
+  "name": "Five Grain Praise",
+  "description": "Grants Healing Per Turn and Attack Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.2,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

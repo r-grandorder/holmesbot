@@ -1,0 +1,16 @@
+{
+  "id": 400400,
+  "servant_name": "Astolfo",
+  "class_name": "rider",
+  "name": "Monstrous Strength C-",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

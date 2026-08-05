@@ -1,0 +1,22 @@
+{
+  "id": 1001000,
+  "servant_name": "Ashiya Douman",
+  "class_name": "alterEgo",
+  "name": "Onyx Life",
+  "description": "Grants Instant Kill to self and Defense Down to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "instant_kill",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "defense_down",
+      "value": 0.2,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

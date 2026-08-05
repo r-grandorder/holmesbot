@@ -1,0 +1,22 @@
+{
+  "id": 602300,
+  "servant_name": "Ryougi Shiki (Assassin)",
+  "class_name": "assassin",
+  "name": "Mystic Eyes of Death Perception",
+  "description": "Grants Instant Kill and Defense Down to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "instant_kill",
+      "value": 0.33,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "defense_down",
+      "value": 0.2,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

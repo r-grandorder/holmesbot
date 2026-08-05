@@ -1,0 +1,22 @@
+{
+  "id": 204100,
+  "servant_name": "Oda Nobukatsu",
+  "class_name": "archer",
+  "name": "War-torn Flower",
+  "description": "Grants Healing Per Turn to all other allies and HP Sacrifice to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.6,
+      "duration": 3,
+      "target": "party_others"
+    },
+    {
+      "effect_type": "sacrifice",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

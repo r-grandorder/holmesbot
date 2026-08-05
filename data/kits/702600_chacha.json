@@ -1,0 +1,16 @@
+{
+  "id": 702600,
+  "servant_name": "Chacha",
+  "class_name": "berserker",
+  "name": "Golden Rule (Evil)",
+  "description": "Grants Burn to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "burn",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

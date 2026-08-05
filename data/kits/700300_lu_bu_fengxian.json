@@ -1,0 +1,16 @@
+{
+  "id": 700300,
+  "servant_name": "Lu Bu Fengxian",
+  "class_name": "berserker",
+  "name": "God Force",
+  "description": "Grants Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

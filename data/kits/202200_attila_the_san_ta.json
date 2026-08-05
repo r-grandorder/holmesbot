@@ -1,0 +1,22 @@
+{
+  "id": 202200,
+  "servant_name": "Attila the San(ta)",
+  "class_name": "archer",
+  "name": "Gift of the Stars",
+  "description": "Grants Evade and Ignore Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "ignore_evade",
+      "value": 1.0,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

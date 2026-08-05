@@ -1,0 +1,16 @@
+{
+  "id": 401100,
+  "servant_name": "Boudica",
+  "class_name": "rider",
+  "name": "Battle Continuation",
+  "description": "Grants Guts to next ally (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    }
+  ]
+}

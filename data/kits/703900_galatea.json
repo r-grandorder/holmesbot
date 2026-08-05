@@ -1,0 +1,22 @@
+{
+  "id": 703900,
+  "servant_name": "Galatea",
+  "class_name": "berserker",
+  "name": "Sculpture Maiden",
+  "description": "Grants Healing Per Turn and Defense Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 1000,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "defense_up",
+      "value": 0.1,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

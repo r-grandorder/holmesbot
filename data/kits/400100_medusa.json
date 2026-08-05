@@ -1,0 +1,16 @@
+{
+  "id": 400100,
+  "servant_name": "Medusa",
+  "class_name": "rider",
+  "name": "Mystic Eyes",
+  "description": "Grants Stun to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "stun",
+      "value": 1,
+      "duration": 2,
+      "target": "enemy"
+    }
+  ]
+}

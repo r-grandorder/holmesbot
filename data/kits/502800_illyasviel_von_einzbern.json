@@ -1,0 +1,22 @@
+{
+  "id": 502800,
+  "servant_name": "Illyasviel von Einzbern",
+  "class_name": "caster",
+  "name": "Suspicious Medicine",
+  "description": "Grants Evade and Guts to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

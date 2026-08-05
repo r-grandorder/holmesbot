@@ -1,0 +1,16 @@
+{
+  "id": 304000,
+  "servant_name": "Mysterious Alter Ego Λ",
+  "class_name": "lancer",
+  "name": "Swan Lake",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

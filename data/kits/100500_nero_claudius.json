@@ -1,0 +1,22 @@
+{
+  "id": 100500,
+  "servant_name": "Nero Claudius",
+  "class_name": "saber",
+  "name": "Invictus Spiritus",
+  "description": "Grants Guts and Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.1,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

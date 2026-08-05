@@ -1,0 +1,22 @@
+{
+  "id": 302000,
+  "servant_name": "Altria Pendragon (Lancer)",
+  "class_name": "lancer",
+  "name": "Mana Burst",
+  "description": "Grants Piercing and Ignore Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "piercing",
+      "value": 0.1,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "ignore_evade",
+      "value": 1.0,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

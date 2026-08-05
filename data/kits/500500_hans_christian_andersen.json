@@ -1,0 +1,22 @@
+{
+  "id": 500500,
+  "servant_name": "Hans Christian Andersen",
+  "class_name": "caster",
+  "name": "Human Observation",
+  "description": "Grants Healing Per Turn and Defense Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "defense_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

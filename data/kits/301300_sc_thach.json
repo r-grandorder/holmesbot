@@ -1,0 +1,28 @@
+{
+  "id": 301300,
+  "servant_name": "Scáthach",
+  "class_name": "lancer",
+  "name": "Wisdom of Dún Scáith",
+  "description": "Grants Piercing and Instant Kill to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "piercing",
+      "value": 0.3,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.3,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "instant_kill",
+      "value": 0.25,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

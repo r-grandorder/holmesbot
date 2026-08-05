@@ -1,0 +1,16 @@
+{
+  "id": 101400,
+  "servant_name": "Fergus mac Róich",
+  "class_name": "saber",
+  "name": "Mind's Eye (True)",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

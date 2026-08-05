@@ -1,0 +1,16 @@
+{
+  "id": 800100,
+  "servant_name": "Mash Kyrielight",
+  "class_name": "shielder",
+  "name": "Transient Wall of Snowflakes",
+  "description": "Grants Defense Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "defense_up",
+      "value": 0.33,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

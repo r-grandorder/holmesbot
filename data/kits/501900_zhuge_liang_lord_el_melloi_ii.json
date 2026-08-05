@@ -1,0 +1,28 @@
+{
+  "id": 501900,
+  "servant_name": "Zhuge Liang (Lord El-Melloi II)",
+  "class_name": "caster",
+  "name": "Discerning Eye",
+  "description": "Grants Curse to all enemies and Attack Up and Defense Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "curse",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 5,
+      "target": "party"
+    },
+    {
+      "effect_type": "defense_up",
+      "value": 0.08,
+      "duration": 5,
+      "target": "party"
+    }
+  ]
+}

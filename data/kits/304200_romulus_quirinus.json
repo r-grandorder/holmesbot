@@ -1,0 +1,16 @@
+{
+  "id": 304200,
+  "servant_name": "Romulus=Quirinus",
+  "class_name": "lancer",
+  "name": "Throne of Quirinus",
+  "description": "Grants Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 2,
+      "target": "self"
+    }
+  ]
+}

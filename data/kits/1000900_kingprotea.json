@@ -1,0 +1,29 @@
+{
+  "id": 1000900,
+  "servant_name": "Kingprotea",
+  "class_name": "alterego",
+  "name": "Huge Scale",
+  "description": "Grants Max Hp Up, Healing Per Turn, and Attack Down to self (on enter)",
+  "trigger": "battle_start",
+  "effects": [
+    {
+      "effect_type": "max_hp_up",
+      "value": 2.0,
+      "duration": 10,
+      "target": "self",
+      "unremovable": true
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 5000,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "attack_down",
+      "value": 0.3,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

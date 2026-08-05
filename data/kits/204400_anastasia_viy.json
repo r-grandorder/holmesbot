@@ -1,0 +1,16 @@
+{
+  "id": 204400,
+  "servant_name": "Anastasia & Viy",
+  "class_name": "archer",
+  "name": "Schwipsig (Summer)",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

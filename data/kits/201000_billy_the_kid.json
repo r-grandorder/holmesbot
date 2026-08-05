@@ -1,0 +1,16 @@
+{
+  "id": 201000,
+  "servant_name": "Billy the Kid",
+  "class_name": "archer",
+  "name": "Mind's Eye (Fake)",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": 700100,
+  "servant_name": "Heracles",
+  "class_name": "berserker",
+  "name": "Indomitable",
+  "description": "Grants Attack Up on Hurt, Burn, and Guts to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "atk_up_on_hurt",
+      "value": 0.05,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "burn",
+      "value": 0.25,
+      "duration": -1,
+      "target": "self",
+      "unremovable": true
+    },
+    {
+      "effect_type": "guts",
+      "value": 2.0,
+      "duration": -1,
+      "target": "self",
+      "unremovable": true
+    }
+  ]
+}

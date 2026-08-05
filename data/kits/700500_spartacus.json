@@ -1,0 +1,16 @@
+{
+  "id": 700500,
+  "servant_name": "Spartacus",
+  "class_name": "berserker",
+  "name": "Unyielding Will",
+  "description": "Grants Healing Per Turn to all other allies (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party_others"
+    }
+  ]
+}

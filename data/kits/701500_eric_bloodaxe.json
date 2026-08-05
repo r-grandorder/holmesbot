@@ -1,0 +1,22 @@
+{
+  "id": 701500,
+  "servant_name": "Eric Bloodaxe",
+  "class_name": "berserker",
+  "name": "Battle Continuation",
+  "description": "Grants Max Hp Up to self and Defense Down to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "max_hp_up",
+      "value": 2000,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "defense_down",
+      "value": 0.1,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

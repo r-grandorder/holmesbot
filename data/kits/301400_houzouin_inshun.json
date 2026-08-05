@@ -1,0 +1,22 @@
+{
+  "id": 301400,
+  "servant_name": "Houzouin Inshun",
+  "class_name": "lancer",
+  "name": "Knowledge of the Sowa",
+  "description": "Grants Evade and Instant Kill to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "instant_kill",
+      "value": 0.1,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

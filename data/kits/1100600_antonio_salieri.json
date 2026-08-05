@@ -1,0 +1,22 @@
+{
+  "id": 1100600,
+  "servant_name": "Antonio Salieri",
+  "class_name": "avenger",
+  "name": "Innocent Monster",
+  "description": "Grants Attack Up and Curse to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.33,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "curse",
+      "value": 1000,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

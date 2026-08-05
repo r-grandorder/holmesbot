@@ -1,0 +1,22 @@
+{
+  "id": 900800,
+  "servant_name": "Astraea",
+  "class_name": "ruler",
+  "name": "Blessing of the Scale",
+  "description": "Grants Evade and Ignore Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "ignore_evade",
+      "value": 1.0,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

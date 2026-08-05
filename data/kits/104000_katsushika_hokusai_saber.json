@@ -1,0 +1,16 @@
+{
+  "id": 104000,
+  "servant_name": "Katsushika Hokusai (Saber)",
+  "class_name": "saber",
+  "name": "Father-Daughter Connection",
+  "description": "Grants Guts to next ally (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    }
+  ]
+}

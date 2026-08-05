@@ -1,0 +1,16 @@
+{
+  "id": 901800,
+  "servant_name": "Uesugi Kenshin",
+  "class_name": "ruler",
+  "name": "Biten's Pagoda",
+  "description": "",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.25,
+      "duration": 2,
+      "target": "self"
+    }
+  ]
+}

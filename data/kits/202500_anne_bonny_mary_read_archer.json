@@ -1,0 +1,16 @@
+{
+  "id": 202500,
+  "servant_name": "Anne Bonny & Mary Read (Archer)",
+  "class_name": "archer",
+  "name": "Pirate's Glory",
+  "description": "Grants Guts to next ally (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    }
+  ]
+}

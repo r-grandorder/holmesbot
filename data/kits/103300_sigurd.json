@@ -1,0 +1,16 @@
+{
+  "id": 103300,
+  "servant_name": "Sigurd",
+  "class_name": "saber",
+  "name": "Dragon Modification",
+  "description": "Grants Guts to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

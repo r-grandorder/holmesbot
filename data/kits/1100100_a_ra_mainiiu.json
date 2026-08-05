@@ -1,0 +1,22 @@
+{
+  "id": 1100100,
+  "servant_name": "Aŋra Mainiiu",
+  "class_name": "avenger",
+  "name": "The End of the Fourth Night",
+  "description": "Grants Curse to all enemies and Healing Per Turn to all other allies (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "curse",
+      "value": 3000,
+      "duration": -1,
+      "target": "all_enemies"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 500,
+      "duration": 3,
+      "target": "party_others"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": 2500400,
+  "servant_name": "Yang Guifei",
+  "class_name": "foreigner",
+  "name": "Sun of a Malignant Star",
+  "description": "Grants Evade to self and Burn to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "burn",
+      "value": 1000,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

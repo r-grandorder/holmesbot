@@ -1,0 +1,22 @@
+{
+  "id": 300900,
+  "servant_name": "Leonidas I",
+  "class_name": "lancer",
+  "name": "Battle Continuation",
+  "description": "Grants Guts and Defense Up to next ally (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "defense_up",
+      "value": 0.5,
+      "duration": 1,
+      "target": "next_ally"
+    }
+  ]
+}

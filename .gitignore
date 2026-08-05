@@ -27,6 +27,7 @@ venv/
 
 data/servants.json
 data/ce.json
+data/kits.json
 scripts/data/community_aliases_review.txt
 
 test_output/

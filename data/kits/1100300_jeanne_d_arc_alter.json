@@ -1,0 +1,22 @@
+{
+  "id": 1100300,
+  "servant_name": "Jeanne d'Arc (Alter)",
+  "class_name": "avenger",
+  "name": "Self-Modification",
+  "description": "Grants Attack Up to self and Burn to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "burn",
+      "value": 1500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

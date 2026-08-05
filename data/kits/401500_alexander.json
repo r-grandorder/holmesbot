@@ -1,0 +1,16 @@
+{
+  "id": 401500,
+  "servant_name": "Alexander",
+  "class_name": "rider",
+  "name": "Fair Youth",
+  "description": "Grants Defense Down to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "defense_down",
+      "value": 0.2,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

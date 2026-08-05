@@ -1,0 +1,22 @@
+{
+  "id": 600500,
+  "servant_name": "Jack the Ripper",
+  "class_name": "assassin",
+  "name": "Murder on a Misty Night",
+  "description": "Grants Evade to self and Attack Up on Damage to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "atk_up_on_damage",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

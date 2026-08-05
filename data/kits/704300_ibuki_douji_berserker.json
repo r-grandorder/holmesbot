@@ -1,0 +1,22 @@
+{
+  "id": 704300,
+  "servant_name": "Ibuki-Douji (Berserker)",
+  "class_name": "berserker",
+  "name": "Midsummer Goddess",
+  "description": "Grants Attack Up and Max Hp Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "max_hp_up",
+      "value": 1000,
+      "duration": 5,
+      "target": "party"
+    }
+  ]
+}

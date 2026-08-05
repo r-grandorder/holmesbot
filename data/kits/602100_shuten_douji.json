@@ -1,0 +1,22 @@
+{
+  "id": 602100,
+  "servant_name": "Shuten-Douji",
+  "class_name": "assassin",
+  "name": "Demonic Nature of Oni",
+  "description": "Grants Defense Down and Stun to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "defense_down",
+      "value": 0.2,
+      "duration": 3,
+      "target": "all_enemies"
+    },
+    {
+      "effect_type": "stun",
+      "value": 1.0,
+      "duration": 1,
+      "target": "all_enemies"
+    }
+  ]
+}

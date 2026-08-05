@@ -1,0 +1,22 @@
+{
+  "id": 704100,
+  "servant_name": "Sei Shounagon (Berserker)",
+  "class_name": "berserker",
+  "name": "Night Pool Slider",
+  "description": "Grants Evade and Healing Per Turn to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.15,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

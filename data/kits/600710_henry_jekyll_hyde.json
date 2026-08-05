@@ -1,0 +1,22 @@
+{
+  "id": 600710,
+  "servant_name": "Henry Jekyll & Hyde",
+  "class_name": "berserker",
+  "name": "Dangerous Game",
+  "description": "Grants Attack Up and Stun to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.75,
+      "duration": 2,
+      "target": "self"
+    },
+    {
+      "effect_type": "stun",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": 601900,
+  "servant_name": "Fuuma \"Evil-wind\" Kotarou",
+  "class_name": "assassin",
+  "name": "Ninjutsu",
+  "description": "Grants Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

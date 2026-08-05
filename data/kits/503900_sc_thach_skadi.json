@@ -1,0 +1,28 @@
+{
+  "id": 503900,
+  "servant_name": "Scáthach-Skadi",
+  "class_name": "caster",
+  "name": "Primordial Rune",
+  "description": "Grants Attack Up and Healing Per Turn to all allies and Defense Down to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.5,
+      "duration": 6,
+      "target": "party"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.2,
+      "duration": 5,
+      "target": "party"
+    },
+    {
+      "effect_type": "defense_down",
+      "value": 0.2,
+      "duration": 5,
+      "target": "enemy"
+    }
+  ]
+}

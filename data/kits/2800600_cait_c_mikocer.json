@@ -1,0 +1,28 @@
+{
+  "id": 2800600,
+  "servant_name": "Cait Cú MikoCer",
+  "class_name": "pretender",
+  "name": "Mikonos☆MikoCer",
+  "description": "Grants Heal On Damage and Healing Per Turn to all allies and Curse to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "heal_on_damage",
+      "value": 500,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "curse",
+      "value": 0.05,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

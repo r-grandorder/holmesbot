@@ -1,0 +1,41 @@
+{
+  "id": 2501400,
+  "servant_name": "Aozaki Aoko",
+  "class_name": "foreigner",
+  "name": "Unfinished Blue",
+  "description": "",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_down",
+      "value": 0.6,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "atk_up_on_damage",
+      "value": 0.2,
+      "duration": -1,
+      "buff_duration": 2,
+      "target": "self"
+    },
+    {
+      "effect_type": "anti_purge",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "piercing",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "heal",
+      "value": 5000,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

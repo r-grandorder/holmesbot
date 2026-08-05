@@ -1,0 +1,22 @@
+{
+  "id": 1101000,
+  "servant_name": "Taira-no-Kagekiyo",
+  "class_name": "avenger",
+  "name": "Kagekiyo Never Dies",
+  "description": "Grants Buff Removal to enemy and Guts to next ally (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "buff_removal",
+      "value": 1.0,
+      "duration": 3,
+      "target": "enemy"
+    },
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    }
+  ]
+}

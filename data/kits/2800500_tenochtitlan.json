@@ -1,0 +1,22 @@
+{
+  "id": 2800500,
+  "servant_name": "Tenochtitlan",
+  "class_name": "pretender",
+  "name": "Xōchiyāōyōtl",
+  "description": "Grants Guts and Attack Up to next ally (on defeat)",
+  "trigger": "on_defeat",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "next_ally"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.4,
+      "duration": 1,
+      "target": "next_ally"
+    }
+  ]
+}

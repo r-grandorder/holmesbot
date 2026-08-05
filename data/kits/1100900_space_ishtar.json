@@ -1,0 +1,16 @@
+{
+  "id": 1100900,
+  "servant_name": "Space Ishtar",
+  "class_name": "avenger",
+  "name": "Devil's Sugar",
+  "description": "Grants Attack Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

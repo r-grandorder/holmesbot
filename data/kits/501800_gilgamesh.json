@@ -1,0 +1,22 @@
+{
+  "id": 501800,
+  "servant_name": "Gilgamesh",
+  "class_name": "caster",
+  "name": "King's Return",
+  "description": "Grants Attack Up and Healing Per Turn to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.08,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

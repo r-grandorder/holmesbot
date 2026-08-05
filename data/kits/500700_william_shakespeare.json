@@ -1,0 +1,22 @@
+{
+  "id": 500700,
+  "servant_name": "William Shakespeare",
+  "class_name": "caster",
+  "name": "Enchant",
+  "description": "Grants Evade to self and Attack Up to next ally (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 1.5,
+      "duration": 2,
+      "target": "next_ally"
+    }
+  ]
+}

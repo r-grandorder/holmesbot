@@ -1,0 +1,28 @@
+{
+  "id": 304800,
+  "servant_name": "Mélusine",
+  "class_name": "lancer",
+  "name": "Dragon Heart",
+  "description": "Grants Attack Up and Defense Down to self and Burn to all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.5,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "defense_down",
+      "value": 0.25,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "burn",
+      "value": 1500,
+      "duration": 1,
+      "target": "all_enemies"
+    }
+  ]
+}

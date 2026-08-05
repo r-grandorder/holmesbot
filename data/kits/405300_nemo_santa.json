@@ -1,0 +1,22 @@
+{
+  "id": 405300,
+  "servant_name": "Nemo (Santa)",
+  "class_name": "beast",
+  "name": "Holy Run, Nautilus",
+  "description": "",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "skill_seal",
+      "value": 1.0,
+      "duration": 1,
+      "target": "enemy"
+    },
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}
