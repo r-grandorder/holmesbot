@@ -741,6 +741,19 @@ class ContractsCog(commands.Cog):
             allowed_mentions=discord.AllowedMentions.none(),
         )
 
+    async def _duel_war_points(self, gid: int, winner, loser) -> str:
+        """During an active war, a cross-faction duel win scores for the winner's faction.
+        Returns a line for the result embed, or '' if it doesn't apply -- no war, someone isn't
+        in a faction, or both are on the same side (which would let a faction farm itself)."""
+        if not await self.bot.wars.active(gid):
+            return ""
+        wm = await self.bot.wars.member(gid, winner.id)
+        lm = await self.bot.wars.member(gid, loser.id)
+        if wm is None or lm is None or wm["slot"] == lm["slot"]:
+            return ""
+        await self.bot.wars.add_points(gid, winner.id, contract_game.WAR_DUEL_POINTS)
+        return f"\n+{contract_game.WAR_DUEL_POINTS} war points for **{wm['name']}**."
+
     async def _duel_result(self, gid: int, challenger, opponent):
         """Resolve a duel, award the daily-capped QP, and return the public result embed
         (or None if a servant vanished mid-resolve)."""
@@ -764,6 +777,7 @@ class ContractsCog(commands.Cog):
             await self.bot.contracts.bump_duel_reward(gid, winner.id)
             wins_today = count + 1
             reward_line = f"\n\n{winner.display_name} earns {qp(contract_game.DUEL_REWARD)}."
+            reward_line += await self._duel_war_points(gid, winner, loser)
         else:
             wins_today = count
             reward_line = f"\n\n{winner.display_name} won, but has no reward wins left today."

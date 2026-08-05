@@ -252,6 +252,7 @@ SWITCH_COOLDOWN = 30 * 60  # seconds between switches per user (also blocks duel
 
 # --- faction war ---
 WAR_REWARD = 5000         # base QP to each member of the winning faction when a season ends
+WAR_DUEL_POINTS = 3       # war points to the winner's faction for a cross-faction duel win
 WAR_UNDERDOG_CAP = 2.0    # max QP-reward multiplier for winning outnumbered (avg/size, clamped)
 WAR_WIN_TICKETS = 1       # Summon Tickets for an even/expected faction win
 WAR_UPSET_TICKETS = 4     # Summon Tickets for a maximum-upset win (scaled between the two)
