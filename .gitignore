@@ -38,3 +38,6 @@ custom-assets/*
 
 # editor swap files
 *.swp
+
+# generated kit-browser data (web/README.md)
+web/kits.json

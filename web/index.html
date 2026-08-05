@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Holmes Bot - Autobattle Kits</title>
+<style>
+  :root { --bg:#0e1117; --panel:#161b22; --line:#30363d; --text:#e6edf3; --dim:#8b949e; --acc:#5b8cff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.4 -apple-system,Segoe UI,Roboto,sans-serif; }
+  header { padding:20px 16px 8px; }
+  h1 { margin:0; font-size:20px; }
+  .sub { color:var(--dim); font-size:13px; margin-top:4px; }
+  .filters { position:sticky; top:0; background:var(--bg); padding:12px 16px; border-bottom:1px solid var(--line);
+             display:flex; flex-wrap:wrap; gap:8px; align-items:center; z-index:5; }
+  .filters input, .filters select { background:var(--panel); color:var(--text); border:1px solid var(--line);
+             border-radius:6px; padding:8px 10px; font-size:14px; }
+  .filters input { flex:1; min-width:180px; }
+  #count { color:var(--dim); font-size:13px; margin-left:auto; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; padding:16px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; display:flex; gap:12px; }
+  .card img { width:56px; height:56px; border-radius:8px; object-fit:cover; background:#222; flex:none; }
+  .card .body { min-width:0; flex:1; }
+  .name { font-weight:600; }
+  .meta { color:var(--dim); font-size:12px; margin:2px 0 8px; }
+  .skill { font-weight:600; color:var(--acc); }
+  .trig { color:var(--dim); font-size:12px; font-weight:400; }
+  .eff { font-size:13px; margin-top:4px; }
+  .eff .t { color:var(--dim); }
+  .stars { color:#e3b341; }
+  .empty { padding:40px 16px; color:var(--dim); text-align:center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Autobattle Kits</h1>
+  <div class="sub">Every servant's autobattle skill. Filter by class, trigger, or effect.</div>
+</header>
+<div class="filters">
+  <input id="q" type="search" placeholder="Search servant or skill...">
+  <select id="fClass"><option value="">All classes</option></select>
+  <select id="fTrigger"><option value="">All triggers</option></select>
+  <select id="fEffect"><option value="">All effects</option></select>
+  <span id="count"></span>
+</div>
+<div id="grid" class="grid"></div>
+<div id="empty" class="empty" hidden>No kits match those filters.</div>
+
+<script>
+const TARGET = {self:"self",party:"party",party_others:"allies",enemy:"front enemy",
+  all_enemies:"all enemies",random_ally:"random ally",random_enemy:"random enemy",next_ally:"next ally"};
+const TRIGGER = {on_enter:"On enter",battle_start:"Battle start",on_kill:"On kill",on_defeat:"On defeat"};
+
+const titleize = s => (s||"").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+const prettyClass = s => (s||"").replace(/([a-z])([A-Z])/g,"$1 $2").replace(/\b\w/g,c=>c.toUpperCase());
+
+function fmtEffect(e){
+  const pct = Math.round(e.value*100)+"%", T = e.type;
+  const tgt = TARGET[e.target]||e.target;
+  const dur = e.duration===-1 ? "perm" : e.duration+"t";
+  let label;
+  if (["attack_up","defense_up"].includes(T)) label = T.split("_")[0].toUpperCase()+" +"+pct;
+  else if (["attack_down","defense_down"].includes(T)) label = T.split("_")[0].toUpperCase()+" -"+pct;
+  else if (["curse","burn","poison"].includes(T)) label = titleize(T)+" "+Math.round(e.value);
+  else if (T==="heal") label = "Heal "+Math.round(e.value);
+  else if (T==="healing_per_turn") label = "Regen "+(e.value<=10?pct:Math.round(e.value));
+  else if (T==="max_hp_up") label = "Max HP +"+(e.value<=10?pct:Math.round(e.value));
+  else if (["stun","sleep","skill_seal"].includes(T)) label = titleize(T);
+  else if (T==="evade") label = "Evade";
+  else if (T==="piercing") label = "Pierce "+pct;
+  else if (T==="instant_kill") label = "Instant Kill "+pct;
+  else if (T==="heal_on_damage") label = "Drain "+pct;
+  else if (T==="guts") label = "Guts "+Math.round(e.value);
+  else label = titleize(T);
+  return `${label} <span class="t">(${tgt}, ${dur})</span>`;
+}
+
+let DATA = [];
+const $ = id => document.getElementById(id);
+
+function fillSelect(sel, values, labeler){
+  for (const v of [...new Set(values)].sort())
+    sel.insertAdjacentHTML("beforeend", `<option value="${v}">${labeler(v)}</option>`);
+}
+
+function render(){
+  const q = $("q").value.trim().toLowerCase();
+  const c = $("fClass").value, tr = $("fTrigger").value, ef = $("fEffect").value;
+  const rows = DATA.filter(r =>
+    (!c || r.className===c) &&
+    (!tr || r.trigger===tr) &&
+    (!ef || r.effects.some(e=>e.type===ef)) &&
+    (!q || r.name.toLowerCase().includes(q) || (r.skill||"").toLowerCase().includes(q))
+  );
+  $("count").textContent = `${rows.length} of ${DATA.length}`;
+  $("empty").hidden = rows.length > 0;
+  $("grid").innerHTML = rows.map(r => `
+    <div class="card">
+      ${r.face ? `<img loading="lazy" src="${r.face}" alt="">` : ``}
+      <div class="body">
+        <div class="name">${r.name} ${r.rarity ? `<span class="stars">${"★".repeat(r.rarity)}</span>` : ``}</div>
+        <div class="meta">${prettyClass(r.className)}</div>
+        <div><span class="skill">${r.skill||"?"}</span> <span class="trig">${TRIGGER[r.trigger]||r.trigger}</span></div>
+        ${r.effects.map(e=>`<div class="eff">${fmtEffect(e)}</div>`).join("")}
+      </div>
+    </div>`).join("");
+}
+
+fetch("./kits.json").then(r=>r.json()).then(data=>{
+  DATA = data;
+  fillSelect($("fClass"), data.map(r=>r.className).filter(Boolean), prettyClass);
+  fillSelect($("fTrigger"), data.map(r=>r.trigger).filter(Boolean), v=>TRIGGER[v]||v);
+  fillSelect($("fEffect"), data.flatMap(r=>r.effects.map(e=>e.type)), titleize);
+  ["q","fClass","fTrigger","fEffect"].forEach(id=>$(id).addEventListener("input", render));
+  render();
+}).catch(()=>{ $("empty").hidden=false; $("empty").textContent="Could not load kits.json (run scripts/build_site_data.py)."; });
+</script>
+</body>
+</html>
