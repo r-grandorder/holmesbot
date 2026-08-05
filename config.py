@@ -43,6 +43,8 @@ class Config:
     summon_ticket_wish_chance: float
     # How contract level-up pings behave: "off" | "milestones" (every Nth level + at cap) | "all".
     levelup_announce: str
+    # Autobattle is experimental; its cog (commands + team config) only loads when this is on.
+    autobattle_enabled: bool
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -85,6 +87,8 @@ class Config:
             shop_ticket_cost=int(os.environ.get("SHOP_TICKET_COST") or "100000"),
             summon_ticket_wish_chance=float(os.environ.get("SUMMON_TICKET_WISH_CHANCE") or "0.15"),
             levelup_announce=levelup_announce,
+            autobattle_enabled=(os.environ.get("AUTOBATTLE_ENABLED") or "").strip().lower()
+            in ("1", "true", "yes", "on", "enabled"),
         )
 
 

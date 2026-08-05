@@ -108,6 +108,10 @@ class HolmesBot(commands.Bot):
                 if self.config.contract_open
                 else f"{len(self.config.contract_whitelist)} user(s)",
             )
+        # Autobattle is experimental; its cog only loads when AUTOBATTLE_ENABLED is set.
+        if self.config.autobattle_enabled:
+            await self.load_extension("cogs.autobattle")
+            log.info("autobattle feature enabled")
 
         if self.config.guild_ids:
             # Register directly in our guild(s) for instant command updates. A guild the bot

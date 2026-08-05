@@ -270,6 +270,35 @@ class ContractService:
             user_id,
         )
 
+    async def battle_team(self, guild_id: int, user_id: int) -> "list[int]":
+        """The user's autobattle team as servant ids in slot order (front to back). Empty if unset."""
+        rows = await self.pool.fetch(
+            "SELECT servant_id FROM autobattle_team WHERE guild_id = $1 AND user_id = $2 "
+            "ORDER BY slot",
+            guild_id,
+            user_id,
+        )
+        return [r["servant_id"] for r in rows]
+
+    async def set_battle_team(self, guild_id: int, user_id: int, servant_ids: "list[int]") -> None:
+        """Replace the user's autobattle team with these 1-3 servant ids (front-to-back)."""
+        async with self.pool.acquire() as conn:
+            async with conn.transaction():
+                await conn.execute(
+                    "DELETE FROM autobattle_team WHERE guild_id = $1 AND user_id = $2",
+                    guild_id,
+                    user_id,
+                )
+                for slot, sid in enumerate(servant_ids[:3]):
+                    await conn.execute(
+                        "INSERT INTO autobattle_team (guild_id, user_id, slot, servant_id) "
+                        "VALUES ($1, $2, $3, $4)",
+                        guild_id,
+                        user_id,
+                        slot,
+                        sid,
+                    )
+
     async def duel_reward_count(self, guild_id: int, user_id: int) -> int:
         """Reward-earning duels the user has won today (drives the daily cap)."""
         val = await self.pool.fetchval(
