@@ -460,25 +460,25 @@ class Autobattle(commands.Cog):
         return "\n\n".join(blocks) or "(none)"
 
     @staticmethod
-    def _sprite_url(servant) -> "str | None":
-        """The battle sprite for the composite: the command-card art (the same asset the legacy
-        used) when we have it, else the battle figure (charaFigure), else the face. Custom units
-        only have a face. NOTE: command cards populate after a servant-data resync; until then this
-        falls back to the figure sprite (still a real sprite, not the face crop)."""
+    def _sprite_url(servant) -> "tuple[str | None, bool]":
+        """(url, is_face) for the composite: the command-card art (the same asset the legacy used)
+        when we have it, else the battle figure (charaFigure) -- both full-body, is_face=False --
+        else the face crop (is_face=True, so the composite shrinks it). Command cards populate after
+        a servant-data resync; the figure is the interim full-body sprite."""
         if servant is None:
-            return None
+            return None, False
         for asset in (getattr(servant, "commands", None), servant.figure):
             if asset:
-                return asset.get("1") or next(iter(asset.values()))
-        return servant.face
+                return (asset.get("1") or next(iter(asset.values()))), False
+        return servant.face, True
 
-    async def _sprites(self, session, servant_ids) -> "list[bytes]":
+    async def _sprites(self, session, servant_ids) -> "list[tuple[bytes, bool]]":
         out = []
         for sid in servant_ids:
-            url = self._sprite_url(self.bot.servants.get(sid))
+            url, is_face = self._sprite_url(self.bot.servants.get(sid))
             if url:
                 try:
-                    out.append(await images.fetch_bytes(session, url))
+                    out.append((await images.fetch_bytes(session, url), is_face))
                 except Exception:  # a sprite that won't fetch just drops from the composite
                     pass
         return out

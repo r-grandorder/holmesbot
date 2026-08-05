@@ -127,28 +127,32 @@ def duel_banner(left: bytes, right: bytes, *, side: int = 120, gap: int = 32, pa
     return _to_png(canvas)
 
 
-def battle_preview(bg: bytes, left_sprites: list[bytes], right_sprites: list[bytes]) -> bytes:
+def battle_preview(bg: bytes, left_sprites, right_sprites) -> bytes:
     """The /ab result image (ported from the legacy autochess preview): each team's servant
     sprites laid over the battle background -- the player team on the left (mirrored to face in),
-    the enemy team on the right. Each sprite is fit into a command-card-shaped box (tall + narrow)
-    preserving aspect, so tall command-card/figure sprites fill it while square face portraits
-    (custom units) get width-limited instead of ballooning wider than everyone else. All sprites
-    are bottom-aligned to a common ground line so shorter ones don't float."""
+    the enemy team on the right, bottom-aligned to a common ground line.
+
+    Each team is a list of (png_bytes, is_face) pairs. Regular sprites (command cards / figures)
+    scale to full sprite height; only `is_face` sprites -- the square custom-unit face portraits --
+    scale to a shorter height so they don't balloon wider than everyone else. Everything else keeps
+    the size it always had."""
     base = Image.open(io.BytesIO(bg)).convert("RGBA")
     bw, bh = base.size
-    max_h = max(1, int(bh * 0.30))
-    max_w = max(1, int(max_h * 0.62))  # command-card aspect; caps wide (square) faces
-    baseline = bh - int(bh * 0.05)  # shared ground line near the bottom
+    card_h = max(1, int(bh * 0.30))       # regular command-card / figure sprites (unchanged)
+    face_h = max(1, int(card_h * 0.6))    # square custom faces, shrunk so they don't dominate
+    baseline = bh - int(bh * 0.05)        # shared ground line near the bottom
 
-    def _place(sprites: list[bytes], x0: int, width: int, mirror: bool) -> None:
+    def _place(sprites, x0: int, width: int, mirror: bool) -> None:
         tiles = []
-        for sb in sprites:
+        for data, is_face in sprites:
             try:
-                img = Image.open(io.BytesIO(sb)).convert("RGBA")
+                img = Image.open(io.BytesIO(data)).convert("RGBA")
             except Exception:  # a bad/undecodable sprite just drops out
                 continue
-            scale = min(max_h / img.height, max_w / img.width, 1.0)  # fit in box, never upscale
-            img = img.resize((max(1, int(img.width * scale)), max(1, int(img.height * scale))), Image.LANCZOS)
+            target = face_h if is_face else card_h
+            if img.height > target:
+                scale = target / img.height
+                img = img.resize((max(1, int(img.width * scale)), target), Image.LANCZOS)
             if mirror:
                 img = img.transpose(Image.FLIP_LEFT_RIGHT)
             tiles.append(img)
