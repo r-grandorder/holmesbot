@@ -35,3 +35,6 @@ test_output/
 # Custom-servant art staged for S3 (S3 is the source of truth; only the README is committed)
 custom-assets/*
 !custom-assets/README.md
+
+# editor swap files
+*.swp
