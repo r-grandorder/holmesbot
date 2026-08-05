@@ -122,39 +122,6 @@ class ContractService:
                 )
                 return row["servant_id"], row["level"], new_level, cap
 
-    async def add_xp_to(
-        self, guild_id: int, user_id: int, servant_id: int, amount: int
-    ) -> "tuple[int, int, int] | None":
-        """Add xp to a specific contracted servant (not necessarily the active one) and roll it
-        into levels. Autobattle uses this to reward a whole team. Returns (old_level, new_level,
-        cap) or None if that servant isn't contracted by the user."""
-        async with self.pool.acquire() as conn:
-            async with conn.transaction():
-                row = await conn.fetchrow(
-                    "SELECT level, xp, grails_used FROM servant_contracts "
-                    "WHERE guild_id = $1 AND user_id = $2 AND servant_id = $3",
-                    guild_id,
-                    user_id,
-                    servant_id,
-                )
-                if row is None:
-                    return None
-                cap = contract_game.level_cap(row["grails_used"])
-                new_level, new_xp = contract_game.apply_xp(
-                    row["level"], row["xp"] + amount, cap
-                )
-                await conn.execute(
-                    "UPDATE servant_contracts SET level = $4, xp = $5, "
-                    "updated_at = CURRENT_TIMESTAMP "
-                    "WHERE guild_id = $1 AND user_id = $2 AND servant_id = $3",
-                    guild_id,
-                    user_id,
-                    servant_id,
-                    new_level,
-                    new_xp,
-                )
-                return row["level"], new_level, cap
-
     async def set_active_level(self, guild_id: int, user_id: int, level: int) -> None:
         """Mod override: set the active servant's level, resetting intra-level xp to 0. The
         caller validates `level` against the grail cap first."""

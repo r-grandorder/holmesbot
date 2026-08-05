@@ -1,46 +1,4 @@
 {
- "beginner_team_1": {
-  "name": "Fast Exp 1",
-  "difficulty": "beginner",
-  "description": "A team of low-level ember gathering servants",
-  "bg_image": "https://static.atlasacademy.io/NA/Back/back20803.png",
-  "servants": [
-   {
-    "servant_id": 100100,
-    "level": 10
-   },
-   {
-    "servant_id": 100200,
-    "level": 10
-   },
-   {
-    "servant_id": 100300,
-    "level": 10
-   }
-  ],
-  "xp_reward": 800
- },
- "beginner_team_2": {
-  "name": "Fast Exp 2",
-  "difficulty": "beginner",
-  "description": "Basic low-star servants at low levels",
-  "bg_image": "https://bunyan-bot.s3.us-east-1.amazonaws.com/assets/autobattle/stages/chaldea.png",
-  "servants": [
-   {
-    "servant_id": 101300,
-    "level": 15
-   },
-   {
-    "servant_id": 200100,
-    "level": 15
-   },
-   {
-    "servant_id": 300500,
-    "level": 15
-   }
-  ],
-  "xp_reward": 800
- },
  "lizzes": {
   "name": "Lizfest",
   "difficulty": "intermediate",
@@ -59,8 +17,7 @@
     "servant_id": 300500,
     "level": 80
    }
-  ],
-  "xp_reward": 2000
+  ]
  },
  "the_cus": {
   "name": "Cu Hell",
@@ -80,8 +37,7 @@
     "servant_id": 702000,
     "level": 60
    }
-  ],
-  "xp_reward": 2000
+  ]
  },
  "apotheosis": {
   "name": "Apotheosis in a Foreign Land",
@@ -101,8 +57,7 @@
     "servant_id": 2500900,
     "level": 90
    }
-  ],
-  "xp_reward": 2000
+  ]
  },
  "yorokobe": {
   "name": "Yorokobe",
@@ -122,8 +77,7 @@
     "servant_id": 200200,
     "level": 90
    }
-  ],
-  "xp_reward": 2000
+  ]
  },
  "celtic_training": {
   "name": "The Celts",
@@ -143,8 +97,7 @@
     "servant_id": 702000,
     "level": 90
    }
-  ],
-  "xp_reward": 4000
+  ]
  },
  "lilim_harlot": {
   "name": "Lilim Harlot",
@@ -164,8 +117,7 @@
     "servant_id": 3300100,
     "level": 90
    }
-  ],
-  "xp_reward": 4000
+  ]
  },
  "tailors": {
   "name": "Little Tailors",
@@ -185,8 +137,7 @@
     "servant_id": 704700,
     "level": 90
    }
-  ],
-  "xp_reward": 4000
+  ]
  },
  "mooncell": {
   "name": "Mooncell",
@@ -206,8 +157,7 @@
     "servant_id": 1000200,
     "level": 90
    }
-  ],
-  "xp_reward": 4000
+  ]
  },
  "mooncell2": {
   "name": "Mooncell 2",
@@ -227,7 +177,6 @@
     "servant_id": 2300200,
     "level": 90
    }
-  ],
-  "xp_reward": 4000
+  ]
  }
 }

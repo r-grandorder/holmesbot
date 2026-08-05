@@ -87,15 +87,15 @@ def class_advantage(attacker_class: str, defender_class: str) -> float:
     return 1.0 / reverse if reverse else 1.0
 
 
-# --- PvE stages (ported from the legacy autochess encounters; preconfigured enemy teams + an
-#     Atlas background + an XP reward, keyed by stage id and grouped by difficulty). Baked into
-#     the image from data/autobattle_encounters.json.
+# --- PvE stages (ported from the legacy autochess encounters; preconfigured enemy teams over an
+#     Atlas background, keyed by stage id and grouped by difficulty). Winning grants no reward for
+#     now (XP is chat-only) -- these are boss challenges. Lives in data/autobattle_encounters.json.
 _ENCOUNTERS_PATH = Path(__file__).parent / "autobattle_encounters.json"
 _encounters_cache: "dict | None" = None
 
 
 def load_encounters() -> dict:
-    """The PvE stage table: {stage_id: {name, difficulty, description, bg_image, servants, xp_reward}}."""
+    """The PvE stage table: {stage_id: {name, difficulty, description, bg_image, servants}}."""
     global _encounters_cache
     if _encounters_cache is None:
         try:

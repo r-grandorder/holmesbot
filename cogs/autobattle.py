@@ -3,7 +3,7 @@ ships dark.
 
 Everything lives under one /ab group:
   /ab team   -- set/view your 1-3 servant team + loadout
-  /ab fight  -- fight a preconfigured PvE stage (free); win to earn XP for the whole team
+  /ab fight  -- fight a preconfigured PvE boss stage with your team (free)
   /ab shop   -- spend QP on consumable battle items (the QP sink)
   /ab equip  -- equip/unequip an item to one of your team's servants
 
@@ -356,7 +356,7 @@ class Autobattle(commands.Cog):
             text = "..." + text[nl:] if nl != -1 else text
         return text
 
-    def _battle_embed(self, member, enc, state, xp_lines, item_lines) -> discord.Embed:
+    def _battle_embed(self, member, enc, state, item_lines) -> discord.Embed:
         won, draw = state["victory"], state.get("draw")
         color = (
             discord.Color.green() if won
@@ -373,13 +373,11 @@ class Autobattle(commands.Cog):
         if enc.get("bg_image"):
             embed.set_image(url=enc["bg_image"])
         embed.add_field(name="Result", value=outcome, inline=True)
-        if xp_lines:
-            embed.add_field(name="XP gained", value="\n".join(xp_lines), inline=False)
         if item_lines:
             embed.add_field(name="Items used", value="\n".join(item_lines), inline=False)
         return embed
 
-    @ab.command(name="fight", description="Fight a PvE stage with your team. Free -- win to earn XP.")
+    @ab.command(name="fight", description="Fight a preconfigured PvE boss stage with your team.")
     @app_commands.describe(stage="Which stage to fight (leave blank for a random one)")
     async def fight(self, interaction: discord.Interaction, stage: "str | None" = None) -> None:
         if not self._allowed(interaction.user.id):
@@ -431,24 +429,8 @@ class Autobattle(commands.Cog):
         engine.resolve(state)
         item_lines = await self._consume_items(gid, uid, player_team, initial)
 
-        xp_lines: list[str] = []
-        if state["victory"]:
-            xp = int(enc.get("xp_reward", 0))
-            for sid in team_ids:
-                res = await self.bot.contracts.add_xp_to(gid, uid, sid, xp)
-                if res is None:
-                    continue
-                old_lvl, new_lvl, cap = res
-                s = self.bot.servants.get(sid)
-                name = s.name if s else f"#{sid}"
-                if new_lvl > old_lvl:
-                    mark = " (cap)" if new_lvl >= cap else ""
-                    xp_lines.append(f"{name}: +{xp:,} XP -- Lv {old_lvl} -> {new_lvl}{mark}")
-                else:
-                    xp_lines.append(f"{name}: +{xp:,} XP")
-
         await interaction.followup.send(
-            embed=self._battle_embed(interaction.user, enc, state, xp_lines, item_lines)
+            embed=self._battle_embed(interaction.user, enc, state, item_lines)
         )
 
     async def _stage_autocomplete(self, interaction, current):
