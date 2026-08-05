@@ -1,0 +1,37 @@
+name: Deploy kit browser
+
+# Builds web/kits.json from the committed kit sources (Atlas faces pulled over stdlib urllib -- no
+# pip installs) and deploys web/ to Cloudflare Pages. Token-only auth: no GitHub App / OAuth link
+# between this repo and the Cloudflare account -- just the two encrypted secrets below.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/kits/**"
+      - "web/**"
+      - "scripts/build_site_data.py"
+      - ".github/workflows/deploy-site.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read  # least privilege: the job only reads the repo + deploys out to Cloudflare
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build kit data
+        run: python scripts/build_site_data.py
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy web --project-name=holmesbot-kits --branch=main

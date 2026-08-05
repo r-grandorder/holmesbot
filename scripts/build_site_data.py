@@ -8,20 +8,38 @@ deploy (see web/README.md). Works from the kit files alone if servant data isn't
 from __future__ import annotations
 
 import json
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 KITS_DIR = ROOT / "data" / "kits"
 OUT = ROOT / "web" / "kits.json"
+ATLAS_NA_BASIC = "https://api.atlasacademy.io/export/NA/basic_servant.json"
 
 
 def _servants() -> dict:
+    """id -> servant record (for name/class/rarity/face). Custom + NPC units come from the committed
+    hand-curated files; NA servants come from the generated servants.json when present, else the
+    Atlas basic-servant export fetched over stdlib urllib (so a Cloudflare Pages build needs only
+    Python -- no sync, no deps). Falls back to kit data alone if Atlas is unreachable."""
     idx: dict[int, dict] = {}
-    for fn in ("servants.json", "custom_servants.json", "npc_servants.json"):
+    for fn in ("custom_servants.json", "npc_servants.json"):
         p = ROOT / "data" / fn
         if p.exists():
             for s in json.loads(p.read_text(encoding="utf-8")):
                 idx[int(s["id"])] = s
+    na = ROOT / "data" / "servants.json"
+    if na.exists():
+        for s in json.loads(na.read_text(encoding="utf-8")):
+            idx[int(s["id"])] = s
+    else:
+        try:
+            with urllib.request.urlopen(ATLAS_NA_BASIC, timeout=30) as r:
+                for s in json.loads(r.read()):
+                    idx[int(s["id"])] = s
+            print("enriched NA faces/rarity from the Atlas basic export")
+        except Exception as e:  # site still builds from kit data alone
+            print(f"Atlas fetch failed ({e}); building without NA face art")
     return idx
 
 

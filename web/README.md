@@ -20,12 +20,21 @@ python -m http.server -d web 8000        # serve it (fetch() won't work from fil
 Run `scripts/sync_atlas.py` first if you want the servant face/rarity locally (otherwise the site
 still works from kit data alone -- names, class, skill, effects).
 
-## Cloudflare Pages (TODO -- set up 2026-08-06)
-Connect the repo and configure:
-- **Build command:** `python scripts/sync_atlas.py && python scripts/build_site_data.py`
-  (drop the `sync_atlas.py` half for a faster build with no face art)
-- **Build output directory:** `web`
-- **Framework preset:** None
+## Deploy (GitHub Action -> Cloudflare Pages)
+`.github/workflows/deploy-site.yml` builds `web/kits.json` and deploys `web/` on every push to
+main (kit/web/script changes) or via manual dispatch. It uses **token-only** auth -- no Cloudflare
+GitHub App / OAuth, so the Cloudflare account and this repo stay unlinked; the only bridge is one
+encrypted secret that reveals nothing about the account owner.
 
-The build regenerates `web/kits.json` on every deploy, so the site stays in sync with the kit
-files. No secrets or environment needed -- it only reads public Atlas data + the repo.
+One-time setup:
+1. **Create the Pages project** (must match `--project-name` in the workflow, `holmesbot-kits`):
+   `npx wrangler pages project create holmesbot-kits --production-branch main`
+   (or dashboard -> Workers & Pages -> Create -> Pages -> Direct Upload).
+2. **Create a scoped API token** (dashboard -> My Profile -> API Tokens -> Create): permission
+   **Account -> Cloudflare Pages -> Edit**, scoped to the one account. Copy your **Account ID**
+   (Workers & Pages overview, right sidebar).
+3. **Add repo secrets** (repo -> Settings -> Secrets and variables -> Actions):
+   `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+
+Keep the site on the `*.pages.dev` URL (no identity-tied custom domain). The build only reads
+public Atlas data + the repo -- no other secrets/env.
