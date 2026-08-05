@@ -11,8 +11,9 @@ Everything lives under one /ab group:
 Uses the contract feature's roster (servant_contracts) + QP (scores), so it shares the
 contract-access gate. PvE and PvP each pay a small, separately-capped QP reward (PvP also scores
 war points), but shop items are the real QP sink: every item is a per-battle consumable spent for
-each fight it's equipped for (win or lose, whether or not it triggered). If you own more it stays
-equipped (auto-re-equip), otherwise it auto-unequips. In PvP only the challenger's items are spent.
+each fight it's equipped for (win or lose, whether or not it triggered). Equips are a sticky
+loadout -- they stay set even at 0 stock and simply aren't fielded until you restock, so you never
+have to re-equip. In PvP only the challenger's items are spent.
 """
 from __future__ import annotations
 
@@ -215,7 +216,9 @@ class Autobattle(commands.Cog):
 
     # --- /ab team --------------------------------------------------------------------------------
 
-    def _team_embed(self, member, servant_ids, levels, equips) -> discord.Embed:
+    async def _team_embed(self, member, gid, uid, servant_ids, levels) -> discord.Embed:
+        equips = await self.bot.contracts.equips(gid, uid)
+        owned = {r["item_id"]: r["quantity"] for r in await self.bot.contracts.inventory(gid, uid)}
         lines = []
         for i, sid in enumerate(servant_ids, 1):
             s = self.bot.servants.get(sid)
@@ -224,8 +227,13 @@ class Autobattle(commands.Cog):
                 continue
             lvl = levels.get(sid, 1)
             atk, hp = autobattle.battle_stats(s, lvl)
-            tag = _item_tag(equips.get(sid))
-            eq = f" -- {tag}" if tag else ""
+            iid = equips.get(sid)
+            tag = _item_tag(iid)
+            if tag:
+                qty = owned.get(iid, 0)
+                eq = f" -- {tag} (x{qty})" if qty > 0 else f" -- {tag} (out of stock)"
+            else:
+                eq = ""
             lines.append(
                 f"**{i}.** {s.name} ({class_display(s.class_name) or '?'}) "
                 f"Lv {lvl} -- {atk:,} ATK / {hp:,} HP{eq}"
@@ -264,9 +272,8 @@ class Autobattle(commands.Cog):
                     "You have no autobattle team yet. Set one with /ab team first:<servant> (up to three).",
                     ephemeral=True,
                 )
-            equips = await self.bot.contracts.equips(gid, uid)
             return await interaction.response.send_message(
-                embed=self._team_embed(interaction.user, team, levels, equips), ephemeral=True
+                embed=await self._team_embed(interaction.user, gid, uid, team, levels), ephemeral=True
             )
 
         chosen: list[int] = []
@@ -280,10 +287,9 @@ class Autobattle(commands.Cog):
             if sid not in chosen:  # a servant can't hold two slots
                 chosen.append(sid)
         await self.bot.contracts.set_battle_team(gid, uid, chosen)
-        equips = await self.bot.contracts.equips(gid, uid)
         await interaction.response.send_message(
             content="Autobattle team saved.",
-            embed=self._team_embed(interaction.user, chosen, levels, equips),
+            embed=await self._team_embed(interaction.user, gid, uid, chosen, levels),
             ephemeral=True,
         )
 
@@ -493,17 +499,16 @@ class Autobattle(commands.Cog):
             return None
 
     async def _consume_items(self, gid, uid, player_team, initial) -> "list[str]":
-        """Every item equipped for the fight is spent afterward -- one copy each, win or lose,
-        whether or not it triggered. Auto-unequip when the last copy is gone. Returns display lines."""
+        """Spend one copy of each item that was equipped for the fight (win or lose, whether or not
+        it triggered). The equip is a STICKY loadout: it stays set even at 0 stock -- it just isn't
+        fielded until you restock (see _side) -- so players never have to re-equip. Display lines."""
         lines = []
         for c in player_team:
             was = initial.get(c["servant_id"])
             if not was:
                 continue
             remaining = await self.bot.contracts.add_item(gid, uid, was, -1)
-            if remaining <= 0:
-                await self.bot.contracts.unequip_item_everywhere(gid, uid, was)
-            tail = "out of stock" if remaining <= 0 else f"{remaining} left"
+            tail = "out of stock, restock to use" if remaining <= 0 else f"{remaining} left"
             lines.append(f"{_item_tag(was)} ({tail})")
         return lines
 

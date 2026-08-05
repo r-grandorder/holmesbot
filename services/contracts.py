@@ -382,16 +382,6 @@ class ContractService:
             servant_id,
         )
 
-    async def unequip_item_everywhere(self, guild_id: int, user_id: int, item_id: str) -> None:
-        """Drop this item from every servant it's equipped on (used when the last copy is spent)."""
-        await self.pool.execute(
-            "DELETE FROM autobattle_equip "
-            "WHERE guild_id = $1 AND user_id = $2 AND item_id = $3",
-            guild_id,
-            user_id,
-            item_id,
-        )
-
     async def duel_reward_count(self, guild_id: int, user_id: int) -> int:
         """Reward-earning duels the user has won today (drives the daily cap)."""
         val = await self.pool.fetchval(
