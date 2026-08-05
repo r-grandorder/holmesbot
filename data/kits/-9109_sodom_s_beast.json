@@ -2,7 +2,7 @@
   "id": -9109,
   "servant_name": "Sodom's Beast",
   "class_name": "beast",
-  "name": "Salt of the Earth",
+  "name": "Holy Grail Possession",
   "description": "Raises own Attack and Poisons all enemies (on enter)",
   "trigger": "on_enter",
   "effects": [
