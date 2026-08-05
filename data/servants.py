@@ -32,6 +32,10 @@ class Servant:
     cv: str | None = None    # seiyuu / voice actor (Atlas profile.cv)
     gender: str = ""         # Atlas gender (male/female/unknown); drives a guess hint
     attribute: str = ""      # Atlas attribute (sky/earth/human/star/beast); category filter
+    atk_base: int = 0        # Atlas base/max ATK + HP: the autobattle stat profile. Battle
+    atk_max: int = 0         # stats scale base->max by level and extrapolate past 120 (uncapped);
+    hp_base: int = 0         # 0 for custom/NPC units (autobattle uses a rarity fallback there).
+    hp_max: int = 0
     npc: bool = False        # hand-curated enemy/boss; art game only (npc_servants.json)
     jp: bool = False         # JP-only servant; included only via the *jp game commands
     aliases: tuple[str, ...] = ()  # extra accepted answers (NPCs + JP), normalized at match
@@ -172,6 +176,10 @@ class ServantIndex:
             cv=item.get("cv"),
             gender=item.get("gender", ""),
             attribute=item.get("attribute", ""),
+            atk_base=item.get("atk_base", 0),
+            atk_max=item.get("atk_max", 0),
+            hp_base=item.get("hp_base", 0),
+            hp_max=item.get("hp_max", 0),
             npc=npc or bool(item.get("npc")),
             jp=jp or bool(item.get("jp")),
             custom=custom or bool(item.get("custom")),
