@@ -47,39 +47,109 @@ def _item_tag(item_id: "str | None") -> str:
     return f"{it.get('emoji', '')} {it['name']}".strip()
 
 
-class _BuySelect(discord.ui.Select):
-    def __init__(self, cog: "Autobattle") -> None:
-        self.cog = cog
-        opts = [
-            discord.SelectOption(
-                label=it["name"][:100],
-                value=iid,
-                description=f"{int(it.get('price', 0)):,} QP"[:100],
-                emoji=it.get("emoji") or None,
-            )
-            for iid, it in sorted(items.all_items().items(), key=lambda kv: kv[1].get("price", 0))
-        ]
-        super().__init__(
-            placeholder="Buy an item (spends QP)...", min_values=1, max_values=1, options=opts[:25]
-        )
-
-    async def callback(self, interaction: discord.Interaction) -> None:
-        await self.cog._buy(interaction, self.values[0])
-
-
 class ShopView(discord.ui.View):
-    """Invoker-scoped buy dropdown for /ab shop (ephemeral)."""
+    """Paginated /ab shop (ephemeral, invoker-scoped), ported from the legacy layout: 5 items per
+    page as per-item Buy buttons with the item emote, prev/next nav, and a bulk `quantity` (buy N
+    per tap). The embed shows only the current page's items + your balance, so it stays compact."""
 
-    def __init__(self, cog: "Autobattle", user_id: int) -> None:
-        super().__init__(timeout=180)
-        self.user_id = user_id
-        self.add_item(_BuySelect(cog))
+    ITEMS_PER_PAGE = 5
+
+    def __init__(self, cog: "Autobattle", guild_id: int, user_id: int, quantity: int = 1) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.gid = guild_id
+        self.uid = user_id
+        self.quantity = max(1, quantity)
+        self.page = 0
+        self.items = sorted(items.all_items().items(), key=lambda kv: kv[1].get("price", 0))
+        self.pages = max(1, (len(self.items) + self.ITEMS_PER_PAGE - 1) // self.ITEMS_PER_PAGE)
+        self._build_buttons()
+
+    def _slice(self):
+        s = self.page * self.ITEMS_PER_PAGE
+        return self.items[s:s + self.ITEMS_PER_PAGE]
+
+    def _build_buttons(self) -> None:
+        self.clear_items()
+        prev = discord.ui.Button(
+            emoji="◀️", style=discord.ButtonStyle.secondary, row=0, disabled=self.page <= 0
+        )
+        prev.callback = self._prev
+        nxt = discord.ui.Button(
+            emoji="▶️", style=discord.ButtonStyle.secondary, row=0, disabled=self.page >= self.pages - 1
+        )
+        nxt.callback = self._next
+        self.add_item(prev)
+        self.add_item(nxt)
+        for i, (iid, it) in enumerate(self._slice()):
+            total = int(it.get("price", 0)) * self.quantity
+            qtxt = f"{self.quantity}x " if self.quantity > 1 else ""
+            b = discord.ui.Button(
+                label=f"Buy {qtxt}{it['name']} ({total:,} QP)"[:80],
+                emoji=it.get("emoji") or None,
+                style=discord.ButtonStyle.primary,
+                row=1 + i // 2,
+            )
+            b.callback = self._buy_cb(iid)
+            self.add_item(b)
+
+    async def render(self) -> discord.Embed:
+        bal = await self.cog.bot.scoring.get_balance(self.gid, self.uid)
+        owned = {r["item_id"]: r["quantity"] for r in await self.cog.bot.contracts.inventory(self.gid, self.uid)}
+        head = [f"Balance: {qp(bal)}"]
+        if self.quantity > 1:
+            head.append(f"**Bulk mode:** buying {self.quantity}x per tap")
+        embed = discord.Embed(
+            title="\N{CROSSED SWORDS} Autobattle Item Shop",
+            description="\n".join(head)
+            + "\n\nItems are spent each fight they're equipped for (in PvP, only the attacker's).",
+            color=discord.Color.gold(),
+        )
+        for iid, it in self._slice():
+            have = owned.get(iid, 0)
+            emoji = it.get("emoji") or "\N{PACKAGE}"
+            suffix = f"  \N{MIDDLE DOT}  owned: {have}" if have else ""
+            embed.add_field(
+                name=f"{emoji} {it['name']} - {int(it.get('price', 0)):,} QP{suffix}",
+                value=it.get("description", ""),
+                inline=False,
+            )
+        embed.set_footer(text=f"Page {self.page + 1}/{self.pages}")
+        return embed
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user.id != self.user_id:
+        if interaction.user.id != self.uid:
             await interaction.response.send_message("This shop isn't yours.", ephemeral=True)
             return False
         return True
+
+    async def _refresh(self, interaction: discord.Interaction) -> None:
+        self._build_buttons()
+        await interaction.response.edit_message(embed=await self.render(), view=self)
+
+    async def _prev(self, interaction: discord.Interaction) -> None:
+        self.page = max(0, self.page - 1)
+        await self._refresh(interaction)
+
+    async def _next(self, interaction: discord.Interaction) -> None:
+        self.page = min(self.pages - 1, self.page + 1)
+        await self._refresh(interaction)
+
+    def _buy_cb(self, item_id: str):
+        async def cb(interaction: discord.Interaction) -> None:
+            it = items.get_item(item_id)
+            total = int(it.get("price", 0)) * self.quantity
+            bal = await self.cog.bot.scoring.get_balance(self.gid, self.uid)
+            if bal < total:
+                return await interaction.response.send_message(
+                    f"You need {qp(total)} for {self.quantity}x {it['name']}; you have {qp(bal)}.",
+                    ephemeral=True,
+                )
+            await self.cog.bot.scoring.sub_qp(self.gid, self.uid, total)
+            await self.cog.bot.contracts.add_item(self.gid, self.uid, item_id, self.quantity)
+            await self._refresh(interaction)
+
+        return cb
 
 
 class LogPager(discord.ui.View):
@@ -243,50 +313,14 @@ class Autobattle(commands.Cog):
 
     # --- /ab shop --------------------------------------------------------------------------------
 
-    async def _shop_embed(self, gid, uid, note=None) -> discord.Embed:
-        bal = await self.bot.scoring.get_balance(gid, uid)
-        owned = {r["item_id"]: r["quantity"] for r in await self.bot.contracts.inventory(gid, uid)}
-        lines = []
-        for iid, it in sorted(items.all_items().items(), key=lambda kv: kv[1].get("price", 0)):
-            have = owned.get(iid, 0)
-            suffix = f"  (owned: {have})" if have else ""
-            emoji = it.get("emoji") or ""
-            lines.append(f"{emoji} **{it['name']}** -- {int(it.get('price', 0)):,} QP{suffix}")
-            lines.append(f"> {it.get('description', '')}")
-        embed = discord.Embed(
-            title="Autobattle Item Shop", description="\n".join(lines), color=discord.Color.gold()
-        )
-        embed.add_field(name="Your QP", value=qp(bal), inline=True)
-        if note:
-            embed.add_field(name="​", value=note, inline=False)
-        return embed
-
-    @ab.command(name="shop", description="Spend QP on consumable battle items.")
-    async def shop(self, interaction: discord.Interaction) -> None:
+    @ab.command(name="shop", description="Browse and buy consumable battle items with QP.")
+    @app_commands.describe(quantity="Buy this many of each item per tap (default 1)")
+    async def shop(self, interaction: discord.Interaction, quantity: "int | None" = 1) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
-        gid, uid = interaction.guild_id, interaction.user.id
-        await interaction.response.send_message(
-            embed=await self._shop_embed(gid, uid), view=ShopView(self, uid), ephemeral=True
-        )
-
-    async def _buy(self, interaction: discord.Interaction, item_id: str) -> None:
-        gid, uid = interaction.guild_id, interaction.user.id
-        it = items.get_item(item_id)
-        if not it:
-            return await interaction.response.send_message("Unknown item.", ephemeral=True)
-        price = int(it.get("price", 0))
-        bal = await self.bot.scoring.get_balance(gid, uid)
-        if bal < price:
-            return await interaction.response.send_message(
-                f"You need {qp(price)} for {it['name']}; you have {qp(bal)}.", ephemeral=True
-            )
-        await self.bot.scoring.sub_qp(gid, uid, price)
-        owned = await self.bot.contracts.add_item(gid, uid, item_id, 1)
-        note = f"Bought {_item_tag(item_id)} -- you own {owned} now. Equip it with /ab equip."
-        await interaction.response.edit_message(
-            embed=await self._shop_embed(gid, uid, note), view=ShopView(self, uid)
-        )
+        qty = max(1, min(int(quantity or 1), 99))
+        view = ShopView(self, interaction.guild_id, interaction.user.id, qty)
+        await interaction.response.send_message(embed=await view.render(), view=view, ephemeral=True)
 
     # --- /ab equip -------------------------------------------------------------------------------
 
