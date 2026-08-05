@@ -1,0 +1,22 @@
+{
+  "id": -9001,
+  "servant_name": "Gudako: Maximum Overdrive",
+  "class_name": "caster",
+  "name": "Command Spell: Overdrive",
+  "description": "Rallies the whole party's Attack and heals them each turn (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.25,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

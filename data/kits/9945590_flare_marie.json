@@ -1,0 +1,22 @@
+{
+  "id": 9945590,
+  "servant_name": "Flare Marie",
+  "class_name": "",
+  "name": "Solar Flare",
+  "description": "Raises own Attack and Burns all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.3,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "burn",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

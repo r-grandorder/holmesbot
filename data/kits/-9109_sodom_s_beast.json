@@ -1,0 +1,22 @@
+{
+  "id": -9109,
+  "servant_name": "Sodom's Beast",
+  "class_name": "beast",
+  "name": "Salt of the Earth",
+  "description": "Raises own Attack and Poisons all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.3,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "poison",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

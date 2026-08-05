@@ -1,0 +1,22 @@
+{
+  "id": -9108,
+  "servant_name": "ORT (Xibalba)",
+  "class_name": "foreigner",
+  "name": "Xibalba Bombardment",
+  "description": "Greatly raises own Attack and pierces the enemy back line (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.35,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "piercing",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

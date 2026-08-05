@@ -1,0 +1,22 @@
+{
+  "id": 9945600,
+  "servant_name": "Aqua Marie",
+  "class_name": "",
+  "name": "Deluge",
+  "description": "Heals the party each turn and raises party Defense (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "defense_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

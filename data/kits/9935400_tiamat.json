@@ -1,0 +1,22 @@
+{
+  "id": 9935400,
+  "servant_name": "Tiamat",
+  "class_name": "Beast",
+  "name": "Chaos Tide",
+  "description": "Vastly raises own Max HP and regenerates each turn (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "max_hp_up",
+      "value": 0.8,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": -1,
+      "target": "self"
+    }
+  ]
+}

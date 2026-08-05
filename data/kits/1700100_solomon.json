@@ -1,0 +1,22 @@
+{
+  "id": 1700100,
+  "servant_name": "Solomon",
+  "class_name": "Grand Caster",
+  "name": "Ars Nova",
+  "description": "Rallies the party's Attack and seals all enemies' skills (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "skill_seal",
+      "value": 1,
+      "duration": 1,
+      "target": "all_enemies"
+    }
+  ]
+}
