@@ -8,9 +8,9 @@ Everything lives under one /ab group:
   /ab equip  -- equip/unequip an item to one of your team's servants
 
 Uses the contract feature's roster (servant_contracts) + QP (scores), so it shares the
-contract-access gate. Battling is free; shop items are the only QP sink. Items are consumable: an
-on-enter buff is spent each battle, a conditional item only when it fires; if you own more it
-stays equipped (auto-re-equip), otherwise it auto-unequips.
+contract-access gate. Battling is free; shop items are the only QP sink. Every item is a
+per-battle consumable: one copy is spent for each fight it's equipped for (win or lose, whether
+or not it triggered). If you own more it stays equipped (auto-re-equip), otherwise it auto-unequips.
 """
 from __future__ import annotations
 
@@ -330,17 +330,18 @@ class Autobattle(commands.Cog):
         return team
 
     async def _consume_items(self, gid, uid, player_team, initial) -> "list[str]":
-        """Decrement inventory for items the engine used up (equipped -> None during the fight);
-        auto-unequip when the last copy is spent. Returns display lines."""
+        """Every item equipped for the fight is spent afterward -- one copy each, win or lose,
+        whether or not it triggered. Auto-unequip when the last copy is gone. Returns display lines."""
         lines = []
         for c in player_team:
             was = initial.get(c["servant_id"])
-            if was and c.get("equipped_item") is None:
-                remaining = await self.bot.contracts.add_item(gid, uid, was, -1)
-                if remaining <= 0:
-                    await self.bot.contracts.unequip_item_everywhere(gid, uid, was)
-                tail = "out of stock" if remaining <= 0 else f"{remaining} left"
-                lines.append(f"{_item_tag(was)} ({tail})")
+            if not was:
+                continue
+            remaining = await self.bot.contracts.add_item(gid, uid, was, -1)
+            if remaining <= 0:
+                await self.bot.contracts.unequip_item_everywhere(gid, uid, was)
+            tail = "out of stock" if remaining <= 0 else f"{remaining} left"
+            lines.append(f"{_item_tag(was)} ({tail})")
         return lines
 
     @staticmethod

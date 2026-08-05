@@ -2,7 +2,7 @@
 loads + serves the data; the engine applies an item's combat effects on its trigger
 (on_enter / on_hurt / on_debuff). Ported from the legacy autochess item system. Players buy items
 with QP (/ab shop) and equip them per servant (/ab equip); ownership + equips live in
-services/contracts.py, and the /ab fight flow consumes a copy when the engine uses one up.
+services/contracts.py, and the /ab fight flow spends one copy per fight an item is equipped for.
 """
 from __future__ import annotations
 

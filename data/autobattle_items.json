@@ -2,7 +2,7 @@
   "ampoule": {
     "name": "Ampoule",
     "description": "Increases ATK by 20% but decreases Max HP by 20%",
-    "price": 50000,
+    "price": 300,
     "trigger": "on_enter",
     "effects": [
       {
@@ -22,7 +22,7 @@
   "divine_wine": {
     "name": "Mysterious Divine Wine",
     "description": "Heals 10% of Max HP per turn",
-    "price": 50000,
+    "price": 400,
     "trigger": "on_enter",
     "effect": {
       "type": "HEAL_PER_TURN",
@@ -35,7 +35,7 @@
   "bronze_apple": {
     "name": "Bronze Apple",
     "description": "Heals 20% HP when taking damage if HP is below 50% (one-time use, doesn't trigger on lethal damage)",
-    "price": 10000,
+    "price": 400,
     "trigger": "on_hurt",
     "effect": {
       "type": "CONDITIONAL_HEAL",
@@ -49,7 +49,7 @@
   "small_bell": {
     "name": "Small Bell of Absolution",
     "description": "Wake from stun/sleep once when afflicted",
-    "price": 15000,
+    "price": 500,
     "trigger": "on_debuff",
     "effect": {
       "type": "CLEANSE_STUN_SLEEP",
@@ -62,7 +62,7 @@
   "fruit_of_eternity": {
     "name": "Fruit of Eternity",
     "description": "Revive with 1 HP when defeated (one-time, does not stack with existing guts)",
-    "price": 500000,
+    "price": 1200,
     "trigger": "on_enter",
     "effect": {
       "type": "GUTS",
@@ -75,7 +75,7 @@
   "black_grail": {
     "name": "Black Grail",
     "description": "Increases ATK by 50%, but take 5000 HP damage per turn (lasts indefinitely)",
-    "price": 1000000,
+    "price": 1500,
     "trigger": "on_enter",
     "effects": [
       {
@@ -95,7 +95,7 @@
   "hero_shield": {
     "name": "Hero's Shield",
     "description": "Increases DEF by 40% for 3 turns",
-    "price": 200000,
+    "price": 500,
     "trigger": "on_enter",
     "effect": {
       "type": "DEFENSE_UP",
@@ -108,7 +108,7 @@
   "eject_button": {
     "name": "Eject Button",
     "description": "Move to the back of the line when hit while in front position (one-time, doesn't trigger on DoT)",
-    "price": 1000000,
+    "price": 800,
     "trigger": "on_hurt",
     "effect": {
       "type": "ORDER_CHANGE_BACK",
@@ -122,7 +122,7 @@
   "poison_apple": {
     "name": "Poison Apple",
     "description": "Inflicts stun on this servant upon entering battle",
-    "price": 10000,
+    "price": 100,
     "trigger": "on_enter",
     "effect": {
       "type": "SELF_STUN",
@@ -135,7 +135,7 @@
   "thanatos_blade": {
     "name": "Thanatos Piercing Blade",
     "description": "Grants ability to pierce through Guts effects, preventing enemy revival (lasts 3 turns)",
-    "price": 1000000,
+    "price": 1200,
     "trigger": "on_enter",
     "effect": {
       "type": "GUTS_PIERCE",
@@ -148,7 +148,7 @@
   "sealbreaker_sigil": {
     "name": "Sealbreaker's Sigil",
     "description": "Negates one Skill Seal effect when it would be applied (one-time use)",
-    "price": 100000,
+    "price": 800,
     "trigger": "on_debuff",
     "effect": {
       "type": "CLEANSE_SKILL_SEAL",
@@ -161,7 +161,7 @@
   "tsukumo_mirror": {
     "name": "Tsukumo Mirror",
     "description": "Protects from buff removal effects once",
-    "price": 150000,
+    "price": 800,
     "trigger": "on_debuff",
     "effect": {
       "type": "CLEANSE_BUFF_REMOVAL",
