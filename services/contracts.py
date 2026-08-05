@@ -332,6 +332,99 @@ class ContractService:
                         sid,
                     )
 
+    # --- autobattle item inventory + equipment (the QP sink) ------------------------------------
+
+    async def inventory(self, guild_id: int, user_id: int) -> "list[Row]":
+        """Owned autobattle items (item_id, quantity), quantity > 0."""
+        return await self.pool.fetch(
+            "SELECT item_id, quantity FROM autobattle_inventory "
+            "WHERE guild_id = $1 AND user_id = $2 AND quantity > 0 ORDER BY item_id",
+            guild_id,
+            user_id,
+        )
+
+    async def item_qty(self, guild_id: int, user_id: int, item_id: str) -> int:
+        val = await self.pool.fetchval(
+            "SELECT quantity FROM autobattle_inventory "
+            "WHERE guild_id = $1 AND user_id = $2 AND item_id = $3",
+            guild_id,
+            user_id,
+            item_id,
+        )
+        return val or 0
+
+    async def add_item(self, guild_id: int, user_id: int, item_id: str, delta: int) -> int:
+        """Adjust an item's quantity by `delta` (buy = +1, consume = -1). Floors at 0 and deletes
+        the row when it hits 0. Returns the new quantity."""
+        async with self.pool.acquire() as conn:
+            async with conn.transaction():
+                cur = await conn.fetchval(
+                    "SELECT quantity FROM autobattle_inventory "
+                    "WHERE guild_id = $1 AND user_id = $2 AND item_id = $3",
+                    guild_id,
+                    user_id,
+                    item_id,
+                ) or 0
+                new_q = max(0, cur + delta)
+                if new_q == 0:
+                    await conn.execute(
+                        "DELETE FROM autobattle_inventory "
+                        "WHERE guild_id = $1 AND user_id = $2 AND item_id = $3",
+                        guild_id,
+                        user_id,
+                        item_id,
+                    )
+                else:
+                    await conn.execute(
+                        "INSERT INTO autobattle_inventory (guild_id, user_id, item_id, quantity) "
+                        "VALUES ($1, $2, $3, $4) "
+                        "ON CONFLICT (guild_id, user_id, item_id) DO UPDATE SET quantity = $4",
+                        guild_id,
+                        user_id,
+                        item_id,
+                        new_q,
+                    )
+                return new_q
+
+    async def equips(self, guild_id: int, user_id: int) -> "dict[int, str]":
+        """{servant_id: item_id} for every servant the user has an item equipped on."""
+        rows = await self.pool.fetch(
+            "SELECT servant_id, item_id FROM autobattle_equip WHERE guild_id = $1 AND user_id = $2",
+            guild_id,
+            user_id,
+        )
+        return {r["servant_id"]: r["item_id"] for r in rows}
+
+    async def equip(self, guild_id: int, user_id: int, servant_id: int, item_id: str) -> None:
+        await self.pool.execute(
+            "INSERT INTO autobattle_equip (guild_id, user_id, servant_id, item_id) "
+            "VALUES ($1, $2, $3, $4) "
+            "ON CONFLICT (guild_id, user_id, servant_id) DO UPDATE SET item_id = $4",
+            guild_id,
+            user_id,
+            servant_id,
+            item_id,
+        )
+
+    async def unequip(self, guild_id: int, user_id: int, servant_id: int) -> None:
+        await self.pool.execute(
+            "DELETE FROM autobattle_equip "
+            "WHERE guild_id = $1 AND user_id = $2 AND servant_id = $3",
+            guild_id,
+            user_id,
+            servant_id,
+        )
+
+    async def unequip_item_everywhere(self, guild_id: int, user_id: int, item_id: str) -> None:
+        """Drop this item from every servant it's equipped on (used when the last copy is spent)."""
+        await self.pool.execute(
+            "DELETE FROM autobattle_equip "
+            "WHERE guild_id = $1 AND user_id = $2 AND item_id = $3",
+            guild_id,
+            user_id,
+            item_id,
+        )
+
     async def duel_reward_count(self, guild_id: int, user_id: int) -> int:
         """Reward-earning duels the user has won today (drives the daily cap)."""
         val = await self.pool.fetchval(

@@ -1,8 +1,8 @@
 """Autobattle items: equippable gear loaded from data/autobattle_items.json. This module only
 loads + serves the data; the engine applies an item's combat effects on its trigger
-(on_enter / on_hurt / on_debuff). Ported from the legacy autochess item system. There's no
-acquire/equip layer yet -- servants carry equipped_item=None until that ships -- so items are
-inert in v1, but the mechanics are here so we don't have to bolt them on later.
+(on_enter / on_hurt / on_debuff). Ported from the legacy autochess item system. Players buy items
+with QP (/ab shop) and equip them per servant (/ab equip); ownership + equips live in
+services/contracts.py, and the /ab fight flow consumes a copy when the engine uses one up.
 """
 from __future__ import annotations
 
