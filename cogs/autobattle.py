@@ -16,6 +16,7 @@ equipped (auto-re-equip), otherwise it auto-unequips. In PvP only the challenger
 """
 from __future__ import annotations
 
+import io
 import random
 import time
 
@@ -28,6 +29,7 @@ from data import autobattle
 from data import autobattle_engine as engine
 from data import autobattle_items as items
 from data import contract_game as cg
+from data import images
 from data.servants import class_display
 
 _DENY = "The autobattle feature isn't open to you yet."
@@ -345,6 +347,51 @@ class Autobattle(commands.Cog):
         }
         return self._build_team([(sid, levels.get(sid, 1)) for sid in team_ids], equips)
 
+    @staticmethod
+    def _hp_bar(cur: int, mx: int, length: int = 10) -> str:
+        if mx <= 0:
+            return "\N{LIGHT SHADE}" * length
+        filled = max(0, min(length, round(length * max(0, cur) / mx)))
+        return "\N{DARK SHADE}" * filled + "\N{LIGHT SHADE}" * (length - filled)
+
+    def _team_hp(self, combatants) -> str:
+        """Post-battle HP bars for a team: one line per servant (class emoji + name + bar + HP)."""
+        lines = []
+        for c in combatants:
+            cur = max(0, c["current_hp"])
+            ko = " (KO)" if not c["alive"] else ""
+            lines.append(
+                f"{engine.format_name(c)} `{self._hp_bar(cur, c['max_hp'])}` "
+                f"{cur:,}/{c['max_hp']:,}{ko}"
+            )
+        return "\n".join(lines) or "(none)"
+
+    async def _faces(self, session, servant_ids) -> "list[bytes]":
+        out = []
+        for sid in servant_ids:
+            s = self.bot.servants.get(sid)
+            if s and s.face:
+                try:
+                    out.append(await images.fetch_bytes(session, s.face))
+                except Exception:  # a face that won't fetch just drops from the composite
+                    pass
+        return out
+
+    async def _battle_image(self, bg_url, left_ids, right_ids) -> "discord.File | None":
+        """Composite both teams' faces over the battle background -> a discord.File (battle.png),
+        or None on any fetch/decode failure (the image is cosmetic; the caller falls back)."""
+        session = self.bot.http_session
+        if not session or not bg_url:
+            return None
+        try:
+            bg = await images.fetch_bytes(session, bg_url)
+            png = images.battle_preview(
+                bg, await self._faces(session, left_ids), await self._faces(session, right_ids)
+            )
+            return discord.File(io.BytesIO(png), filename="battle.png")
+        except Exception:
+            return None
+
     async def _consume_items(self, gid, uid, player_team, initial) -> "list[str]":
         """Every item equipped for the fight is spent afterward -- one copy each, win or lose,
         whether or not it triggered. Auto-unequip when the last copy is gone. Returns display lines."""
@@ -372,7 +419,7 @@ class Autobattle(commands.Cog):
             text = "..." + text[nl:] if nl != -1 else text
         return text
 
-    def _battle_embed(self, member, enc, state, item_lines, reward_line=None) -> discord.Embed:
+    def _battle_embed(self, member, enc, state, item_lines, reward_line=None, has_image=False) -> discord.Embed:
         won, draw = state["victory"], state.get("draw")
         color = (
             discord.Color.green() if won
@@ -382,12 +429,16 @@ class Autobattle(commands.Cog):
         outcome = "Victory!" if won else "Draw" if draw else "Defeat"
         embed = discord.Embed(
             title=f"{enc.get('difficulty', '?').title()}: {enc.get('name', 'Stage')}",
-            description=f"```\n{self._trim_log(state['battle_log'])}\n```",
+            description=self._trim_log(state["battle_log"]),  # plain text so emojis + bold render
             color=color,
         )
         embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
-        if enc.get("bg_image"):
+        if has_image:
+            embed.set_image(url="attachment://battle.png")
+        elif enc.get("bg_image"):
             embed.set_image(url=enc["bg_image"])
+        embed.add_field(name="Your team", value=self._team_hp(state["player_servants"]), inline=False)
+        embed.add_field(name="Enemy", value=self._team_hp(state["enemy_servants"]), inline=False)
         embed.add_field(name="Result", value=outcome, inline=True)
         if reward_line:
             embed.add_field(name="Reward", value=reward_line, inline=True)
@@ -452,9 +503,12 @@ class Autobattle(commands.Cog):
                 else:
                     reward_line = f"Daily PvE cap reached ({cg.AB_PVE_DAILY_CAP})"
 
-        await interaction.followup.send(
-            embed=self._battle_embed(interaction.user, enc, state, item_lines, reward_line)
+        enemy_ids = [m["servant_id"] for m in enc.get("servants", [])]
+        battle_file = await self._battle_image(enc.get("bg_image"), team_ids, enemy_ids)
+        embed = self._battle_embed(
+            interaction.user, enc, state, item_lines, reward_line, has_image=battle_file is not None
         )
+        await interaction.followup.send(embed=embed, file=battle_file or discord.utils.MISSING)
 
     async def _stage_autocomplete(self, interaction, current):
         q = current.strip().lower()
@@ -491,7 +545,9 @@ class Autobattle(commands.Cog):
         await self.bot.wars.add_points(gid, winner.id, cg.AB_PVP_WAR_POINTS)
         return f"\n+{cg.AB_PVP_WAR_POINTS} war points for **{wm['name']}**."
 
-    def _pvp_embed(self, challenger, opponent, state, winner, item_lines, reward_line) -> discord.Embed:
+    def _pvp_embed(
+        self, challenger, opponent, state, winner, item_lines, reward_line, bg_url=None, has_image=False
+    ) -> discord.Embed:
         draw = state.get("draw")
         color = (
             discord.Color.light_grey() if draw
@@ -501,12 +557,15 @@ class Autobattle(commands.Cog):
         outcome = "Draw." if draw else f"{winner.display_name} wins!"
         embed = discord.Embed(
             title=f"{challenger.display_name} vs {opponent.display_name}",
-            description=f"```\n{self._trim_log(state['battle_log'])}\n```",
+            description=self._trim_log(state["battle_log"]),  # plain text so emojis + bold render
             color=color,
         )
-        bgs = autobattle.pvp_backgrounds()
-        if bgs:
-            embed.set_image(url=random.choice(bgs).get("bg_image", ""))
+        if has_image:
+            embed.set_image(url="attachment://battle.png")
+        elif bg_url:
+            embed.set_image(url=bg_url)
+        embed.add_field(name=challenger.display_name, value=self._team_hp(state["player_servants"]), inline=False)
+        embed.add_field(name=opponent.display_name, value=self._team_hp(state["enemy_servants"]), inline=False)
         embed.add_field(name="Result", value=outcome, inline=True)
         if reward_line:
             embed.add_field(name="Reward", value=reward_line, inline=False)
@@ -586,8 +645,16 @@ class Autobattle(commands.Cog):
             else:
                 reward_line = f"{winner.display_name} hit the daily PvP cap ({cg.AB_PVP_DAILY_CAP}) -- no reward."
 
+        bgs = autobattle.pvp_backgrounds()
+        bg_url = random.choice(bgs).get("bg_image") if bgs else None
+        battle_file = await self._battle_image(bg_url, my_team, opp_team)
+        embed = self._pvp_embed(
+            interaction.user, opponent, state, winner, item_lines, reward_line,
+            bg_url=bg_url, has_image=battle_file is not None,
+        )
         await interaction.followup.send(
-            embed=self._pvp_embed(interaction.user, opponent, state, winner, item_lines, reward_line),
+            embed=embed,
+            file=battle_file or discord.utils.MISSING,
             allowed_mentions=discord.AllowedMentions.none(),
         )
 

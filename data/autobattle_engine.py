@@ -29,8 +29,23 @@ from data.autobattle_items import get_item
 BATTLE_START, ON_ENTER, ON_DEFEAT, ON_KILL = "battle_start", "on_enter", "on_defeat", "on_kill"
 
 
+# Class icons for the battle log. Unicode placeholders that render anywhere; swap the values for
+# the r/grandorder server's custom class emoji (<:saber:id>, ...) when we have the ids.
+CLASS_EMOJI = {
+    "saber": "⚔️", "archer": "🏹", "lancer": "🔱", "rider": "🐎",
+    "caster": "🎩", "assassin": "🗡️", "berserker": "🪓", "ruler": "⚖️",
+    "avenger": "🩸", "alterego": "🎭", "mooncancer": "🌙", "foreigner": "👁️",
+    "pretender": "🃏", "beast": "👹", "shielder": "🛡️",
+}
+
+
+def class_emoji(class_name: str) -> str:
+    return CLASS_EMOJI.get((class_name or "").lower(), "")
+
+
 def format_name(s: dict) -> str:
-    return s["name"]
+    emoji = class_emoji(s.get("className", ""))
+    return f"{emoji} {s['name']}".strip() if emoji else s["name"]
 
 
 def _skill_has_effect(skill, effect_type: str) -> bool:

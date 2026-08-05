@@ -125,3 +125,35 @@ def duel_banner(left: bytes, right: bytes, *, side: int = 120, gap: int = 32, pa
     canvas.alpha_composite(a, (pad, pad))
     canvas.alpha_composite(b, (pad + side + gap, pad))
     return _to_png(canvas)
+
+
+def battle_preview(bg: bytes, left_faces: list[bytes], right_faces: list[bytes]) -> bytes:
+    """The /ab result image: both teams' face portraits laid over a battle background, the left
+    team along the left edge and the right team along the right, each a bottom-anchored row.
+    Faces scale to the background so up to three per side fit in each half."""
+    base = Image.open(io.BytesIO(bg)).convert("RGBA")
+    bw, bh = base.size
+    side = max(48, min(int(bh * 0.34), int(bw * 0.15)))
+    gap = max(4, int(side * 0.1))
+    y = bh - side - int(bh * 0.06)  # bottom-anchored, small margin
+
+    def _row(faces: list[bytes], center_x: int) -> None:
+        tiles = []
+        for fb in faces:
+            try:
+                tiles.append(
+                    Image.open(io.BytesIO(fb)).convert("RGBA").resize((side, side), Image.LANCZOS)
+                )
+            except Exception:  # a bad/undecodable face just drops out of the row
+                continue
+        if not tiles:
+            return
+        row_w = len(tiles) * side + (len(tiles) - 1) * gap
+        x = center_x - row_w // 2
+        for tile in tiles:
+            base.alpha_composite(tile, (max(0, x), max(0, y)))
+            x += side + gap
+
+    _row(left_faces, bw // 4)
+    _row(right_faces, bw * 3 // 4)
+    return _to_png(base.convert("RGB"))
