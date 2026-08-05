@@ -1,0 +1,22 @@
+{
+  "id": 2301000,
+  "servant_name": "Tenochtitlan (Moon Cancer)",
+  "class_name": "moonCancer",
+  "name": "Blazing Sun Stone",
+  "description": "Raises own Attack and lowers all enemies' Defense (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.25,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "defense_down",
+      "value": 0.2,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

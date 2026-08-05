@@ -1,0 +1,22 @@
+{
+  "id": -701600,
+  "servant_name": "Tamamo Cat (Idol)",
+  "class_name": "berserker",
+  "name": "Monstrous Strength",
+  "description": "Grants Stun and Attack Up to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "stun",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.33,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

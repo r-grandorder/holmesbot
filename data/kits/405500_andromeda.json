@@ -1,0 +1,22 @@
+{
+  "id": 405500,
+  "servant_name": "Andromeda",
+  "class_name": "rider",
+  "name": "Chains of the Doomed Princess",
+  "description": "Grants Defense Up to the party and Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "defense_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

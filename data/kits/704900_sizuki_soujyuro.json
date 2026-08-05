@@ -1,0 +1,16 @@
+{
+  "id": 704900,
+  "servant_name": "Sizuki Soujyuro",
+  "class_name": "berserker",
+  "name": "Mystic Eyes of Death Perception",
+  "description": "Greatly raises own Attack (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.35,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

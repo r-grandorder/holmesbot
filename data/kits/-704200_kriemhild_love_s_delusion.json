@@ -1,0 +1,22 @@
+{
+  "id": -704200,
+  "servant_name": "Kriemhild (Love's Delusion)",
+  "class_name": "berserker",
+  "name": "Revenge Plot (Amok)",
+  "description": "Grants Attack Up to self and Buff Removal to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "buff_removal",
+      "value": 1.0,
+      "duration": 1,
+      "target": "enemy"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": -9105,
+  "servant_name": "Helena Blavatsky (Christmas)",
+  "class_name": "rider",
+  "name": "Mahatma",
+  "description": "Grants Attack Up to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

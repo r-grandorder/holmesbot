@@ -1,0 +1,22 @@
+{
+  "id": 605000,
+  "servant_name": "Hassan of the Shining Star",
+  "class_name": "assassin",
+  "name": "Zabaniya: Delusional Heartbeat",
+  "description": "Gains Instant Kill and raises own Attack (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "instant_kill",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": -9110,
+  "servant_name": "Suzuka Gozen (Santa)",
+  "class_name": "lancer",
+  "name": "Mystic Eyes",
+  "description": "Grants Stun to enemy (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "stun",
+      "value": 1,
+      "duration": 1,
+      "target": "enemy"
+    }
+  ]
+}

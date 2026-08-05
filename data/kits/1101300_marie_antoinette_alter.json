@@ -1,0 +1,22 @@
+{
+  "id": 1101300,
+  "servant_name": "Marie Antoinette (Alter)",
+  "class_name": "avenger",
+  "name": "Crimson Guillotine",
+  "description": "Raises own Attack and Burns all enemies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.25,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "burn",
+      "value": 500,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

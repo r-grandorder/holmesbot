@@ -1,0 +1,22 @@
+{
+  "id": 1101900,
+  "servant_name": "Xu Fu (Avenger)",
+  "class_name": "avenger",
+  "name": "Elixir of Immortality",
+  "description": "Heals the party each turn and raises party Attack (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

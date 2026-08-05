@@ -1,0 +1,22 @@
+{
+  "id": 1101700,
+  "servant_name": "Monte Cristo",
+  "class_name": "avenger",
+  "name": "The Count's Vengeance",
+  "description": "Greatly raises own Attack and gains Piercing (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.35,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "piercing",
+      "value": 0.1,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

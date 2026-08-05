@@ -1,0 +1,22 @@
+{
+  "id": -401300,
+  "servant_name": "Queen Medb (Idol)",
+  "class_name": "rider",
+  "name": "Golden Rule (Body)",
+  "description": "Grants Defense Up and Healing Per Turn to all allies (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "defense_up",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 0.1,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}

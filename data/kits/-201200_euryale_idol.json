@@ -1,0 +1,22 @@
+{
+  "id": -201200,
+  "servant_name": "Euryale (Idol)",
+  "class_name": "archer",
+  "name": "Siren Song",
+  "description": "Grants Stun to enemy and Heal to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "stun",
+      "value": 1,
+      "duration": 1,
+      "target": "enemy"
+    },
+    {
+      "effect_type": "heal",
+      "value": 300,
+      "duration": 1,
+      "target": "self"
+    }
+  ]
+}

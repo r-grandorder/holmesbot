@@ -1,0 +1,22 @@
+{
+  "id": -101800,
+  "servant_name": "Altera (Idol)",
+  "class_name": "saber",
+  "name": "Scourge of God",
+  "description": "Grants Attack Up and Ignore Evade to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "attack_up",
+      "value": 0.2,
+      "duration": 2,
+      "target": "self"
+    },
+    {
+      "effect_type": "ignore_evade",
+      "value": 1.0,
+      "duration": 3,
+      "target": "self"
+    }
+  ]
+}

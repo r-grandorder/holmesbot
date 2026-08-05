@@ -1,0 +1,22 @@
+{
+  "id": 2300600,
+  "servant_name": "BB Dubai",
+  "class_name": "moonCancer",
+  "name": "C.C.C. - Domination",
+  "description": "Seals all enemies' skills and lowers their Attack (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "skill_seal",
+      "value": 1,
+      "duration": 1,
+      "target": "all_enemies"
+    },
+    {
+      "effect_type": "attack_down",
+      "value": 0.2,
+      "duration": 3,
+      "target": "all_enemies"
+    }
+  ]
+}

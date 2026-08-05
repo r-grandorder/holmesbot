@@ -1,0 +1,28 @@
+{
+  "id": -501200,
+  "servant_name": "Nitocris (Idol)",
+  "class_name": "caster",
+  "name": "Affection of the Sky God",
+  "description": "Grants Guts and Instant Kill to self (on enter)",
+  "trigger": "on_enter",
+  "effects": [
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "instant_kill",
+      "value": 0.25,
+      "duration": 3,
+      "target": "self"
+    },
+    {
+      "effect_type": "instant_kill",
+      "value": 0.15,
+      "duration": 3,
+      "target": "party"
+    }
+  ]
+}
