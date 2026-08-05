@@ -85,7 +85,7 @@ class ShopView(discord.ui.View):
             total = int(it.get("price", 0)) * self.quantity
             qtxt = f"{self.quantity}x " if self.quantity > 1 else ""
             b = discord.ui.Button(
-                label=f"Buy {qtxt}{it['name']} ({total:,} QP)"[:80],
+                label=f"{qtxt}{it['name']} ({total:,} QP)"[:80],
                 emoji=it.get("emoji") or None,
                 style=discord.ButtonStyle.primary,
                 row=1 + i // 2,
