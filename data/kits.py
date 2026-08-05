@@ -136,3 +136,7 @@ class KitIndex:
 
     def get(self, servant_id: int) -> "Skill | None":
         return self._by_id.get(servant_id)
+
+    def items(self) -> "list[tuple[int, Skill]]":
+        """(servant_id, Skill) for every kitted servant -- used by the /ab kit lookup."""
+        return list(self._by_id.items())

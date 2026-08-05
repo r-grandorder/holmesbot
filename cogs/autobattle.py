@@ -7,6 +7,7 @@ Everything lives under one /ab group:
   /ab duel   -- battle another player's team (PvP); cross-faction wins score war points, own cap
   /ab shop   -- spend QP on consumable battle items (the QP sink)
   /ab equip  -- equip/unequip an item to one of your team's servants
+  /ab kit    -- look up any servant's kit (skill + effects)
 
 Uses the contract feature's roster (servant_contracts) + QP (scores), so it shares the
 contract-access gate. PvE and PvP each pay a small, separately-capped QP reward (PvP also scores
@@ -401,6 +402,69 @@ class Autobattle(commands.Cog):
             out.append(
                 app_commands.Choice(name=f"{it['name']} (x{r['quantity']})"[:100], value=r["item_id"])
             )
+            if len(out) >= 25:
+                break
+        return out
+
+    # --- /ab kit (lookup) ------------------------------------------------------------------------
+
+    _TARGET_WORD = {
+        "self": "self", "party": "whole party", "party_others": "other allies",
+        "enemy": "front enemy", "all_enemies": "all enemies", "random_ally": "a random ally",
+        "random_enemy": "a random enemy", "next_ally": "next ally",
+    }
+    _TRIGGER_WORD = {
+        "on_enter": "On enter", "battle_start": "Battle start",
+        "on_kill": "On kill", "on_defeat": "On defeat",
+    }
+
+    def _kit_embed(self, servant, skill) -> discord.Embed:
+        name = servant.name if servant else skill.servant_name
+        cls = class_display(servant.class_name) if servant else class_display(skill.class_name)
+        emoji = engine.class_emoji(servant.class_name if servant else skill.class_name)
+        trigger = self._TRIGGER_WORD.get(skill.trigger, skill.trigger)
+        lines = [
+            f"{engine.format_effect_description(e.effect_type, e.value, e.duration)} "
+            f"-> {self._TARGET_WORD.get(e.target, e.target)}"
+            for e in skill.effects
+        ]
+        embed = discord.Embed(
+            title=f"{emoji} {name}".strip(),
+            description=f"**{skill.name}**  ({trigger})\n\n" + "\n".join(lines),
+            color=discord.Color.blurple(),
+        )
+        if cls:
+            embed.set_footer(text=cls)
+        if servant and servant.face:
+            embed.set_thumbnail(url=servant.face)
+        return embed
+
+    @ab.command(name="kit", description="Look up a servant's autobattle kit (skill + effects).")
+    @app_commands.describe(servant="The servant whose kit to view")
+    async def kit(self, interaction: discord.Interaction, servant: int) -> None:
+        if not self._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        skill = self.bot.kits.get(servant) if self.bot.kits else None
+        s = self.bot.servants.get(servant)
+        if skill is None:
+            nm = s.name if s else f"#{servant}"
+            return await interaction.response.send_message(
+                f"{nm} has no autobattle kit yet -- fights with basic attacks.", ephemeral=True
+            )
+        await interaction.response.send_message(embed=self._kit_embed(s, skill), ephemeral=True)
+
+    @kit.autocomplete("servant")
+    async def _ac_kit(self, interaction, current):
+        q = current.strip().lower()
+        if not self.bot.kits:
+            return []
+        out: list[app_commands.Choice[int]] = []
+        for sid, sk in self.bot.kits.items():
+            s = self.bot.servants.get(sid)
+            name = s.name if s else sk.servant_name
+            if q and q not in name.lower():
+                continue
+            out.append(app_commands.Choice(name=name[:100], value=sid))
             if len(out) >= 25:
                 break
         return out
