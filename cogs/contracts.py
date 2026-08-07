@@ -58,11 +58,16 @@ _EVENTS = [
     ("qp_reward", "QP reward (a chatter finds QP)"),
     ("grail_single", "Single grail (Draco)"),
     ("grail_box", "Grail present box (Gilgamesh)"),
+    ("ember", "Embers of Wisdom (Chaldea staff)"),
 ]
 _EVENT_CHOICES = [app_commands.Choice(name=lbl, value=val) for val, lbl in _EVENTS]
 _EVENT_LABEL = {val: lbl for val, lbl in _EVENTS}
 # Claim-style spawns take just a channel; qp_reward is an auto-award, dispatched separately.
-_EVENT_SPAWN = {"grail_single": "_spawn_single", "grail_box": "_spawn_box"}
+_EVENT_SPAWN = {
+    "grail_single": "_spawn_single",
+    "grail_box": "_spawn_box",
+    "ember": "_spawn_ember",
+}
 
 
 def _stars(rarity: int) -> str:
