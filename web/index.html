@@ -69,7 +69,7 @@ function fmtEffect(e){
   else if (T==="evade") label = "Evade";
   else if (T==="piercing") label = "Pierce "+pct;
   else if (T==="instant_kill") label = "Instant Kill "+pct;
-  else if (T==="heal_on_damage") label = "Drain "+pct;
+  else if (T==="heal_on_damage") label = "Drain "+Math.round(e.value);
   else if (T==="guts") label = "Guts "+Math.round(e.value);
   else label = titleize(T);
   return `${label} <span class="t">(${tgt}, ${dur})</span>`;

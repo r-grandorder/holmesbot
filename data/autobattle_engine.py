@@ -108,7 +108,7 @@ def format_effect_description(effect_type: str, value: float, duration: int) -> 
         if value == 1:
             return f"{emoji} moves to front"
         return f"{emoji} swaps position"
-    elif effect_type in ("heal", "max_hp_up", "healing_per_turn"):
+    elif effect_type in ("heal", "max_hp_up", "healing_per_turn", "heal_on_damage"):
         value_str = f"{int(value)} HP"
     elif effect_type == "guts":
         value_str = f"{int(value)} lives"
