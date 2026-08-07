@@ -76,6 +76,32 @@ def _stars(rarity: int) -> str:
     return f"{rarity}\N{BLACK STAR}"
 
 
+def _xp_emote(config, kind: str) -> str:
+    """The configured custom emote for an XP item ('embers'|'hellfire'), or '' if unset."""
+    return config.ember_emote if kind == "embers" else config.hellfire_emote
+
+
+def _xp_label(config, kind: str, *, plural: bool = False) -> str:
+    """The item name prefixed with its custom emote, e.g. '<:ember:...> Ember of Wisdom'
+    (just the name when the emote is unset)."""
+    base = "Ember" if kind == "embers" else "Hellfire"
+    name = f"{base}s of Wisdom" if plural else f"{base} of Wisdom"
+    e = _xp_emote(config, kind)
+    return f"{e} {name}".strip() if e else name
+
+
+def _apply_ember_emoji(view: "discord.ui.View", config) -> None:
+    """Swap a claim/open view's button(s) to the configured custom ember emote (no-op if unset,
+    leaving the built-in flame). Called from a view's __init__ after super().__init__()."""
+    e = config.ember_emote
+    if not e:
+        return
+    emoji = discord.PartialEmoji.from_str(e)
+    for child in view.children:
+        if isinstance(child, discord.ui.Button):
+            child.emoji = emoji
+
+
 def _flavor(line: str | None, limit: int = 140) -> str | None:
     """A summon voice line trimmed for a short flavor blurb: whitespace collapsed, then cut at
     the last sentence break within `limit` (a clean full sentence), falling back to a word
@@ -469,10 +495,12 @@ class ContractsCog(commands.Cog):
         embed = discord.Embed(title="Your Items", color=discord.Color.blurple())
         embed.add_field(name="QP", value=qp(bal))
         te = self.bot.config.summon_ticket_emote
+        ee = self.bot.config.ember_emote
+        he = self.bot.config.hellfire_emote
         embed.add_field(name="Holy Grails", value=f"{grails:,} {ge}".strip() if ge else str(grails))
         embed.add_field(name="Summon Tickets", value=f"{tickets:,} {te}".strip() if te else str(tickets))
-        embed.add_field(name="Ember of Wisdom", value=f"{embers:,}")
-        embed.add_field(name="Hellfire of Wisdom", value=f"{hellfire:,}")
+        embed.add_field(name="Ember of Wisdom", value=f"{embers:,} {ee}".strip() if ee else f"{embers:,}")
+        embed.add_field(name="Hellfire of Wisdom", value=f"{hellfire:,} {he}".strip() if he else f"{hellfire:,}")
         embed.set_footer(text="Feed XP to a servant with /ember")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -661,7 +689,7 @@ class ContractsCog(commands.Cog):
             return await interaction.response.send_message(_DENY, ephemeral=True)
         gid, uid = interaction.guild_id, interaction.user.id
         kind = item if item in ("embers", "hellfire") else "embers"
-        label = "Ember of Wisdom" if kind == "embers" else "Hellfire of Wisdom"
+        label = _xp_label(self.bot.config, kind)
         s = self.bot.servants.get(servant)
         embers, hellfire = await self.bot.contracts.xp_items(gid, uid)
         held = embers if kind == "embers" else hellfire
@@ -1154,7 +1182,7 @@ class ContractsCog(commands.Cog):
         ticket_word = f"{tickets_each} Summon Ticket{'s' if tickets_each != 1 else ''}"
         bonus = " (outnumbered-win bonus!)" if factor > 1.0 else ""
         hellfire_word = (
-            f" + **{hellfire_each}** Hellfire of Wisdom" if hellfire_each else ""
+            f" + **{hellfire_each}** {_xp_label(self.bot.config, 'hellfire')}" if hellfire_each else ""
         )
         return (
             f"**{win['name']}** wins {war_name or 'the war'} with **{top:,} pts**!{bonus} Each of the "
@@ -1336,9 +1364,9 @@ class ContractsCog(commands.Cog):
             if tickets is not None:
                 sbits.append(f"Summon Tickets to **{tickets}**")
             if embers is not None:
-                sbits.append(f"Embers of Wisdom to **{embers}**")
+                sbits.append(f"{_xp_label(self.bot.config, 'embers', plural=True)} to **{embers}**")
             if hellfire is not None:
-                sbits.append(f"Hellfire of Wisdom to **{hellfire}**")
+                sbits.append(f"{_xp_label(self.bot.config, 'hellfire')} to **{hellfire}**")
             notice = f"**{mod}** set your " + " and ".join(sbits) + "."
         else:
             gbits = []
@@ -1347,9 +1375,11 @@ class ContractsCog(commands.Cog):
             if tickets is not None:
                 gbits.append(f"**{tickets}** Summon Ticket{'s' if abs(tickets) != 1 else ''}")
             if embers is not None:
-                gbits.append(f"**{embers}** Ember{'s' if abs(embers) != 1 else ''} of Wisdom")
+                ee = _xp_emote(self.bot.config, "embers")
+                gbits.append(f"{ee} **{embers}** Ember{'s' if abs(embers) != 1 else ''} of Wisdom".strip())
             if hellfire is not None:
-                gbits.append(f"**{hellfire}** Hellfire of Wisdom")
+                he = _xp_emote(self.bot.config, "hellfire")
+                gbits.append(f"{he} **{hellfire}** Hellfire of Wisdom".strip())
             notice = f"**{mod}** granted you " + " and ".join(gbits) + "!"
         await self._notify_grant(interaction, target, notice, quiet)
 
@@ -1502,7 +1532,7 @@ class ContractsCog(commands.Cog):
         host = random.choice(list(EMBER_HOSTS.values()))
         s = self.bot.servants.get(host["servant_id"])
         embed = discord.Embed(
-            title="\N{FIRE} Embers of Wisdom",
+            title=self._ember_title("Embers of Wisdom"),
             description=(
                 f"**{host['name']}:** *\"{random.choice(host['appear'])}\"*\n\n"
                 "Up for grabs -- first to claim takes them!"
@@ -1544,6 +1574,10 @@ class ContractsCog(commands.Cog):
     def _grail_title(self, text: str) -> str:
         ge = self.bot.config.grail_emote
         return f"{ge} {text}".strip() if ge else text
+
+    def _ember_title(self, text: str) -> str:
+        # Falls back to a plain flame when the custom emote is unset, so the title always has a mark.
+        return f"{self.bot.config.ember_emote or chr(0x1F525)} {text}".strip()
 
     async def _spawn_single(self, channel: discord.abc.Messageable) -> None:
         host = random.choice(list(GRAIL_HOSTS.values()))
@@ -1698,6 +1732,7 @@ class ShopView(discord.ui.View):
         ember_btn = discord.ui.Button(
             label=f"Ember of Wisdom ({contract_game.EMBER_SHOP_COST:,} QP)",
             style=discord.ButtonStyle.secondary,
+            emoji=discord.PartialEmoji.from_str(cfg.ember_emote) if cfg.ember_emote else None,
         )
         ember_btn.callback = self._buy_ember
         self.add_item(ember_btn)
@@ -1708,7 +1743,7 @@ class ShopView(discord.ui.View):
         grails = await self.cog.bot.contracts.grail_balance(guild_id, self.user_id)
         tickets = await self.cog.bot.contracts.summon_tickets(guild_id, self.user_id)
         embers, _ = await self.cog.bot.contracts.xp_items(guild_id, self.user_id)
-        ge, te = cfg.grail_emote, cfg.summon_ticket_emote
+        ge, te, ee = cfg.grail_emote, cfg.summon_ticket_emote, cfg.ember_emote
         host = self.cog.bot.servants.get(_SHOP_HOST_ID)
         embed = discord.Embed(
             title="QP Shop",
@@ -1729,7 +1764,9 @@ class ShopView(discord.ui.View):
         embed.add_field(
             name="Your Summon Tickets", value=f"{tickets:,} {te}".strip() if te else str(tickets)
         )
-        embed.add_field(name="Your Embers of Wisdom", value=f"{embers:,}")
+        embed.add_field(
+            name="Your Embers of Wisdom", value=f"{embers:,} {ee}".strip() if ee else f"{embers:,}"
+        )
         return embed
 
     async def _buy(self, interaction: discord.Interaction, cost: int, grant, label: str) -> None:
@@ -1914,6 +1951,7 @@ class EmberDropView(discord.ui.View):
         self.host = host
         self.claimed = False
         self.message: discord.Message | None = None
+        _apply_ember_emoji(self, cog.bot.config)
 
     async def on_timeout(self) -> None:
         if not self.claimed and self.message is not None:
@@ -1938,7 +1976,7 @@ class EmberDropView(discord.ui.View):
         line = random.choice(self.host["claim"]).format(user=interaction.user.display_name)
         s = self.cog.bot.servants.get(self.host["servant_id"])
         embed = discord.Embed(
-            title="\N{FIRE} Ember of Wisdom Claimed!",
+            title=self.cog._ember_title("Ember of Wisdom Claimed!"),
             description=(
                 f"**{self.host['name']}:** *\"{line}\"*\n\n"
                 f"{interaction.user.mention} claimed **{n}** Ember{'s' if n != 1 else ''} of Wisdom "
@@ -1968,6 +2006,7 @@ class EmberBoxView(discord.ui.View):
         self.claims: dict[int, int] = {}   # user_id -> embers taken
         self.appear = random.choice(host["appear"])
         self.message: discord.Message | None = None
+        _apply_ember_emoji(self, cog.bot.config)
 
     def render(self, *, empty: bool = False) -> discord.Embed:
         if empty:
@@ -1980,7 +2019,7 @@ class EmberBoxView(discord.ui.View):
                 f"**{self.remaining}** of **{self.uses}** openings left."
             )
         embed = discord.Embed(
-            title="\N{FIRE} An Ember Present Box Appears!",
+            title=self.cog._ember_title("An Ember Present Box Appears!"),
             description=body,
             color=discord.Color.orange(),
         )
