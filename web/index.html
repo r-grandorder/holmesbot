@@ -111,6 +111,7 @@ fetch("./kits.json").then(r=>r.json()).then(data=>{
   ["q","fClass","fTrigger","fEffect"].forEach(id=>$(id).addEventListener("input", render));
   render();
   checkMod();
+  applyOverrides();
 }).catch(()=>{ $("empty").hidden=false; $("empty").textContent="Could not load kits.json (run scripts/build_site_data.py)."; });
 
 // ---- mod-only kit editor (only appears for users in DASHBOARD_MOD_IDS) ----
@@ -118,6 +119,22 @@ function checkMod(){
   if (!token()) return;
   fetch(API_BASE+"/api/me", {headers:authHeaders()}).then(r=>r.ok?r.json():null)
     .then(me=>{ if (me && me.can_edit_kits){ IS_MOD = true; render(); } }).catch(()=>{});
+}
+// Overlay live DB overrides onto the baked kits.json so the cards show the true current kits.
+function applyOverrides(){
+  fetch(API_BASE+"/api/kits/overrides").then(r=>r.ok?r.json():null).then(d=>{
+    if (!d || !d.overrides) return;
+    let n = 0;
+    for (const [sid, kit] of Object.entries(d.overrides)){
+      const row = DATA.find(x=>x.id===parseInt(sid,10));
+      if (row){
+        row.skill = kit.name; row.trigger = kit.trigger;
+        row.effects = (kit.effects||[]).map(e=>({type:e.effect_type, value:e.value, duration:e.duration, target:e.target}));
+        n++;
+      }
+    }
+    if (n) render();
+  }).catch(()=>{});
 }
 let EDIT_ID = null, VOCAB = null;
 const opttag = (v, sel) => `<option value="${v}" ${v===sel?"selected":""}>${titleize(v)}</option>`;

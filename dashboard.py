@@ -445,6 +445,15 @@ async def kit_delete(request: web.Request) -> web.Response:
     return _json({"ok": True, "has_override": False})
 
 
+async def kit_overrides_all(request: web.Request) -> web.Response:
+    """Public: every live kit override, so the kit browser can overlay them on the baked kits.json
+    and show everyone the true current kit (not just the mod editing it). Read-only game data."""
+    bot = request.app["bot"]
+    svc = bot.kit_service
+    overrides = {str(sid): kit for sid, kit in await svc.all_overrides()} if svc else {}
+    return _json({"overrides": overrides})
+
+
 # --- CORS + mounting -------------------------------------------------------------------------
 def _cors_middleware(origin: str):
     @web.middleware
@@ -485,6 +494,7 @@ def setup_dashboard(app: web.Application, bot) -> None:
     r.add_get("/api/wars/banner", wars_banner)
     r.add_get("/api/wars/history", wars_history)
     r.add_get("/api/wars/{war_id}", wars_detail)
+    r.add_get("/api/kits/overrides", kit_overrides_all)  # before {sid} so it isn't caught as an id
     r.add_get("/api/kits/{sid}", kit_get)
     r.add_put("/api/kits/{sid}", kit_put)
     r.add_delete("/api/kits/{sid}", kit_delete)
