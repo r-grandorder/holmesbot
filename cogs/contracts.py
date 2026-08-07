@@ -1480,10 +1480,10 @@ class ContractsCog(commands.Cog):
         host = random.choice(list(EMBER_HOSTS.values()))
         s = self.bot.servants.get(host["servant_id"])
         embed = discord.Embed(
-            title="\N{FIRE} An Ember of Wisdom Appears!",
+            title="\N{FIRE} Embers of Wisdom",
             description=(
                 f"**{host['name']}:** *\"{random.choice(host['appear'])}\"*\n\n"
-                "An Ember of Wisdom has manifested!\nBe the first to claim it!"
+                "Up for grabs -- first to claim takes them!"
             ),
             color=discord.Color.orange(),
         )

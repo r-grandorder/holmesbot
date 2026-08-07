@@ -143,90 +143,92 @@ GRAIL_HOSTS: dict[str, dict] = {
 
 
 # Ember-of-Wisdom drop announcers -- Chaldea staff rather than the grail cast. Each uses its own
-# Atlas face (looked up by servant_id at drop time), so no local art is needed. {user} = claimer.
+# Atlas face (looked up by servant_id at drop time), so no local art is needed. Embers are the
+# ordinary in-universe leveling item, so the lines stay casual -- no need to explain what they are.
+# {user} = claimer.
 EMBER_HOSTS: dict[str, dict] = {
     "mash": {
         "name": "Mash Kyrielight",
         "servant_id": 800100,
         "appear": [
-            "Senpai, a cinder of pure knowledge just materialized! A Servant could grow from it.",
-            "Analysis complete: crystallized wisdom. Perfect for training a Servant, Senpai!",
-            "Something warm and glowing appeared... it feels like it wants to teach someone.",
+            "Senpai, some embers turned up! Good for leveling a Servant.",
+            "I gathered a few embers from today's gate, Senpai. Anyone need them?",
+            "Embers over here! Grab them for a Servant, Senpai.",
         ],
         "claim": [
-            "There you go, {user}! Put it toward a Servant's growth, okay?",
-            "{user} secured it! I'm sure your Servant will grow stronger.",
-            "Well done, {user}! Wisdom like this shouldn't go to waste.",
+            "There you go, {user}! Should be good for a level or two.",
+            "{user} got them! Go level up a Servant.",
+            "All yours, {user}. Put them to good use!",
         ],
     },
     "davinci_caster": {
         "name": "Leonardo da Vinci",
         "servant_id": 500900,
         "appear": [
-            "Ta-da! A little masterpiece of condensed experience, courtesy of yours truly.",
-            "Behold, crystallized wisdom! Even a genius appreciates a good shortcut.",
-            "I whipped this up between projects. Pure growth, no assembly required.",
+            "Fresh embers, straight from the gate. Help yourselves.",
+            "Leftover embers from the training run. First come, first served.",
+            "Embers up for grabs -- even I don't hoard these.",
         ],
         "claim": [
-            "Nicely done, {user}! Feed it to a Servant and watch them flourish.",
-            "{user} claims it! Efficiency -- I approve wholeheartedly.",
-            "There you are, {user}. Wisdom is wasted sitting around, after all.",
+            "There you go, {user}. Go level someone.",
+            "{user} takes them. Efficient as always.",
+            "All yours, {user}. Don't let them sit around.",
         ],
     },
     "davinci_rider": {
         "name": "Leonardo da Vinci (Rider)",
         "servant_id": 403500,
         "appear": [
-            "Step right up~! One glowing ember of wisdom, absolutely free!",
-            "Limited-time offer: crystallized experience, going fast! Who wants it?",
-            "Hehe, look what rolled off the workshop cart~ Grab it before it cools!",
+            "Embers~! Come grab 'em, free today only!",
+            "Spare bundle of embers here~ Who's leveling?",
+            "Embers going fast~ First one takes the lot!",
         ],
         "claim": [
-            "Sold~! Enjoy the gains, {user}!",
-            "{user} snags the prize! Come again~",
-            "Great pick, {user}! Your Servant's about to grow in style.",
+            "All yours, {user}~ Go level up!",
+            "{user} snagged 'em! Nice one~",
+            "Enjoy the embers, {user}~",
         ],
     },
     "holmes": {
         "name": "Sherlock Holmes",
         "servant_id": 900500,
         "appear": [
-            "Curious -- a nugget of crystallized insight. Its use is elementary enough.",
-            "Observe: a lump of pure wisdom. Its purpose is deduced with ease.",
-            "A rare specimen of condensed experience. Do try to make use of it.",
+            "A few embers, if anyone's leveling a Servant.",
+            "Embers going spare. Their use is elementary.",
+            "Some embers turned up. Do put them to work.",
         ],
         "claim": [
-            "Well reasoned, {user}. Apply it where it does the most good.",
-            "{user} secures the evidence. A sound investment in growth.",
-            "The case of the idle wisdom is closed -- {user} put it to work.",
+            "Good, {user}. Level someone worthwhile.",
+            "{user} takes them -- a sound use.",
+            "There you are, {user}. Off you go.",
         ],
     },
     "nemo": {
         "name": "Captain Nemo",
         "servant_id": 403700,
         "appear": [
-            "...A cinder of wisdom surfaced. Salvage it.",
-            "Found this in the depths. It will fuel a Servant's growth. Take it.",
-            "Rare cargo -- crystallized experience. Don't let it sink.",
+            "...Embers. Take them.",
+            "Spare embers, for leveling. Go on.",
+            "Embers surfaced. Don't waste them.",
         ],
         "claim": [
-            "Good. {user} has it. Put it to use.",
-            "{user} claimed the haul. It won't go to waste on my watch.",
-            "Secured by {user}. Growth is the only course worth charting.",
+            "Good. {user} has them.",
+            "{user} took the embers. Fine.",
+            "Yours, {user}. Use them well.",
         ],
     },
     "asclepius": {
         "name": "Asclepius",
         "servant_id": 504300,
         "appear": [
-            "A concentrate of vital wisdom -- excellent for a Servant's development.",
-            "This ember carries the spark of growth. Administer it wisely.",
-            "Consider it a prescription: pure experience, to strengthen the worthy.",
+            "Some embers, if you're raising a Servant.",
+            "Embers here -- fine for a Servant's growth.",
+            "A few embers going spare. Take what you need.",
         ],
         "claim": [
-            "Take it, {user}. A well-trained Servant is a healthy one.",
-            "{user} receives the remedy. Growth is its own kind of healing.",
-            "There, {user}. See that it nourishes a Servant properly.",
+            "Take them, {user}. Level someone up.",
+            "{user} gets them. Growth is growth.",
+            "There, {user}. Put them to good use.",
         ],
     },
 }
