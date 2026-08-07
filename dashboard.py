@@ -203,7 +203,13 @@ async def me(request: web.Request) -> web.Response:
     bot = request.app["bot"]
     uid = _require_uid(request)
     guild = bot.get_guild(_guild_id(bot))
-    return _json({"id": str(uid), "name": await _resolve_name(bot, guild, uid)})
+    is_mod = uid in bot.config.dashboard_mod_ids
+    return _json({
+        "id": str(uid),
+        "name": await _resolve_name(bot, guild, uid),
+        "is_mod": is_mod,
+        "can_edit_kits": is_mod and bot.kits is not None,
+    })
 
 
 async def me_inventory(request: web.Request) -> web.Response:

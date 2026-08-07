@@ -27,6 +27,17 @@
   <div id="empty" class="empty" hidden>No kits match those filters.</div>
 </main>
 
+<div id="editor" class="modal" hidden>
+  <div class="modal-card">
+    <div id="ed-body"></div>
+    <div class="ed-actions">
+      <button id="ed-save" class="btn" hidden>Save</button>
+      <button id="ed-revert" class="btn ghost" hidden>Revert to default</button>
+      <button id="ed-cancel" class="btn ghost">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script src="nav.js"></script>
 <script>
 const TARGET = {self:"self",party:"party",party_others:"allies",enemy:"front enemy",
@@ -59,6 +70,9 @@ function fmtEffect(e){
 
 let DATA = [];
 const $ = id => document.getElementById(id);
+const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let IS_MOD = false;
+const authHeaders = () => token() ? {Authorization:"Bearer "+token()} : {};
 
 function fillSelect(sel, values, labeler){
   for (const v of [...new Set(values)].sort())
@@ -84,6 +98,7 @@ function render(){
         <div class="meta">${prettyClass(r.className)}</div>
         <div><span class="skill">${r.skill||"?"}</span> <span class="trig">${TRIGGER[r.trigger]||r.trigger}</span></div>
         ${r.effects.map(e=>`<div class="eff">${fmtEffect(e)}</div>`).join("")}
+        ${IS_MOD ? `<button class="editbtn" data-id="${r.id}">Edit kit</button>` : ``}
       </div>
     </div>`).join("");
 }
@@ -95,7 +110,101 @@ fetch("./kits.json").then(r=>r.json()).then(data=>{
   fillSelect($("fEffect"), data.flatMap(r=>r.effects.map(e=>e.type)), titleize);
   ["q","fClass","fTrigger","fEffect"].forEach(id=>$(id).addEventListener("input", render));
   render();
+  checkMod();
 }).catch(()=>{ $("empty").hidden=false; $("empty").textContent="Could not load kits.json (run scripts/build_site_data.py)."; });
+
+// ---- mod-only kit editor (only appears for users in DASHBOARD_MOD_IDS) ----
+function checkMod(){
+  if (!token()) return;
+  fetch(API_BASE+"/api/me", {headers:authHeaders()}).then(r=>r.ok?r.json():null)
+    .then(me=>{ if (me && me.can_edit_kits){ IS_MOD = true; render(); } }).catch(()=>{});
+}
+let EDIT_ID = null, VOCAB = null;
+const opttag = (v, sel) => `<option value="${v}" ${v===sel?"selected":""}>${titleize(v)}</option>`;
+function effectRow(e){
+  e = e || {effect_type:VOCAB.effect_types[0], value:1, duration:-1, target:"self"};
+  return `<div class="effrow">
+    <select class="e-type">${VOCAB.effect_types.map(t=>opttag(t,e.effect_type)).join("")}</select>
+    <input class="e-val" type="number" step="any" value="${e.value}" title="value">
+    <input class="e-dur" type="number" step="1" value="${e.duration}" title="duration (-1 = permanent)">
+    <select class="e-tgt">${VOCAB.targets.map(t=>opttag(t,e.target)).join("")}</select>
+    <label class="e-unrem"><input type="checkbox" ${e.unremovable?"checked":""}> unrem</label>
+    <button class="e-del" title="remove effect">&times;</button>
+  </div>`;
+}
+async function openEditor(sid){
+  const box = $("editor"), body = $("ed-body");
+  box.hidden = false; body.innerHTML = `<div class="loading"><div class="spinner"></div></div>`;
+  $("ed-save").hidden = $("ed-revert").hidden = true;
+  try{
+    const r = await fetch(API_BASE+"/api/kits/"+sid, {headers:authHeaders()});
+    if (!r.ok) throw new Error("HTTP "+r.status);
+    const d = await r.json(); VOCAB = d.vocab; EDIT_ID = sid;
+    const k = d.kit || {name:"", trigger:VOCAB.triggers[0], description:"", effects:[]};
+    body.innerHTML = `
+      <div class="ed-title">${esc(d.servant_name)} <span class="dim">#${sid}</span></div>
+      <label class="fld">Skill name<input id="ed-name" value="${esc(k.name||"")}"></label>
+      <label class="fld">Trigger<select id="ed-trigger">${VOCAB.triggers.map(t=>opttag(t,k.trigger)).join("")}</select></label>
+      <label class="fld">Description<input id="ed-desc" value="${esc(k.description||"")}"></label>
+      <div class="fld">Effects</div>
+      <div id="ed-effects">${(k.effects||[]).map(effectRow).join("")}</div>
+      <button id="ed-add" class="ghostbtn">+ Add effect</button>
+      <div id="ed-err" class="ed-err"></div>`;
+    $("ed-add").onclick = ()=> $("ed-effects").insertAdjacentHTML("beforeend", effectRow());
+    $("ed-save").hidden = false;
+    $("ed-revert").hidden = !d.has_override;
+  }catch(e){ body.innerHTML = `<div class="errbox">Couldn't load kit. ${esc(e.message)}</div>`; }
+}
+function gatherKit(){
+  const effects = [...document.querySelectorAll("#ed-effects .effrow")].map(row=>{
+    const o = { effect_type: row.querySelector(".e-type").value,
+      value: parseFloat(row.querySelector(".e-val").value),
+      duration: parseInt(row.querySelector(".e-dur").value,10),
+      target: row.querySelector(".e-tgt").value };
+    if (row.querySelector(".e-unrem input").checked) o.unremovable = true;
+    return o;
+  });
+  return { id: EDIT_ID, name: $("ed-name").value.trim(), trigger: $("ed-trigger").value,
+    description: $("ed-desc").value.trim(), effects };
+}
+function patchLocal(kit){
+  const row = DATA.find(x=>x.id===EDIT_ID);
+  if (!row) return;
+  row.skill = kit.name; row.trigger = kit.trigger;
+  row.effects = (kit.effects||[]).map(e=>({type:e.effect_type, value:e.value, duration:e.duration, target:e.target}));
+}
+async function saveKit(){
+  const kit = gatherKit(), err = $("ed-err"); err.textContent = "";
+  try{
+    const r = await fetch(API_BASE+"/api/kits/"+EDIT_ID, {method:"PUT",
+      headers:{...authHeaders(), "Content-Type":"application/json"}, body: JSON.stringify(kit)});
+    const d = await r.json().catch(()=>({}));
+    if (!r.ok || !d.ok){ err.textContent = "Rejected: " + ((d.errors||[]).join("; ") || ("HTTP "+r.status)); return; }
+    patchLocal(kit); closeEditor(); render();
+  }catch(e){ err.textContent = "Error: " + e.message; }
+}
+async function revertKit(){
+  const err = $("ed-err"); err.textContent = "";
+  try{
+    const r = await fetch(API_BASE+"/api/kits/"+EDIT_ID, {method:"DELETE", headers:authHeaders()});
+    if (!r.ok) throw new Error("HTTP "+r.status);
+    const d = await (await fetch(API_BASE+"/api/kits/"+EDIT_ID, {headers:authHeaders()})).json();
+    if (d.kit) patchLocal({name:d.kit.name, trigger:d.kit.trigger, effects:d.kit.effects});
+    closeEditor(); render();
+  }catch(e){ err.textContent = "Error: " + e.message; }
+}
+function closeEditor(){ $("editor").hidden = true; EDIT_ID = null; }
+
+$("grid").addEventListener("click", e=>{
+  const b = e.target.closest(".editbtn"); if (b) openEditor(parseInt(b.dataset.id,10));
+});
+$("editor").addEventListener("click", e=>{
+  if (e.target.id === "editor") closeEditor();
+  if (e.target.classList.contains("e-del")) e.target.closest(".effrow").remove();
+});
+$("ed-save").onclick = saveKit;
+$("ed-revert").onclick = revertKit;
+$("ed-cancel").onclick = closeEditor;
 </script>
 </body>
 </html>

@@ -167,8 +167,34 @@ section.on{display:block; animation:fade .2s ease;}
 .filters input:focus,.filters select:focus{outline:none; border-color:var(--line);}
 #count{color:var(--dim); font-size:13px; margin-left:auto;}
 
+/* ---- kit editor (mod-only) ---- */
+.editbtn{margin-top:10px; background:transparent; border:1px solid var(--line); color:var(--gold2);
+  border-radius:8px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer;}
+.editbtn:hover{background:rgba(216,180,91,.1);}
+.modal{position:fixed; inset:0; z-index:50; display:flex; align-items:flex-start; justify-content:center;
+  padding:44px 16px; overflow:auto; background:rgba(4,7,14,.72); backdrop-filter:blur(4px);}
+.modal[hidden]{display:none;}
+.modal-card{background:var(--solid); border:1px solid var(--line); border-radius:16px; padding:22px;
+  width:min(560px,100%); box-shadow:0 24px 70px rgba(0,0,0,.55);}
+.ed-title{font-family:"Cinzel",Georgia,serif; font-size:18px; color:var(--gold2); margin-bottom:6px;}
+.fld{display:block; font-size:11px; color:var(--dim); margin:14px 0 0; font-weight:600;
+  text-transform:uppercase; letter-spacing:.06em;}
+.fld input,.fld select{display:block; width:100%; margin-top:5px; background:var(--panel); color:var(--text);
+  border:1px solid var(--soft); border-radius:8px; padding:9px 11px; font-size:14px;}
+#ed-effects{display:flex; flex-direction:column; gap:7px; margin-top:6px;}
+.effrow{display:grid; grid-template-columns:1.5fr .7fr .7fr 1fr auto auto; gap:6px; align-items:center;}
+.effrow select,.effrow input[type=number]{background:var(--panel); color:var(--text); border:1px solid var(--soft);
+  border-radius:7px; padding:7px 8px; font-size:13px; min-width:0;}
+.effrow .e-unrem{font-size:11px; color:var(--dim); display:flex; align-items:center; gap:3px; white-space:nowrap;}
+.e-del{background:transparent; border:none; color:var(--danger); font-size:20px; line-height:1; cursor:pointer;}
+.ghostbtn{margin-top:10px; background:transparent; border:1px dashed var(--line); color:var(--gold2);
+  border-radius:8px; padding:7px 12px; font-size:13px; cursor:pointer;}
+.ed-actions{display:flex; gap:8px; margin-top:22px;}
+.ed-err{color:var(--danger); font-size:13px; margin-top:12px; min-height:1em;}
+
 @media (max-width:640px){
   .topnav{gap:12px; padding:11px 14px;}
   .brand{font-size:16px;}
   header.page,main{padding-left:14px; padding-right:14px;}
+  .effrow{grid-template-columns:1fr 1fr; }
 }
