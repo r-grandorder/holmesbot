@@ -3,14 +3,26 @@
   "servant_name": "Beast Koyanskaya",
   "class_name": "Beast",
   "name": "Tamamo Vitch",
-  "description": "Curses all enemies and evades once (on enter)",
+  "description": "The Beast that devours Beasts: permanently raises Attack, poisons all enemies, regenerates HP each turn, and slips away with Evade (on enter).",
   "trigger": "on_enter",
   "effects": [
     {
-      "effect_type": "curse",
-      "value": 500,
+      "effect_type": "attack_up",
+      "value": 0.5,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "poison",
+      "value": 800,
       "duration": 3,
       "target": "all_enemies"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 2000,
+      "duration": -1,
+      "target": "self"
     },
     {
       "effect_type": "evade",

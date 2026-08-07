@@ -3,20 +3,32 @@
   "servant_name": "Beast Kiara",
   "class_name": "Beast",
   "name": "Amrita of Absorption",
-  "description": "Drains HP when dealing damage and weakens all enemies (on enter)",
+  "description": "Heaven's Hole: permanently drains HP when dealing damage, permanently raises Attack, strips all enemies' Defense, and slips a blow with Evade (on enter).",
   "trigger": "on_enter",
   "effects": [
     {
       "effect_type": "heal_on_damage",
-      "value": 0.3,
-      "duration": 3,
+      "value": 2500,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.45,
+      "duration": -1,
       "target": "self"
     },
     {
       "effect_type": "defense_down",
-      "value": 0.2,
+      "value": 0.25,
       "duration": 3,
       "target": "all_enemies"
+    },
+    {
+      "effect_type": "evade",
+      "value": 1.0,
+      "duration": 1,
+      "target": "self"
     }
   ]
 }

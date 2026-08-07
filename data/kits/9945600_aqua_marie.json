@@ -1,22 +1,35 @@
 {
   "id": 9945600,
   "servant_name": "Aqua Marie",
-  "class_name": "",
+  "class_name": "Beast",
   "name": "Deluge",
-  "description": "Heals the party each turn and raises party Defense (on enter)",
+  "description": "The tidal half of the Alien God: regenerates heavily each turn, permanently raises own Defense, unremovably raises Max HP, and raises Attack (on enter).",
   "trigger": "on_enter",
   "effects": [
     {
       "effect_type": "healing_per_turn",
-      "value": 0.1,
-      "duration": 3,
-      "target": "party"
+      "value": 3000,
+      "duration": -1,
+      "target": "self"
     },
     {
       "effect_type": "defense_up",
-      "value": 0.2,
-      "duration": 3,
-      "target": "party"
+      "value": 0.5,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "max_hp_up",
+      "value": 0.8,
+      "duration": -1,
+      "target": "self",
+      "unremovable": true
+    },
+    {
+      "effect_type": "attack_up",
+      "value": 0.4,
+      "duration": -1,
+      "target": "self"
     }
   ]
 }

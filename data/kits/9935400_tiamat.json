@@ -3,20 +3,33 @@
   "servant_name": "Tiamat",
   "class_name": "Beast",
   "name": "Chaos Tide",
-  "description": "Vastly raises own Max HP and regenerates each turn (on enter)",
+  "description": "The Mother of Life: unremovably doubles own Max HP, regenerates heavily each turn, permanently raises Attack, and erodes all enemies' Defense (on enter).",
   "trigger": "on_enter",
   "effects": [
     {
       "effect_type": "max_hp_up",
-      "value": 0.8,
+      "value": 1.0,
+      "duration": -1,
+      "target": "self",
+      "unremovable": true
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 3000,
       "duration": -1,
       "target": "self"
     },
     {
-      "effect_type": "healing_per_turn",
-      "value": 0.1,
+      "effect_type": "attack_up",
+      "value": 0.4,
       "duration": -1,
       "target": "self"
+    },
+    {
+      "effect_type": "defense_down",
+      "value": 0.25,
+      "duration": 3,
+      "target": "all_enemies"
     }
   ]
 }

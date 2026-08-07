@@ -3,20 +3,32 @@
   "servant_name": "Goetia",
   "class_name": "Beast",
   "name": "Ars Almadel Salomonis",
-  "description": "Incinerates all enemies and raises own Attack (on enter)",
+  "description": "The King of Mages: permanently raises own Attack, regenerates HP each turn, curses all enemies, and refuses to fall with Guts (on enter).",
   "trigger": "on_enter",
   "effects": [
     {
       "effect_type": "attack_up",
-      "value": 0.35,
-      "duration": 3,
+      "value": 0.5,
+      "duration": -1,
+      "target": "self"
+    },
+    {
+      "effect_type": "healing_per_turn",
+      "value": 2500,
+      "duration": -1,
       "target": "self"
     },
     {
       "effect_type": "curse",
-      "value": 500,
+      "value": 700,
       "duration": 3,
       "target": "all_enemies"
+    },
+    {
+      "effect_type": "guts",
+      "value": 1.0,
+      "duration": 3,
+      "target": "self"
     }
   ]
 }
