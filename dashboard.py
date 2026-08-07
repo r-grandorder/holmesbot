@@ -125,7 +125,7 @@ def _servant_dto(bot, servant_id: int, level: int, grails_used: int) -> dict:
     return {
         "servant_id": servant_id,
         "name": s.name if s else f"#{servant_id}",
-        "class": (s.className if s else None),
+        "class": (s.class_name if s else None),
         "rarity": (s.rarity if s else None),
         "face": (s.face if s else None),
         "art": (s.art.get("0") if s and s.art else None),
