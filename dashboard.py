@@ -151,7 +151,6 @@ async def auth_login(request: web.Request) -> web.Response:
         "response_type": "code",
         "scope": "identify",
         "state": state,
-        "prompt": "none",
     })
     raise web.HTTPFound(f"{DISCORD_API}/oauth2/authorize?{params}")
 
