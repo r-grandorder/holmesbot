@@ -1136,15 +1136,22 @@ class ContractsCog(commands.Cog):
         factor = contract_game.underdog_factor(win["members"], avg_size)
         tickets_each = contract_game.war_ticket_reward(factor)
         qp_each = round(contract_game.WAR_REWARD * factor)
+        hellfire_each = contract_game.WAR_HELLFIRE_REWARD
         for uid in members:
             await self.bot.scoring.add_qp(guild_id, uid, qp_each)
             await self.bot.contracts.grant_tickets(guild_id, uid, tickets_each)
+            if hellfire_each:
+                await self.bot.contracts.grant_xp_item(guild_id, uid, "hellfire", hellfire_each)
         te = self.bot.config.summon_ticket_emote
         ticket_word = f"{tickets_each} Summon Ticket{'s' if tickets_each != 1 else ''}"
         bonus = " (outnumbered-win bonus!)" if factor > 1.0 else ""
+        hellfire_word = (
+            f" + **{hellfire_each}** Hellfire of Wisdom" if hellfire_each else ""
+        )
         return (
             f"**{win['name']}** wins {war_name or 'the war'} with **{top:,} pts**!{bonus} Each of the "
-            f"{len(members)} member(s) earns **{ticket_word}**{' ' + te if te else ''} + {qp(qp_each)}."
+            f"{len(members)} member(s) earns **{ticket_word}**{' ' + te if te else ''} + "
+            f"{qp(qp_each)}{hellfire_word}."
         )
 
     @app_commands.command(name="setservantlevel", description="(Mods) Set a member's contracted servant level.")
@@ -1666,12 +1673,19 @@ class ShopView(discord.ui.View):
         )
         ticket_btn.callback = self._buy_ticket
         self.add_item(ticket_btn)
+        ember_btn = discord.ui.Button(
+            label=f"Ember of Wisdom ({contract_game.EMBER_SHOP_COST:,} QP)",
+            style=discord.ButtonStyle.secondary,
+        )
+        ember_btn.callback = self._buy_ember
+        self.add_item(ember_btn)
 
     async def render(self, guild_id: int) -> discord.Embed:
         cfg = self.cog.bot.config
         bal = await self.cog.bot.scoring.get_balance(guild_id, self.user_id)
         grails = await self.cog.bot.contracts.grail_balance(guild_id, self.user_id)
         tickets = await self.cog.bot.contracts.summon_tickets(guild_id, self.user_id)
+        embers, _ = await self.cog.bot.contracts.xp_items(guild_id, self.user_id)
         ge, te = cfg.grail_emote, cfg.summon_ticket_emote
         host = self.cog.bot.servants.get(_SHOP_HOST_ID)
         embed = discord.Embed(
@@ -1680,7 +1694,8 @@ class ShopView(discord.ui.View):
                 f'*"{self.line}"*\n\n'
                 f"Your QP: **{qp(bal)}**\n\n"
                 f"**Holy Grail** ({qp(cfg.shop_grail_cost)}) -- goes to your stash; spend it with /grail to raise a cap by 5.\n"
-                f"**Summon Ticket** ({qp(cfg.shop_ticket_cost)}) -- redeem with /redeem for a boosted pull."
+                f"**Summon Ticket** ({qp(cfg.shop_ticket_cost)}) -- redeem with /redeem for a boosted pull.\n"
+                f"**Ember of Wisdom** ({qp(contract_game.EMBER_SHOP_COST)}) -- feed XP to any servant with /ember."
             ),
             color=discord.Color.blurple(),
         )
@@ -1692,6 +1707,7 @@ class ShopView(discord.ui.View):
         embed.add_field(
             name="Your Summon Tickets", value=f"{tickets:,} {te}".strip() if te else str(tickets)
         )
+        embed.add_field(name="Your Embers of Wisdom", value=f"{embers:,}")
         return embed
 
     async def _buy(self, interaction: discord.Interaction, cost: int, grant, label: str) -> None:
@@ -1716,6 +1732,13 @@ class ShopView(discord.ui.View):
         await self._buy(
             interaction, self.cog.bot.config.shop_ticket_cost,
             self.cog.bot.contracts.grant_tickets, "Summon Ticket",
+        )
+
+    async def _buy_ember(self, interaction: discord.Interaction) -> None:
+        await self._buy(
+            interaction, contract_game.EMBER_SHOP_COST,
+            lambda gid, uid, n: self.cog.bot.contracts.grant_xp_item(gid, uid, "embers", n),
+            "Ember of Wisdom",
         )
 
     async def on_timeout(self) -> None:
