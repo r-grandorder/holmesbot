@@ -141,10 +141,19 @@ async function loadWars(){
     let html = `<div class="h2">Active war</div>`;
     if (active.active){
       const max = Math.max(1, ...active.factions.map(f => f.score||0));
-      const facs = active.factions.map(f => `<div class="fac">
-        <div class="row"><span>${esc(f.name)} <span class="dim">&middot; ${f.members} members</span></span><b>${num(f.score)}</b></div>
-        <div class="bar"><span style="width:${Math.round((f.score||0)/max*100)}%"></span></div></div>`).join("");
-      html += `<div class="warcard"><div class="name">${esc(active.name)||"Faction War"}</div>
+      const facs = active.factions.map((f,i) => `<div class="fac">
+        <div class="row fachead" data-fac="${i}">
+          <span>${esc(f.name)} <span class="dim">&middot; ${f.members} members <span class="caret">&#9662;</span></span></span>
+          <b>${num(f.score)}</b></div>
+        <div class="bar"><span style="width:${Math.round((f.score||0)/max*100)}%"></span></div>
+        <div class="facroster" id="facroster-${i}" hidden>${
+          f.roster && f.roster.length
+            ? f.roster.map(m => `<div class="row"><span class="dim">${esc(m.name)}</span><span class="dim">${num(m.score)}</span></div>`).join("")
+            : `<div class="dim" style="padding:5px 0">No members yet.</div>`
+        }</div></div>`).join("");
+      html += `<div class="warcard">
+        <img class="warbanner" src="${API_BASE}/api/wars/banner" alt="" onerror="this.remove()">
+        <div class="name">${esc(active.name)||"Faction War"}</div>
         ${active.description?`<div class="meta">${esc(active.description)}</div>`:""}
         <div class="meta">Ends ${when(active.ends_at)}</div>${facs}</div>`;
     } else { html += `<div class="empty">No war is currently running.</div>`; }
@@ -154,6 +163,11 @@ async function loadWars(){
       <div class="meta">${when(w.started_at)} &ndash; ${when(w.ended_at)}</div>
       <div id="war-${w.id}"></div></div>`).join("") : `<div class="empty">No past wars yet.</div>`;
     tab.innerHTML = html;
+    tab.querySelectorAll(".fachead").forEach(el => el.onclick = () => {
+      const r = $("facroster-" + el.dataset.fac);
+      r.hidden = !r.hidden;
+      el.classList.toggle("open", !r.hidden);
+    });
     tab.querySelectorAll(".warcard.click").forEach(el => el.onclick = async () => {
       const box = $("war-" + el.dataset.war);
       if (box.dataset.open){ box.innerHTML = ""; box.dataset.open = ""; return; }

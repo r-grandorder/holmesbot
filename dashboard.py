@@ -270,17 +270,44 @@ async def wars_active(request: web.Request) -> web.Response:
     gid = _guild_id(bot)
     if not await bot.wars.active(gid):
         return _json({"active": False})
+    guild = bot.get_guild(gid)
     standings = await bot.wars.standings(gid)
+    # Group current members under their faction slot so the page can list each team's roster.
+    by_slot: dict[int, list] = {}
+    for m in await bot.wars.roster(gid):
+        by_slot.setdefault(m["slot"], []).append(
+            {"name": await _resolve_name(bot, guild, m["user_id"]), "score": m["score"]}
+        )
     return _json({
         "active": True,
         "name": await bot.wars.name(gid),
         "description": await bot.wars.description(gid),
         "ends_at": await bot.wars.ends_at(gid),
         "factions": [
-            {"slot": f["slot"], "name": f["name"], "score": f["score"], "members": f["members"]}
+            {"slot": f["slot"], "name": f["name"], "score": f["score"], "members": f["members"],
+             "roster": by_slot.get(f["slot"], [])}
             for f in standings
         ],
     })
+
+
+def _img_content_type(data: bytes) -> str:
+    if data[:8] == b"\x89PNG\r\n\x1a\n": return "image/png"
+    if data[:3] == b"\xff\xd8\xff": return "image/jpeg"
+    if data[:6] in (b"GIF87a", b"GIF89a"): return "image/gif"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP": return "image/webp"
+    return "application/octet-stream"
+
+
+async def wars_banner(request: web.Request) -> web.Response:
+    """Serve the active war's banner image (a BLOB on the war row); 404 if none is set."""
+    bot = request.app["bot"]
+    data = await bot.wars.banner(_guild_id(bot))
+    if not data:
+        raise web.HTTPNotFound()
+    data = bytes(data)
+    return web.Response(body=data, content_type=_img_content_type(data),
+                        headers={"Cache-Control": "no-cache"})
 
 
 async def wars_history(request: web.Request) -> web.Response:
@@ -361,6 +388,7 @@ def setup_dashboard(app: web.Application, bot) -> None:
     r.add_get("/api/leaderboard/servants", leaderboard_servants)
     r.add_get("/api/leaderboard/qp", leaderboard_qp)
     r.add_get("/api/wars/active", wars_active)
+    r.add_get("/api/wars/banner", wars_banner)
     r.add_get("/api/wars/history", wars_history)
     r.add_get("/api/wars/{war_id}", wars_detail)
     # OPTIONS preflight for every /api/* path (CORS middleware fills in the response).
