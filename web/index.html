@@ -4,48 +4,30 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Holmes Bot - Autobattle Kits</title>
-<style>
-  :root { --bg:#0e1117; --panel:#161b22; --line:#30363d; --text:#e6edf3; --dim:#8b949e; --acc:#5b8cff; }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.4 -apple-system,Segoe UI,Roboto,sans-serif; }
-  header { padding:20px 16px 8px; }
-  h1 { margin:0; font-size:20px; }
-  .sub { color:var(--dim); font-size:13px; margin-top:4px; }
-  .filters { position:sticky; top:0; background:var(--bg); padding:12px 16px; border-bottom:1px solid var(--line);
-             display:flex; flex-wrap:wrap; gap:8px; align-items:center; z-index:5; }
-  .filters input, .filters select { background:var(--panel); color:var(--text); border:1px solid var(--line);
-             border-radius:6px; padding:8px 10px; font-size:14px; }
-  .filters input { flex:1; min-width:180px; }
-  #count { color:var(--dim); font-size:13px; margin-left:auto; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; padding:16px; }
-  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; display:flex; gap:12px; }
-  .card img { width:56px; height:56px; border-radius:8px; object-fit:cover; background:#222; flex:none; }
-  .card .body { min-width:0; flex:1; }
-  .name { font-weight:600; }
-  .meta { color:var(--dim); font-size:12px; margin:2px 0 8px; }
-  .skill { font-weight:600; color:var(--acc); }
-  .trig { color:var(--dim); font-size:12px; font-weight:400; }
-  .eff { font-size:13px; margin-top:4px; }
-  .eff .t { color:var(--dim); }
-  .stars { color:#e3b341; }
-  .empty { padding:40px 16px; color:var(--dim); text-align:center; }
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
 </head>
-<body>
-<header>
+<body data-page="kits">
+<div id="topnav"></div>
+<header class="page">
   <h1>Autobattle Kits</h1>
   <div class="sub">Every servant's autobattle skill. Filter by class, trigger, or effect.</div>
 </header>
-<div class="filters">
-  <input id="q" type="search" placeholder="Search servant or skill...">
-  <select id="fClass"><option value="">All classes</option></select>
-  <select id="fTrigger"><option value="">All triggers</option></select>
-  <select id="fEffect"><option value="">All effects</option></select>
-  <span id="count"></span>
-</div>
-<div id="grid" class="grid"></div>
-<div id="empty" class="empty" hidden>No kits match those filters.</div>
+<main>
+  <div class="filters">
+    <input id="q" type="search" placeholder="Search servant or skill...">
+    <select id="fClass"><option value="">All classes</option></select>
+    <select id="fTrigger"><option value="">All triggers</option></select>
+    <select id="fEffect"><option value="">All effects</option></select>
+    <span id="count"></span>
+  </div>
+  <div id="grid" class="grid"></div>
+  <div id="empty" class="empty" hidden>No kits match those filters.</div>
+</main>
 
+<script src="nav.js"></script>
 <script>
 const TARGET = {self:"self",party:"party",party_others:"allies",enemy:"front enemy",
   all_enemies:"all enemies",random_ally:"random ally",random_enemy:"random enemy",next_ally:"next ally"};

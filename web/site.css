@@ -1,0 +1,156 @@
+/* Shared theme for the Holmes Bot site (kit browser + dashboard). Gold-on-midnight, Fate/Chaldea
+   flavored. Loaded by index.html and dashboard.html; nav markup + behavior live in nav.js. */
+:root{
+  --bg:#090d17; --bg-glow:#16233f;
+  --panel:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.010));
+  --solid:#111827;
+  --line:rgba(216,180,91,.18);        /* gold hairline */
+  --soft:rgba(255,255,255,.07);
+  --text:#eef1f8; --dim:#93a0ba;
+  --gold:#d8b45b; --gold2:#f2d891;
+  --blue:#7aa2ff; --danger:#e78a86;
+  --g1:#f2d891; --g2:#cdd6e5; --g3:#e0a06a;   /* rank medals */
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; color:var(--text);
+  font:15px/1.5 "Inter",-apple-system,Segoe UI,Roboto,sans-serif;
+  background:radial-gradient(1100px 560px at 50% -10%, var(--bg-glow) 0%, rgba(22,35,63,0) 60%) fixed, var(--bg);
+  min-height:100vh;
+}
+a{color:var(--blue); text-decoration:none;}
+::selection{background:rgba(216,180,91,.25);}
+
+/* ---- top nav (shared) ---- */
+.topnav{
+  position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:22px;
+  padding:13px 22px; background:rgba(9,13,23,.82); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.brand{
+  display:inline-flex; align-items:center; gap:10px;
+  font-family:"Cinzel",Georgia,serif; font-weight:700; font-size:19px; letter-spacing:.06em;
+  color:var(--gold2); text-decoration:none; white-space:nowrap;
+  text-shadow:0 1px 12px rgba(216,180,91,.25);
+}
+.brandlogo{width:32px; height:32px; border-radius:50%; object-fit:cover; flex:none;
+  border:1px solid var(--line); box-shadow:0 1px 8px rgba(0,0,0,.4);}
+.mainnav{display:flex; gap:4px; flex-wrap:wrap;}
+.mainnav a{
+  color:var(--dim); padding:8px 13px; border-radius:8px; font-size:14px; font-weight:500;
+}
+.mainnav a:hover{color:var(--text); background:rgba(255,255,255,.05);}
+.mainnav a.active{color:var(--gold2); background:rgba(216,180,91,.10);}
+.navauth{margin-left:auto; display:flex; gap:8px; align-items:center;}
+.btn{
+  display:inline-block; background:linear-gradient(180deg,var(--gold2),var(--gold)); color:#241a06;
+  font-weight:600; border:none; border-radius:8px; padding:8px 15px; font-size:13px;
+  text-decoration:none; cursor:pointer; white-space:nowrap;
+}
+.btn:hover{filter:brightness(1.06);}
+.btn.ghost{background:transparent; color:var(--text); border:1px solid var(--line);}
+.btn.ghost:hover{background:rgba(255,255,255,.05); filter:none;}
+
+/* ---- layout ---- */
+header.page{padding:24px 22px 4px; max-width:1180px; margin:0 auto;}
+header.page h1{font-family:"Cinzel",Georgia,serif; margin:0; font-size:24px; letter-spacing:.02em; color:var(--gold2);}
+header.page .sub{color:var(--dim); font-size:14px; margin-top:6px;}
+main{padding:8px 22px 60px; max-width:1180px; margin:0 auto;}
+section{display:none;}
+section.on{display:block; animation:fade .2s ease;}
+@keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+.h2{
+  font-family:"Cinzel",Georgia,serif; font-size:14px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--gold); margin:26px 0 14px; display:flex; align-items:center; gap:11px;
+}
+.h2::before{content:""; width:7px; height:7px; transform:rotate(45deg); background:var(--gold); flex:none;}
+.h2 .n{color:var(--dim); font-family:"Inter",sans-serif; letter-spacing:0; text-transform:none; font-size:13px; font-weight:500;}
+
+/* ---- states ---- */
+.loading{display:flex; gap:12px; align-items:center; justify-content:center; padding:70px 0; color:var(--dim);}
+.spinner{
+  width:26px; height:26px; border-radius:50%;
+  border:3px solid rgba(216,180,91,.20); border-top-color:var(--gold); animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.empty,.note{color:var(--dim); padding:28px 4px;}
+.note{text-align:center; padding:64px 16px;}
+.errbox{color:var(--danger); padding:24px 4px;}
+
+/* ---- inventory stat chips ---- */
+.stats{display:grid; grid-template-columns:repeat(auto-fill,minmax(158px,1fr)); gap:12px;}
+.stat{display:flex; align-items:center; gap:13px; padding:14px 16px; border-radius:13px;
+  background:var(--panel); border:1px solid var(--soft);}
+.stat .ico{width:38px; height:38px; object-fit:contain; flex:none; filter:drop-shadow(0 2px 5px rgba(0,0,0,.45));}
+.stat .v{font-size:21px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.1;}
+.stat .k{font-size:12px; color:var(--dim); margin-top:2px;}
+.warline{color:var(--dim); font-size:14px; margin-top:14px;}
+.warline b{color:var(--text);}
+
+/* ---- cards (servants + kits) ---- */
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px;}
+.card{display:flex; gap:14px; padding:14px; border-radius:14px; background:var(--panel);
+  border:1px solid var(--soft); transition:border-color .15s, transform .15s;}
+.card:hover{border-color:var(--line); transform:translateY(-1px);}
+.card.active{border-color:var(--gold); box-shadow:0 0 0 1px rgba(216,180,91,.35) inset;}
+.card>img{width:60px; height:60px; border-radius:10px; object-fit:cover; background:#1a2336; flex:none;}
+.card .body{min-width:0; flex:1;}
+.name{font-weight:600; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.meta{color:var(--dim); font-size:12.5px; margin:3px 0;}
+.stars{color:var(--gold); letter-spacing:1px;}
+.badge{font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#241a06;
+  background:linear-gradient(180deg,var(--gold2),var(--gold)); padding:2px 8px; border-radius:999px;}
+.mini{width:15px; height:15px; object-fit:contain; vertical-align:-3px; margin-right:2px;}
+.lvbar{height:5px; border-radius:3px; background:rgba(255,255,255,.08); overflow:hidden; margin-top:7px;}
+.lvbar>span{display:block; height:100%; background:linear-gradient(90deg,var(--gold),var(--gold2));}
+
+/* ---- kit browser specifics ---- */
+.skill{font-weight:600; color:var(--gold2);}
+.trig{color:var(--dim); font-size:12px; font-weight:400;}
+.eff{font-size:13px; margin-top:4px;}
+.eff .t{color:var(--dim);}
+
+/* ---- tables (leaderboards) ---- */
+.tbl{width:100%; border-collapse:collapse;}
+.tbl th{text-align:left; color:var(--dim); font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+  font-weight:600; padding:9px 12px; border-bottom:1px solid var(--line);}
+.tbl td{padding:11px 12px; border-bottom:1px solid var(--soft); font-size:14px; vertical-align:middle;}
+.tbl tr:hover td{background:rgba(255,255,255,.025);}
+.tbl .r{text-align:right; font-variant-numeric:tabular-nums;}
+.rankn{font-weight:700; color:var(--dim); width:44px;}
+.rankn.g1{color:var(--g1);} .rankn.g2{color:var(--g2);} .rankn.g3{color:var(--g3);}
+.face-sm{width:30px; height:30px; border-radius:7px; object-fit:cover; vertical-align:middle; margin-right:9px; background:#1a2336;}
+.inline-ic{width:16px; height:16px; object-fit:contain; vertical-align:-3px; margin-left:5px;}
+
+/* ---- leaderboard / generic sub-tabs ---- */
+.subnav{display:inline-flex; gap:4px; padding:4px; border-radius:11px; background:rgba(255,255,255,.03);
+  border:1px solid var(--soft); margin-bottom:16px;}
+.subnav button{background:none; border:none; color:var(--dim); padding:8px 16px; border-radius:8px;
+  font-size:13px; font-weight:500; cursor:pointer;}
+.subnav button:hover{color:var(--text);}
+.subnav button.on{background:linear-gradient(180deg,var(--gold2),var(--gold)); color:#241a06; font-weight:600;}
+
+/* ---- wars ---- */
+.warcard{padding:16px 18px; border-radius:14px; background:var(--panel); border:1px solid var(--soft); margin-bottom:12px;}
+.warcard.click{cursor:pointer;} .warcard.click:hover{border-color:var(--line);}
+.fac{margin:10px 0;}
+.fac .row{display:flex; justify-content:space-between; font-size:14px; margin-bottom:5px;}
+.fac .bar{height:8px; border-radius:5px; background:rgba(255,255,255,.06); overflow:hidden;}
+.fac .bar>span{display:block; height:100%; background:linear-gradient(90deg,var(--gold),var(--gold2));}
+.dim{color:var(--dim);}
+
+/* ---- kit-browser filter bar ---- */
+.filters{position:sticky; top:57px; z-index:10; display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  padding:14px 0; background:linear-gradient(180deg, var(--bg) 70%, rgba(9,13,23,0));}
+.filters input,.filters select{background:var(--solid); color:var(--text); border:1px solid var(--soft);
+  border-radius:9px; padding:9px 12px; font-size:14px;}
+.filters input{flex:1; min-width:200px;}
+.filters input:focus,.filters select:focus{outline:none; border-color:var(--line);}
+#count{color:var(--dim); font-size:13px; margin-left:auto;}
+
+@media (max-width:640px){
+  .topnav{gap:12px; padding:11px 14px;}
+  .brand{font-size:16px;}
+  header.page,main{padding-left:14px; padding-right:14px;}
+}
