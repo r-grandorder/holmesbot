@@ -129,7 +129,11 @@ class HolmesBot(commands.Bot):
                 except Exception:
                     log.warning("skipping bad kit override for %s", sid)
             await self.load_extension("cogs.autobattle")
-            await self.load_extension("cogs.raids")
+            try:
+                await self.load_extension("cogs.raids")
+            except Exception:
+                # Raids are new/untested -- never let a load failure crash-loop the whole bot.
+                log.exception("failed to load cogs.raids; raids disabled this boot")
             log.info(
                 "autobattle feature enabled (%d kits, %d overrides)",
                 len(self.kits), len(overrides),
