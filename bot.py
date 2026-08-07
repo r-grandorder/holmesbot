@@ -19,6 +19,7 @@ from db import Database
 from services.aliases import AliasService
 from services.backup import BackupService
 from services.kits import KitService
+from services.raids import RaidService
 from services.contracts import ContractService
 from services.games import GameService
 from services.guild_config import GuildConfigService
@@ -75,6 +76,7 @@ class HolmesBot(commands.Bot):
         self.contracts: ContractService | None = None
         self.backups: BackupService | None = None
         self.kit_service: KitService | None = None
+        self.raids: RaidService | None = None
         self._health_runner: web.AppRunner | None = None
 
     async def setup_hook(self) -> None:
@@ -97,6 +99,7 @@ class HolmesBot(commands.Bot):
         self.aliases = AliasService(self.db.pool)
         self.contracts = ContractService(self.db.pool)
         self.wars = WarService(self.db.pool)
+        self.raids = RaidService(self.db.pool)
         await self.aliases.reload()
         await self.games.sweep_expired()
 
@@ -126,6 +129,7 @@ class HolmesBot(commands.Bot):
                 except Exception:
                     log.warning("skipping bad kit override for %s", sid)
             await self.load_extension("cogs.autobattle")
+            await self.load_extension("cogs.raids")
             log.info(
                 "autobattle feature enabled (%d kits, %d overrides)",
                 len(self.kits), len(overrides),

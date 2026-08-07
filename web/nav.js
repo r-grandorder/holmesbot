@@ -32,6 +32,7 @@ function renderTopNav() {
         <a href="/dashboard.html#me" data-nav="me">My stuff</a>
         <a href="/dashboard.html#boards" data-nav="boards">Leaderboards</a>
         <a href="/dashboard.html#wars" data-nav="wars">Wars</a>
+        <a href="/dashboard.html#raids" data-nav="raids">Raids</a>
       </nav>
       <div class="navauth" id="navauth"></div>
     </header>`;

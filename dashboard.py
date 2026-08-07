@@ -27,9 +27,12 @@ import urllib.parse
 
 from aiohttp import web
 
+import datetime as dt
+
 from data import contract_game
 from data.autobattle import battle_stats
 from data.kits import validate_kit, EFFECT_TYPES, TARGETS, TRIGGERS
+from data.raids import validate_raid_def, active_phase
 
 log = logging.getLogger("holmesbot.dashboard")
 
@@ -454,6 +457,184 @@ async def kit_overrides_all(request: web.Request) -> web.Response:
     return _json({"overrides": overrides})
 
 
+# --- raids: staff config (mod-only) + public status/history ----------------------------------
+async def raids_list(request: web.Request) -> web.Response:
+    """Public: all raid definitions (name/display/enabled) for the config list + client menus."""
+    bot = request.app["bot"]
+    if bot.raids is None:
+        return _json({"raids": []})
+    return _json({"raids": [
+        {"name": n, "display_name": d.get("display_name", n), "enabled": e,
+         "boss_servant_id": d.get("boss_servant_id")}
+        for n, d, e in await bot.raids.all_defs()
+    ]})
+
+
+async def raid_get(request: web.Request) -> web.Response:
+    """Mod-only: one raid definition + the vocab the editor needs for phase-kit dropdowns."""
+    bot = request.app["bot"]
+    _require_mod(request)
+    name = request.match_info["name"]
+    got = await bot.raids.get_def(name)
+    return _json({
+        "name": name,
+        "def": got[0] if got else None,
+        "enabled": got[1] if got else False,
+        "vocab": {"triggers": sorted(TRIGGERS), "targets": sorted(TARGETS),
+                  "effect_types": sorted(EFFECT_TYPES)},
+    })
+
+
+async def raid_put(request: web.Request) -> web.Response:
+    """Mod-only: validate + save a raid definition (does not start it)."""
+    bot = request.app["bot"]
+    uid = _require_mod(request)
+    name = request.match_info["name"].strip()
+    if not name:
+        raise web.HTTPBadRequest(text="bad raid name")
+    try:
+        body = await request.json()
+    except Exception:
+        raise web.HTTPBadRequest(text="invalid JSON body")
+    defn = body.get("def") if isinstance(body, dict) else None
+    if not isinstance(defn, dict):
+        raise web.HTTPBadRequest(text="body.def (object) required")
+    errors = validate_raid_def(defn)
+    if errors:
+        return _json({"ok": False, "errors": errors}, status=400)
+    await bot.raids.set_def(name, defn, uid)
+    await bot.raids.audit(uid, "raid_def_edit", {"name": name})
+    return _json({"ok": True})
+
+
+async def raid_delete(request: web.Request) -> web.Response:
+    bot = request.app["bot"]
+    uid = _require_mod(request)
+    name = request.match_info["name"]
+    await bot.raids.delete_def(name)
+    await bot.raids.audit(uid, "raid_def_delete", {"name": name})
+    return _json({"ok": True})
+
+
+async def raid_enable(request: web.Request) -> web.Response:
+    """Mod-only: enable a raid (starts a live instance in the configured guild) or disable it (ends
+    the active instance if it's this def)."""
+    bot = request.app["bot"]
+    uid = _require_mod(request)
+    name = request.match_info["name"]
+    try:
+        on = bool((await request.json()).get("enabled", False))
+    except Exception:
+        raise web.HTTPBadRequest(text="invalid JSON body")
+    got = await bot.raids.get_def(name)
+    if not got:
+        raise web.HTTPNotFound(text='{"error":"no such raid"}', content_type="application/json")
+    defn = got[0]
+    gid = _guild_id(bot)
+    started = ended = False
+    if on:
+        errors = validate_raid_def(defn)
+        if errors:
+            return _json({"ok": False, "errors": errors}, status=400)
+        await bot.raids.set_enabled(name, True, uid)
+        expires = (dt.datetime.now(dt.timezone.utc)
+                   + dt.timedelta(hours=int(defn["duration_hours"]))).strftime("%Y-%m-%d %H:%M:%S")
+        iid = await bot.raids.start(gid, name, defn.get("display_name", name),
+                                    int(defn["boss_servant_id"]), int(defn["total_hp"]), expires)
+        started = iid is not None
+    else:
+        await bot.raids.set_enabled(name, False, uid)
+        active = await bot.raids.active(gid)
+        if active and active["def_name"] == name:
+            await bot.raids.end(active["id"], "expired")
+            ended = True
+    await bot.raids.audit(uid, "raid_enable",
+                          {"name": name, "enabled": on, "started": started, "ended": ended})
+    return _json({"ok": True, "enabled": on, "started": started, "ended": ended})
+
+
+async def raids_active(request: web.Request) -> web.Response:
+    """Public: the live raid's HP/phase/time + damage leaderboard (for the dashboard status card)."""
+    bot = request.app["bot"]
+    if bot.raids is None:
+        return _json({"active": False})
+    gid = _guild_id(bot)
+    inst = await bot.raids.active(gid)
+    if not inst:
+        return _json({"active": False})
+    got = await bot.raids.get_def(inst["def_name"])
+    phase = active_phase(got[0], inst["current_hp"], inst["total_hp"]) if got else None
+    guild = bot.get_guild(gid)
+    lb = await bot.raids.leaderboard(inst["id"], 10)
+    return _json({
+        "active": True,
+        "name": inst.get("display_name"),
+        "current_hp": inst["current_hp"],
+        "total_hp": inst["total_hp"],
+        "phase": (phase or {}).get("name"),
+        "flavor": (phase or {}).get("flavor"),
+        "expires_at": inst["expires_at"],
+        "leaderboard": [
+            {"rank": i, "name": await _resolve_name(bot, guild, r["user_id"]), "damage": r["damage"]}
+            for i, r in enumerate(lb, 1)
+        ],
+    })
+
+
+async def raids_history(request: web.Request) -> web.Response:
+    """Public: past raids + their final leaderboards (the 'Past raids' view)."""
+    bot = request.app["bot"]
+    if bot.raids is None:
+        return _json({"raids": []})
+    gid = _guild_id(bot)
+    guild = bot.get_guild(gid)
+    out = []
+    for r in await bot.raids.history(gid, _LEADERBOARD_LIMIT):
+        lb = await bot.raids.leaderboard(r["id"], 10)
+        out.append({
+            "id": r["id"], "name": r["display_name"] or r["def_name"], "status": r["status"],
+            "started_at": r["started_at"], "ended_at": r["ended_at"],
+            "leaderboard": [
+                {"rank": i, "name": await _resolve_name(bot, guild, x["user_id"]), "damage": x["damage"]}
+                for i, x in enumerate(lb, 1)
+            ],
+        })
+    return _json({"raids": out})
+
+
+async def raid_sprite_upload(request: web.Request) -> web.Response:
+    """Mod-only: upload a boss/phase sprite (multipart) -> stored as a BLOB -> returns its id."""
+    bot = request.app["bot"]
+    uid = _require_mod(request)
+    reader = await request.multipart()
+    field = await reader.next()
+    if field is None:
+        raise web.HTTPBadRequest(text="no file uploaded")
+    data = await field.read(decode=False)
+    if not data:
+        raise web.HTTPBadRequest(text="empty file")
+    if len(data) > 2_000_000:
+        raise web.HTTPBadRequest(text="file too large (max 2MB)")
+    sprite_id = await bot.raids.store_sprite(data, uid)
+    await bot.raids.audit(uid, "raid_sprite_upload", {"id": sprite_id, "bytes": len(data)})
+    return _json({"ok": True, "id": sprite_id})
+
+
+async def raid_sprite_get(request: web.Request) -> web.Response:
+    """Public: serve an uploaded sprite BLOB (referenced by phase/boss sprite_id in embeds + the site)."""
+    bot = request.app["bot"]
+    try:
+        sprite_id = int(request.match_info["id"])
+    except ValueError:
+        raise web.HTTPBadRequest(text="bad sprite id")
+    data = await bot.raids.get_sprite(sprite_id)
+    if not data:
+        raise web.HTTPNotFound()
+    data = bytes(data)
+    return web.Response(body=data, content_type=_img_content_type(data),
+                        headers={"Cache-Control": "public, max-age=86400"})
+
+
 # --- CORS + mounting -------------------------------------------------------------------------
 def _cors_middleware(origin: str):
     @web.middleware
@@ -468,7 +649,7 @@ def _cors_middleware(origin: str):
             except web.HTTPException as ex:
                 resp = ex
         resp.headers["Access-Control-Allow-Origin"] = origin
-        resp.headers["Access-Control-Allow-Methods"] = "GET, PUT, DELETE, OPTIONS"
+        resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         resp.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
         resp.headers["Vary"] = "Origin"
         return resp
@@ -498,6 +679,16 @@ def setup_dashboard(app: web.Application, bot) -> None:
     r.add_get("/api/kits/{sid}", kit_get)
     r.add_put("/api/kits/{sid}", kit_put)
     r.add_delete("/api/kits/{sid}", kit_delete)
+    # Raids: static/collection paths BEFORE the {name} catch-all so they aren't read as a name.
+    r.add_get("/api/raids", raids_list)
+    r.add_get("/api/raids/active", raids_active)
+    r.add_get("/api/raids/history", raids_history)
+    r.add_get("/api/raids/sprite/{id}", raid_sprite_get)
+    r.add_post("/api/raids/sprite", raid_sprite_upload)
+    r.add_post("/api/raids/{name}/enable", raid_enable)
+    r.add_get("/api/raids/{name}", raid_get)
+    r.add_put("/api/raids/{name}", raid_put)
+    r.add_delete("/api/raids/{name}", raid_delete)
     # OPTIONS preflight for every /api/* path (CORS middleware fills in the response).
     r.add_route("OPTIONS", "/api/{tail:.*}", lambda req: web.Response(status=204))
     log.info("dashboard API mounted (guild %d, frontend %s)", _guild_id(bot),

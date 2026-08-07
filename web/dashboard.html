@@ -16,7 +16,18 @@
   <section id="tab-me"></section>
   <section id="tab-boards"></section>
   <section id="tab-wars"></section>
+  <section id="tab-raids"></section>
 </main>
+
+<div id="raid-editor" class="modal" hidden>
+  <div class="modal-card">
+    <div id="raid-ed-body"></div>
+    <div class="ed-actions">
+      <button id="raid-ed-save" class="btn">Save</button>
+      <button id="raid-ed-cancel" class="btn ghost">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <script src="nav.js"></script>
 <script>
@@ -182,11 +193,249 @@ async function loadWars(){
   } catch(e){ tab.innerHTML = errBox(e); }
 }
 
+// ---- Raids (public status/history + mod-only config editor) ----
+let RAID_IS_MOD = false, RAID_VOCAB = null;
+const medal = r => ({1:"\u{1F947}",2:"\u{1F948}",3:"\u{1F949}"}[r] || (r + "."));
+
+async function loadRaids(){
+  const tab = $("tab-raids");
+  tab.innerHTML = SPINNER;
+  try {
+    const [active, hist, me] = await Promise.all([
+      fetch(API_BASE+"/api/raids/active").then(r=>r.ok?r.json():{active:false}),
+      fetch(API_BASE+"/api/raids/history").then(r=>r.ok?r.json():{raids:[]}),
+      token() ? api("/api/me").catch(()=>({})) : {},
+    ]);
+    RAID_IS_MOD = !!me.is_mod;
+    let html = `<div class="h2">Active raid</div>`;
+    if (active.active){
+      const pct = active.total_hp ? Math.round(active.current_hp/active.total_hp*100) : 0;
+      const lb = (active.leaderboard||[]).map(r=>`<div class="row"><span>${medal(r.rank)} ${esc(r.name)}</span><b>${num(r.damage)}</b></div>`).join("");
+      html += `<div class="warcard">
+        <div class="name">${esc(active.name)||"Raid"}</div>
+        ${active.flavor?`<div class="meta">${esc(active.flavor)}</div>`:""}
+        <div class="meta">Phase: ${esc(active.phase||"Opening")} &middot; Ends ${when(active.expires_at)}</div>
+        <div class="fac"><div class="row"><span>HP</span><b>${num(active.current_hp)} / ${num(active.total_hp)}</b></div>
+          <div class="bar"><span style="width:${pct}%"></span></div></div>
+        <div style="margin-top:8px">${lb || '<span class="dim">No contributors yet.</span>'}</div></div>`;
+    } else {
+      html += `<div class="empty">No raid is active right now.</div>`;
+    }
+    tab.innerHTML = html
+      + (RAID_IS_MOD ? `<div class="h2">Raid configs <span class="n">mods</span></div><div id="raid-defs"></div>
+           <button id="raid-new" class="btn">+ New raid</button>` : ``)
+      + `<div class="h2">Past raids</div>` + histHtml(hist);
+    if (RAID_IS_MOD){
+      const defs = await fetch(API_BASE+"/api/raids", {headers:authHeaders()}).then(r=>r.json());
+      renderRaidDefs(defs.raids||[]);
+      $("raid-new").onclick = ()=>openRaidEditor("");
+    }
+    wirePastRaids(tab, hist);
+  } catch(e){ tab.innerHTML = errBox(e); }
+}
+
+function histHtml(hist){
+  if (!hist.raids || !hist.raids.length) return `<div class="empty">No past raids yet.</div>`;
+  return hist.raids.map(r=>`<div class="warcard click" data-raid="${r.id}">
+    <div class="name">${esc(r.name)} ${r.status==="defeated"?"\u{1F525}":"⌛"}</div>
+    <div class="meta">${when(r.ended_at)}</div>
+    <div id="rhist-${r.id}" hidden></div></div>`).join("");
+}
+function wirePastRaids(tab, hist){
+  const byId = {}; (hist.raids||[]).forEach(r=>byId[r.id]=r);
+  tab.querySelectorAll(".warcard.click[data-raid]").forEach(el=>el.onclick=()=>{
+    const box = $("rhist-"+el.dataset.raid);
+    if (box.dataset.open){ box.hidden=true; box.dataset.open=""; return; }
+    const r = byId[el.dataset.raid] || {};
+    box.innerHTML = (r.leaderboard||[]).map(x=>`<div class="row"><span class="dim">${medal(x.rank)} ${esc(x.name)}</span><span class="dim">${num(x.damage)}</span></div>`).join("") || '<span class="dim">No contributors.</span>';
+    box.hidden=false; box.dataset.open="1";
+  });
+}
+
+function renderRaidDefs(defs){
+  const el = $("raid-defs");
+  if (!defs.length){ el.innerHTML = `<div class="empty">No raids configured yet.</div>`; return; }
+  el.innerHTML = defs.map(d=>`<div class="card"><div class="body">
+    <div class="name">${esc(d.display_name)} <span class="dim">(${esc(d.name)})</span> ${d.enabled?'<span class="badge">Live</span>':''}</div>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button class="editbtn" data-edit="${esc(d.name)}">Edit</button>
+      <button class="editbtn" data-toggle="${esc(d.name)}" data-on="${d.enabled?1:0}">${d.enabled?"Disable":"Enable"}</button>
+    </div></div></div>`).join("");
+  el.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openRaidEditor(b.dataset.edit));
+  el.querySelectorAll("[data-toggle]").forEach(b=>b.onclick=()=>toggleRaid(b.dataset.toggle, b.dataset.on!=="1"));
+}
+async function toggleRaid(name, on){
+  try {
+    const r = await fetch(API_BASE+"/api/raids/"+encodeURIComponent(name)+"/enable", {
+      method:"POST", headers:{...authHeaders(),"Content-Type":"application/json"}, body:JSON.stringify({enabled:on})});
+    const d = await r.json().catch(()=>({}));
+    if (!r.ok || !d.ok){ alert("Failed: "+((d.errors||[]).join("; ")||("HTTP "+r.status))); return; }
+    loadRaids();
+  } catch(e){ alert("Error: "+e.message); }
+}
+
+// ---- raid editor ----
+const selTag = (v, sel) => `<option value="${esc(v)}" ${v===sel?"selected":""}>${esc(prettyClass(v))}</option>`;
+function raidEffRow(e){
+  e = e || {effect_type:RAID_VOCAB.effect_types[0], value:1, duration:-1, target:"self"};
+  return `<div class="effrow">
+    <select class="e-type">${RAID_VOCAB.effect_types.map(t=>selTag(t,e.effect_type)).join("")}</select>
+    <input class="e-val" type="number" step="any" value="${e.value}" title="value">
+    <input class="e-dur" type="number" step="1" value="${e.duration}" title="duration (-1 = perm)">
+    <select class="e-tgt">${RAID_VOCAB.targets.map(t=>selTag(t,e.target)).join("")}</select>
+    <label class="e-unrem"><input type="checkbox" ${e.unremovable?"checked":""}> unrem</label>
+    <button class="e-del">&times;</button></div>`;
+}
+function spriteSlot(key, id){
+  const url = id ? API_BASE+"/api/raids/sprite/"+id : "";
+  return `<div class="fld">Sprite (optional upload)
+    <input type="hidden" class="sprite-id" data-key="${key}" value="${id||""}">
+    <input type="file" accept="image/*" class="sprite-file" data-key="${key}">
+    <img class="sprite-prev" data-key="${key}" src="${url}" height="52" ${id?"":'hidden'}></div>`;
+}
+function phaseBlock(ph, i){
+  ph = ph || {threshold:1.0, name:"", flavor:"", atk_mult:1, kit:null};
+  const kit = ph.kit || {name:"", trigger:RAID_VOCAB.triggers[0], effects:[]};
+  return `<div class="phase" data-phase="${i}">
+    <div class="row"><b>Phase ${i+1}</b><button class="e-del" data-delphase="1">remove</button></div>
+    <label class="fld">Enters at HP fraction (0-1)<input class="ph-threshold" type="number" step="0.05" min="0.01" max="1" value="${ph.threshold}"></label>
+    <label class="fld">Name<input class="ph-name" value="${esc(ph.name||"")}"></label>
+    <label class="fld">Flavor text<input class="ph-flavor" value="${esc(ph.flavor||"")}"></label>
+    <label class="fld">ATK multiplier<input class="ph-atk" type="number" step="0.1" value="${ph.atk_mult||1}"></label>
+    ${spriteSlot("phase-"+i, ph.sprite_id)}
+    <label class="fld">Skill name<input class="ph-kit-name" value="${esc(kit.name||"")}"></label>
+    <label class="fld">Skill trigger<select class="ph-kit-trigger">${RAID_VOCAB.triggers.map(t=>selTag(t,kit.trigger)).join("")}</select></label>
+    <div class="fld">Skill effects</div>
+    <div class="ph-effects">${(kit.effects||[]).map(raidEffRow).join("")}</div>
+    <button class="ghostbtn ph-addeff">+ Add effect</button></div>`;
+}
+function rankRow(t){
+  t = t || {top:1, qp:0, grails:0, tickets:0};
+  return `<div class="rankrow">
+    <input class="rk-top" type="number" placeholder="top N" value="${t.top||1}" title="top N">
+    <input class="rk-qp" type="number" placeholder="QP" value="${t.qp||0}" title="QP">
+    <input class="rk-grails" type="number" placeholder="grails" value="${t.grails||0}" title="grails">
+    <input class="rk-tickets" type="number" placeholder="tickets" value="${t.tickets||0}" title="tickets">
+    <button class="e-del">&times;</button></div>`;
+}
+async function openRaidEditor(name){
+  const box = $("raid-editor"), body = $("raid-ed-body");
+  box.hidden = false; body.innerHTML = SPINNER; $("raid-ed-save").disabled = true;
+  try {
+    const d = await fetch(API_BASE+"/api/raids/"+encodeURIComponent(name||"_new"), {headers:authHeaders()}).then(r=>r.json());
+    RAID_VOCAB = d.vocab;
+    const defn = d.def || {display_name:"", boss_servant_id:"", boss_level:120, total_hp:1000000,
+      battle_hp:50000, duration_hours:24, phases:[], rewards:{}};
+    const rw = defn.rewards || {}, part = rw.participation || {}, lh = rw.last_hit || {};
+    body.innerHTML = `
+      <div class="ed-title">${name ? ("Edit raid: " + esc(name)) : "New raid"}</div>
+      <label class="fld">Slug / id${name ? "" : " (lowercase, no spaces)"}<input id="rd-name" value="${esc(name||"")}" ${name?"readonly":""}></label>
+      <label class="fld">Display name<input id="rd-display" value="${esc(defn.display_name||"")}"></label>
+      <label class="fld">Boss servant id<input id="rd-boss" type="number" value="${esc(defn.boss_servant_id||"")}"></label>
+      <label class="fld">Boss level<input id="rd-level" type="number" value="${defn.boss_level||120}"></label>
+      <label class="fld">Total HP (shared pool)<input id="rd-total" type="number" value="${defn.total_hp||1000000}"></label>
+      <label class="fld">Per-battle HP (each fight)<input id="rd-battle" type="number" value="${defn.battle_hp||50000}"></label>
+      <label class="fld">Duration (hours)<input id="rd-hours" type="number" value="${defn.duration_hours||24}"></label>
+      ${spriteSlot("default", defn.default_sprite_id)}
+      <div class="h2">Rewards</div>
+      <label class="fld">Per-fight QP<input id="rd-perfight" type="number" value="${rw.per_fight_qp||0}"></label>
+      <label class="fld">Participation QP<input id="rd-part-qp" type="number" value="${part.qp||0}"></label>
+      <label class="fld">Participation embers<input id="rd-part-em" type="number" value="${part.embers||0}"></label>
+      <label class="fld">Last-hit QP<input id="rd-lh-qp" type="number" value="${lh.qp||0}"></label>
+      <label class="fld">Last-hit hellfire<input id="rd-lh-hf" type="number" value="${lh.hellfire||0}"></label>
+      <div class="fld">Rank tiers (top N -> QP / grails / tickets)</div>
+      <div id="rd-ranks">${(rw.ranks||[]).map(rankRow).join("")}</div>
+      <button id="rd-addrank" class="ghostbtn">+ Add rank tier</button>
+      <div class="h2">Phases</div>
+      <div id="rd-phases">${(defn.phases||[]).map(phaseBlock).join("")}</div>
+      <button id="rd-addphase" class="ghostbtn">+ Add phase</button>
+      <div id="rd-err" class="ed-err"></div>`;
+    $("rd-addphase").onclick = () => { const c=$("rd-phases"); c.insertAdjacentHTML("beforeend", phaseBlock(null, c.children.length)); };
+    $("rd-addrank").onclick = () => $("rd-ranks").insertAdjacentHTML("beforeend", rankRow(null));
+    $("raid-ed-save").disabled = false;
+    $("raid-ed-save").onclick = () => saveRaid(name);
+  } catch(e){ body.innerHTML = `<div class="errbox">Couldn't load raid. ${esc(e.message)}</div>`; }
+}
+function _spriteId(key){ const el = document.querySelector(`.sprite-id[data-key="${key}"]`); const v = el && el.value; return v ? parseInt(v,10) : undefined; }
+function gatherRaidDef(){
+  const phases = [...document.querySelectorAll("#rd-phases .phase")].map((p, i) => {
+    const eff = [...p.querySelectorAll(".ph-effects .effrow")].map(row => {
+      const o = { effect_type: row.querySelector(".e-type").value, value: parseFloat(row.querySelector(".e-val").value),
+        duration: parseInt(row.querySelector(".e-dur").value,10), target: row.querySelector(".e-tgt").value };
+      if (row.querySelector(".e-unrem input").checked) o.unremovable = true;
+      return o;
+    });
+    const ph = { threshold: parseFloat(p.querySelector(".ph-threshold").value),
+      name: p.querySelector(".ph-name").value.trim(), flavor: p.querySelector(".ph-flavor").value.trim(),
+      atk_mult: parseFloat(p.querySelector(".ph-atk").value) || 1 };
+    const sid = _spriteId("phase-"+i); if (sid) ph.sprite_id = sid;
+    const kitName = p.querySelector(".ph-kit-name").value.trim();
+    if (kitName || eff.length) ph.kit = { name: kitName, trigger: p.querySelector(".ph-kit-trigger").value, effects: eff };
+    return ph;
+  });
+  const ranks = [...document.querySelectorAll("#rd-ranks .rankrow")].map(r => ({
+    top: parseInt(r.querySelector(".rk-top").value,10), qp: parseInt(r.querySelector(".rk-qp").value,10)||0,
+    grails: parseInt(r.querySelector(".rk-grails").value,10)||0, tickets: parseInt(r.querySelector(".rk-tickets").value,10)||0 }));
+  const def = {
+    display_name: $("rd-display").value.trim(),
+    boss_servant_id: parseInt($("rd-boss").value,10),
+    boss_level: parseInt($("rd-level").value,10) || 120,
+    total_hp: parseInt($("rd-total").value,10),
+    battle_hp: parseInt($("rd-battle").value,10),
+    duration_hours: parseInt($("rd-hours").value,10),
+    phases,
+    rewards: {
+      per_fight_qp: parseInt($("rd-perfight").value,10)||0,
+      participation: { qp: parseInt($("rd-part-qp").value,10)||0, embers: parseInt($("rd-part-em").value,10)||0 },
+      last_hit: { qp: parseInt($("rd-lh-qp").value,10)||0, hellfire: parseInt($("rd-lh-hf").value,10)||0 },
+      ranks,
+    },
+  };
+  const dsid = _spriteId("default"); if (dsid) def.default_sprite_id = dsid;
+  return def;
+}
+async function saveRaid(){
+  const name = ($("rd-name").value || "").trim();
+  const err = $("rd-err"); err.textContent = "";
+  if (!name){ err.textContent = "Slug is required."; return; }
+  try {
+    const r = await fetch(API_BASE+"/api/raids/"+encodeURIComponent(name), {
+      method:"PUT", headers:{...authHeaders(), "Content-Type":"application/json"}, body: JSON.stringify({def: gatherRaidDef()})});
+    const d = await r.json().catch(()=>({}));
+    if (!r.ok || !d.ok){ err.textContent = "Rejected: " + ((d.errors||[]).join("; ") || ("HTTP "+r.status)); return; }
+    $("raid-editor").hidden = true; loadRaids();
+  } catch(e){ err.textContent = "Error: " + e.message; }
+}
+// delegated modal handlers (bound once; the modal is static in the page)
+$("raid-ed-cancel").onclick = () => { $("raid-editor").hidden = true; };
+$("raid-editor").addEventListener("click", e => {
+  if (e.target.classList.contains("e-del")){
+    if (e.target.dataset.delphase) e.target.closest(".phase").remove();
+    else e.target.closest(".effrow, .rankrow")?.remove();
+  } else if (e.target.classList.contains("ph-addeff")){
+    e.target.previousElementSibling.insertAdjacentHTML("beforeend", raidEffRow(null));
+  }
+});
+$("raid-editor").addEventListener("change", async e => {
+  if (!e.target.classList.contains("sprite-file")) return;
+  const key = e.target.dataset.key, f = e.target.files[0];
+  if (!f) return;
+  try {
+    const fd = new FormData(); fd.append("file", f);
+    const r = await fetch(API_BASE+"/api/raids/sprite", {method:"POST", headers:authHeaders(), body:fd});
+    const d = await r.json();
+    if (!r.ok || !d.ok) throw new Error((d.errors||["upload failed"]).join("; "));
+    document.querySelector(`.sprite-id[data-key="${key}"]`).value = d.id;
+    const prev = document.querySelector(`.sprite-prev[data-key="${key}"]`);
+    prev.src = API_BASE+"/api/raids/sprite/"+d.id; prev.hidden = false;
+  } catch(err){ alert("Sprite upload failed: " + err.message); }
+});
+
 // ---- hash-routed tabs (nav lives in the shared top nav) ----
-const loaders = { me:loadMe, boards:loadBoards, wars:loadWars };
-const titles = { me:"My stuff", boards:"Leaderboards", wars:"Wars" };
+const loaders = { me:loadMe, boards:loadBoards, wars:loadWars, raids:loadRaids };
+const titles = { me:"My stuff", boards:"Leaderboards", wars:"Wars", raids:"Raids" };
 const loaded = {};
-function currentTab(){ const h = location.hash.replace(/^#/,""); return ["me","boards","wars"].includes(h) ? h : "me"; }
+function currentTab(){ const h = location.hash.replace(/^#/,""); return ["me","boards","wars","raids"].includes(h) ? h : "me"; }
 function show(tab){
   document.querySelectorAll("main > section").forEach(s => s.classList.toggle("on", s.id === "tab-"+tab));
   document.querySelectorAll(".mainnav a").forEach(a => a.classList.toggle("active", a.dataset.nav === tab));
