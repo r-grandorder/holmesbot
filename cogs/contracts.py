@@ -451,15 +451,20 @@ class ContractsCog(commands.Cog):
     async def items(self, interaction: discord.Interaction) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
-        bal = await self.bot.scoring.get_balance(interaction.guild_id, interaction.user.id)
-        grails = await self.bot.contracts.grail_balance(interaction.guild_id, interaction.user.id)
-        tickets = await self.bot.contracts.summon_tickets(interaction.guild_id, interaction.user.id)
+        gid, uid = interaction.guild_id, interaction.user.id
+        bal = await self.bot.scoring.get_balance(gid, uid)
+        grails = await self.bot.contracts.grail_balance(gid, uid)
+        tickets = await self.bot.contracts.summon_tickets(gid, uid)
+        embers, hellfire = await self.bot.contracts.xp_items(gid, uid)
         ge = self.bot.config.grail_emote
         embed = discord.Embed(title="Your Items", color=discord.Color.blurple())
         embed.add_field(name="QP", value=qp(bal))
         te = self.bot.config.summon_ticket_emote
         embed.add_field(name="Holy Grails", value=f"{grails:,} {ge}".strip() if ge else str(grails))
         embed.add_field(name="Summon Tickets", value=f"{tickets:,} {te}".strip() if te else str(tickets))
+        embed.add_field(name="Ember of Wisdom", value=f"{embers:,}")
+        embed.add_field(name="Hellfire of Wisdom", value=f"{hellfire:,}")
+        embed.set_footer(text="Feed XP to a servant with /ember")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.command(name="shop", description="Visit Da Vinci's Workshop to spend QP on Holy Grails and Summon Tickets.")
@@ -616,6 +621,83 @@ class ContractsCog(commands.Cog):
             tag = " (active)" if r["active"] else ""
             out.append(
                 app_commands.Choice(name=f"{s.name[:60]} (Lv {r['level']}/{cap}){tag}", value=s.id)
+            )
+            if len(out) >= 25:
+                break
+        return out
+
+    @app_commands.command(
+        name="ember", description="Feed XP to one of your servants (Ember or Hellfire of Wisdom)."
+    )
+    @app_commands.guild_only()
+    @app_commands.describe(
+        servant="A servant you own (search by name)",
+        item="Which XP item to use (default Ember of Wisdom)",
+        quantity="How many to use (default 1)",
+    )
+    @app_commands.choices(
+        item=[
+            app_commands.Choice(name="Ember of Wisdom", value="embers"),
+            app_commands.Choice(name="Hellfire of Wisdom", value="hellfire"),
+        ]
+    )
+    async def ember(
+        self,
+        interaction: discord.Interaction,
+        servant: int,
+        item: str = "embers",
+        quantity: int = 1,
+    ) -> None:
+        if not self._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        gid, uid = interaction.guild_id, interaction.user.id
+        kind = item if item in ("embers", "hellfire") else "embers"
+        label = "Ember of Wisdom" if kind == "embers" else "Hellfire of Wisdom"
+        s = self.bot.servants.get(servant)
+        embers, hellfire = await self.bot.contracts.xp_items(gid, uid)
+        held = embers if kind == "embers" else hellfire
+        if held <= 0:
+            return await interaction.response.send_message(
+                f"You have no {label}. Get them from chat drops, /shop, or war rewards.",
+                ephemeral=True,
+            )
+        qty = max(1, min(quantity, held))
+        xp_each = contract_game.EMBER_XP if kind == "embers" else contract_game.HELLFIRE_XP
+        res = await self.bot.contracts.add_xp_to(gid, uid, servant, xp_each * qty)
+        if res is None:
+            return await interaction.response.send_message(
+                "You haven't contracted that servant.", ephemeral=True
+            )
+        old, new, cap = res
+        nm = s.name if s else "That servant"
+        if old >= cap:  # already at cap -- nothing was applied; don't spend the item
+            return await interaction.response.send_message(
+                f"{nm} is already at its level cap ({cap}). Raise the cap with a grail first (/grail).",
+                ephemeral=True,
+            )
+        await self.bot.contracts.grant_xp_item(gid, uid, kind, -qty)
+        capnote = " (cap reached)" if new >= cap else ""
+        await interaction.response.send_message(
+            f"Fed {qty} {label} to **{nm}**: Lv {old} -> **{new}**{capnote}. "
+            f"{held - qty} {label} left.",
+            ephemeral=True,
+        )
+
+    @ember.autocomplete("servant")
+    async def _ember_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[int]]:
+        rows = await self.bot.contracts.owned(interaction.guild_id, interaction.user.id)
+        q = current.strip().lower()
+        out: list[app_commands.Choice[int]] = []
+        for r in rows:
+            s = self.bot.servants.get(r["servant_id"])
+            if s is None or (q and q not in s.name.lower()):
+                continue
+            cap = contract_game.level_cap(r["grails_used"])
+            tag = " (at cap)" if r["level"] >= cap else ""
+            out.append(
+                app_commands.Choice(name=f"{s.name[:58]} (Lv {r['level']}/{cap}){tag}", value=s.id)
             )
             if len(out) >= 25:
                 break
@@ -1157,6 +1239,8 @@ class ContractsCog(commands.Cog):
         member="Whose items to adjust (defaults to you)",
         grails="Grail amount (omit to leave unchanged)",
         tickets="Summon Ticket amount (omit to leave unchanged)",
+        embers="Ember of Wisdom amount (omit to leave unchanged)",
+        hellfire="Hellfire of Wisdom amount (omit to leave unchanged)",
         mode="add (default) adjusts by the amount; set replaces the balance",
         quiet="Skip the recipient notification (silent grant)",
     )
@@ -1172,6 +1256,8 @@ class ContractsCog(commands.Cog):
         member: discord.Member | None = None,
         grails: int | None = None,
         tickets: int | None = None,
+        embers: int | None = None,
+        hellfire: int | None = None,
         mode: app_commands.Choice[str] | None = None,
         quiet: bool = False,
     ) -> None:
@@ -1179,12 +1265,13 @@ class ContractsCog(commands.Cog):
             return await interaction.response.send_message(
                 "You need moderator permissions to grant items.", ephemeral=True
             )
-        if grails is None and tickets is None:
+        if grails is None and tickets is None and embers is None and hellfire is None:
             return await interaction.response.send_message(
-                "Specify grails and/or tickets to change.", ephemeral=True
+                "Specify at least one item (grails, tickets, embers, hellfire) to change.",
+                ephemeral=True,
             )
         setmode = (mode.value if mode else "add") == "set"
-        if setmode and ((grails is not None and grails < 0) or (tickets is not None and tickets < 0)):
+        if setmode and any(v is not None and v < 0 for v in (grails, tickets, embers, hellfire)):
             return await interaction.response.send_message(
                 "A set amount can't be negative.", ephemeral=True
             )
@@ -1207,6 +1294,20 @@ class ContractsCog(commands.Cog):
                 if newt < 0:
                     newt = await self.bot.contracts.set_tickets(gid, target.id, 0)
             parts.append(f"tickets: **{newt}**")
+        if embers is not None:
+            newe = (
+                await self.bot.contracts.set_xp_item(gid, target.id, "embers", embers)
+                if setmode
+                else await self.bot.contracts.grant_xp_item(gid, target.id, "embers", embers)
+            )
+            parts.append(f"embers: **{newe}**")
+        if hellfire is not None:
+            newh = (
+                await self.bot.contracts.set_xp_item(gid, target.id, "hellfire", hellfire)
+                if setmode
+                else await self.bot.contracts.grant_xp_item(gid, target.id, "hellfire", hellfire)
+            )
+            parts.append(f"hellfire: **{newh}**")
         whose = "your" if target.id == interaction.user.id else f"{target.display_name}'s"
         await interaction.response.send_message(
             f"Updated {whose} items -- " + ", ".join(parts) + ".", ephemeral=True
@@ -1218,6 +1319,10 @@ class ContractsCog(commands.Cog):
                 sbits.append(f"Holy Grails to **{grails}**")
             if tickets is not None:
                 sbits.append(f"Summon Tickets to **{tickets}**")
+            if embers is not None:
+                sbits.append(f"Embers of Wisdom to **{embers}**")
+            if hellfire is not None:
+                sbits.append(f"Hellfire of Wisdom to **{hellfire}**")
             notice = f"**{mod}** set your " + " and ".join(sbits) + "."
         else:
             gbits = []
@@ -1225,6 +1330,10 @@ class ContractsCog(commands.Cog):
                 gbits.append(f"**{grails}** Holy Grail{'s' if abs(grails) != 1 else ''}")
             if tickets is not None:
                 gbits.append(f"**{tickets}** Summon Ticket{'s' if abs(tickets) != 1 else ''}")
+            if embers is not None:
+                gbits.append(f"**{embers}** Ember{'s' if abs(embers) != 1 else ''} of Wisdom")
+            if hellfire is not None:
+                gbits.append(f"**{hellfire}** Hellfire of Wisdom")
             notice = f"**{mod}** granted you " + " and ".join(gbits) + "!"
         await self._notify_grant(interaction, target, notice, quiet)
 

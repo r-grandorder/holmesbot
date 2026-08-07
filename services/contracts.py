@@ -265,6 +265,19 @@ class ContractService:
             n,
         )
 
+    async def set_xp_item(self, guild_id: int, user_id: int, kind: str, n: int) -> int:
+        """Mod override: set an XP-item balance (kind 'embers'|'hellfire') to exactly max(0, n)."""
+        col = {"embers": "embers", "hellfire": "hellfire"}[kind]
+        n = max(0, n)
+        await self.pool.execute(
+            f"INSERT INTO grail_balance (guild_id, user_id, {col}) VALUES ($1, $2, $3) "
+            f"ON CONFLICT (guild_id, user_id) DO UPDATE SET {col} = $3",
+            guild_id,
+            user_id,
+            n,
+        )
+        return n
+
     async def apply_grail(
         self, guild_id: int, giver_id: int, target_id: int
     ) -> "tuple[str, int | None, int | None]":
