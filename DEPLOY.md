@@ -37,8 +37,37 @@ docker compose pull bot && docker compose up -d bot
 ```
 
 ## Backups
-The entire state is the SQLite file on the `holmes-data` volume:
+The entire state is the SQLite file on the `holmes-data` volume. For a quick manual copy:
 ```bash
 docker compose cp bot:/data/holmesbot.sqlite3 ./backup-$(date +%F).sqlite3
 ```
-(Add litestream later for continuous off-site replication.)
+
+### Automated off-site backups (S3)
+The bot can snapshot the DB and upload it to a **private** S3 bucket on a schedule. It ships dark:
+nothing runs until `BACKUP_S3_BUCKET` is set. Each run takes a consistent snapshot (`VACUUM INTO`,
+safe while the bot keeps writing), gzips it, uploads a timestamped object, and prunes to
+`BACKUP_RETENTION` newest.
+
+1. **Provision** the private bucket + a scoped IAM user:
+   ```bash
+   cd terraform && terraform apply
+   terraform output backup_bucket
+   terraform output backup_access_key_id
+   terraform output -raw backup_secret_access_key
+   ```
+2. **Configure** `.env` (see `.env.example`):
+   ```
+   BACKUP_S3_BUCKET=<backup_bucket>
+   AWS_ACCESS_KEY_ID=<backup_access_key_id>
+   AWS_SECRET_ACCESS_KEY=<backup_secret_access_key>
+   AWS_DEFAULT_REGION=us-east-1
+   # optional: BACKUP_INTERVAL_HOURS=6  BACKUP_RETENTION=30  BACKUP_S3_PREFIX=db-backups/
+   ```
+3. `docker compose up -d` to pick up the new env. On boot the log shows `db backups enabled -> ...`.
+   Mods can trigger one anytime with `/dbbackup`.
+
+**Restore:** download an object, `gunzip` it, and drop it in as `/data/holmesbot.sqlite3`:
+```bash
+aws s3 cp s3://<bucket>/db-backups/<file>.sqlite3.gz - | gunzip > holmesbot.sqlite3
+docker compose cp ./holmesbot.sqlite3 bot:/data/holmesbot.sqlite3 && docker compose restart bot
+```

@@ -14,6 +14,12 @@ aiosqlite==0.22.1
     # via -r requirements.in
 attrs==26.1.0
     # via aiohttp
+boto3==1.43.66
+    # via -r requirements.in
+botocore==1.43.66
+    # via
+    #   boto3
+    #   s3transfer
 discord-py==2.4.0
     # via -r requirements.in
 frozenlist==1.8.0
@@ -22,6 +28,10 @@ frozenlist==1.8.0
     #   aiosignal
 idna==3.18
     # via yarl
+jmespath==1.1.0
+    # via
+    #   boto3
+    #   botocore
 multidict==6.7.1
     # via
     #   aiohttp
@@ -30,11 +40,19 @@ pillow==10.4.0
     # via -r requirements.in
 propcache==0.5.2
     # via yarl
+python-dateutil==2.9.0.post0
+    # via botocore
 python-dotenv==1.0.1
     # via -r requirements.in
 rapidfuzz==3.9.6
     # via -r requirements.in
+s3transfer==0.19.2
+    # via boto3
+six==1.17.0
+    # via python-dateutil
 typing-extensions==4.15.0
     # via aiosignal
+urllib3==2.7.0
+    # via botocore
 yarl==1.24.2
     # via aiohttp

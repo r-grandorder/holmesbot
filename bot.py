@@ -17,6 +17,7 @@ from data.servants import ServantIndex
 from data.shadows import ShadowCatalog
 from db import Database
 from services.aliases import AliasService
+from services.backup import BackupService
 from services.contracts import ContractService
 from services.games import GameService
 from services.guild_config import GuildConfigService
@@ -71,6 +72,7 @@ class HolmesBot(commands.Bot):
         self.guild_config: GuildConfigService | None = None
         self.games: GameService | None = None
         self.contracts: ContractService | None = None
+        self.backups: BackupService | None = None
         self._health_runner: web.AppRunner | None = None
 
     async def setup_hook(self) -> None:
@@ -115,6 +117,23 @@ class HolmesBot(commands.Bot):
             self.kits = KitIndex.load()
             await self.load_extension("cogs.autobattle")
             log.info("autobattle feature enabled (%d kits loaded)", len(self.kits))
+
+        # Automated DB backups ship dark: only when a (private) S3 bucket is configured.
+        if self.config.backup_s3_bucket:
+            self.backups = BackupService(
+                self.db.pool,
+                bucket=self.config.backup_s3_bucket,
+                prefix=self.config.backup_s3_prefix,
+                retention=self.config.backup_retention,
+            )
+            await self.load_extension("cogs.backup")
+            log.info(
+                "db backups enabled -> s3://%s/%s every %dh, keeping %d",
+                self.config.backup_s3_bucket,
+                self.config.backup_s3_prefix,
+                self.config.backup_interval_hours,
+                self.config.backup_retention,
+            )
 
         if self.config.guild_ids:
             # Register directly in our guild(s) for instant command updates. A guild the bot

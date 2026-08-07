@@ -47,6 +47,13 @@ class Config:
     levelup_announce: str
     # Autobattle is experimental; its cog (commands + team config) only loads when this is on.
     autobattle_enabled: bool
+    # Automated SQLite -> S3 backups. Ships dark: the backup task only runs when a bucket is set.
+    # Must be a PRIVATE bucket (never the public assets bucket). AWS creds come from the standard
+    # boto3 env chain (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_DEFAULT_REGION).
+    backup_s3_bucket: str
+    backup_s3_prefix: str
+    backup_interval_hours: int
+    backup_retention: int
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -93,6 +100,10 @@ class Config:
             levelup_announce=levelup_announce,
             autobattle_enabled=(os.environ.get("AUTOBATTLE_ENABLED") or "").strip().lower()
             in ("1", "true", "yes", "on", "enabled"),
+            backup_s3_bucket=(os.environ.get("BACKUP_S3_BUCKET") or "").strip(),
+            backup_s3_prefix=(os.environ.get("BACKUP_S3_PREFIX") or "db-backups/").strip(),
+            backup_interval_hours=int(os.environ.get("BACKUP_INTERVAL_HOURS") or "6"),
+            backup_retention=int(os.environ.get("BACKUP_RETENTION") or "30"),
         )
 
 

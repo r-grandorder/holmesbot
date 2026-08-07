@@ -1,5 +1,6 @@
 aiohttp
 aiosqlite
+boto3
 discord.py
 pillow
 python-dotenv
