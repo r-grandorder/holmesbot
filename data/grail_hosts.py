@@ -140,3 +140,93 @@ GRAIL_HOSTS: dict[str, dict] = {
         ],
     },
 }
+
+
+# Ember-of-Wisdom drop announcers -- Chaldea staff rather than the grail cast. Each uses its own
+# Atlas face (looked up by servant_id at drop time), so no local art is needed. {user} = claimer.
+EMBER_HOSTS: dict[str, dict] = {
+    "mash": {
+        "name": "Mash Kyrielight",
+        "servant_id": 800100,
+        "appear": [
+            "Senpai, a cinder of pure knowledge just materialized! A Servant could grow from it.",
+            "Analysis complete: crystallized wisdom. Perfect for training a Servant, Senpai!",
+            "Something warm and glowing appeared... it feels like it wants to teach someone.",
+        ],
+        "claim": [
+            "There you go, {user}! Put it toward a Servant's growth, okay?",
+            "{user} secured it! I'm sure your Servant will grow stronger.",
+            "Well done, {user}! Wisdom like this shouldn't go to waste.",
+        ],
+    },
+    "davinci_caster": {
+        "name": "Leonardo da Vinci",
+        "servant_id": 500900,
+        "appear": [
+            "Ta-da! A little masterpiece of condensed experience, courtesy of yours truly.",
+            "Behold, crystallized wisdom! Even a genius appreciates a good shortcut.",
+            "I whipped this up between projects. Pure growth, no assembly required.",
+        ],
+        "claim": [
+            "Nicely done, {user}! Feed it to a Servant and watch them flourish.",
+            "{user} claims it! Efficiency -- I approve wholeheartedly.",
+            "There you are, {user}. Wisdom is wasted sitting around, after all.",
+        ],
+    },
+    "davinci_rider": {
+        "name": "Leonardo da Vinci (Rider)",
+        "servant_id": 403500,
+        "appear": [
+            "Step right up~! One glowing ember of wisdom, absolutely free!",
+            "Limited-time offer: crystallized experience, going fast! Who wants it?",
+            "Hehe, look what rolled off the workshop cart~ Grab it before it cools!",
+        ],
+        "claim": [
+            "Sold~! Enjoy the gains, {user}!",
+            "{user} snags the prize! Come again~",
+            "Great pick, {user}! Your Servant's about to grow in style.",
+        ],
+    },
+    "holmes": {
+        "name": "Sherlock Holmes",
+        "servant_id": 900500,
+        "appear": [
+            "Curious -- a nugget of crystallized insight. Its use is elementary enough.",
+            "Observe: a lump of pure wisdom. Its purpose is deduced with ease.",
+            "A rare specimen of condensed experience. Do try to make use of it.",
+        ],
+        "claim": [
+            "Well reasoned, {user}. Apply it where it does the most good.",
+            "{user} secures the evidence. A sound investment in growth.",
+            "The case of the idle wisdom is closed -- {user} put it to work.",
+        ],
+    },
+    "nemo": {
+        "name": "Captain Nemo",
+        "servant_id": 403700,
+        "appear": [
+            "...A cinder of wisdom surfaced. Salvage it.",
+            "Found this in the depths. It will fuel a Servant's growth. Take it.",
+            "Rare cargo -- crystallized experience. Don't let it sink.",
+        ],
+        "claim": [
+            "Good. {user} has it. Put it to use.",
+            "{user} claimed the haul. It won't go to waste on my watch.",
+            "Secured by {user}. Growth is the only course worth charting.",
+        ],
+    },
+    "asclepius": {
+        "name": "Asclepius",
+        "servant_id": 504300,
+        "appear": [
+            "A concentrate of vital wisdom -- excellent for a Servant's development.",
+            "This ember carries the spark of growth. Administer it wisely.",
+            "Consider it a prescription: pure experience, to strengthen the worthy.",
+        ],
+        "claim": [
+            "Take it, {user}. A well-trained Servant is a healthy one.",
+            "{user} receives the remedy. Growth is its own kind of healing.",
+            "There, {user}. See that it nourishes a Servant properly.",
+        ],
+    },
+}

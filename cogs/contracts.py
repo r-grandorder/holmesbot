@@ -14,7 +14,7 @@ from discord.ext import commands, tasks
 from branding import qp
 from data import contract_game
 from data import images
-from data.grail_hosts import GRAIL_HOSTS
+from data.grail_hosts import EMBER_HOSTS, GRAIL_HOSTS
 from data.servants import class_display
 from data.stimmy_hosts import STIMMY_HOSTS
 from permissions import is_mod
@@ -132,6 +132,7 @@ class ContractsCog(commands.Cog):
         self._xp_cd: dict[tuple[int, int], float] = {}  # (guild,user) -> last xp monotonic
         self._single_cd: dict[int, float] = {}          # guild -> last single-grail monotonic
         self._box_cd: dict[int, float] = {}             # guild -> last grail-box monotonic
+        self._ember_cd: dict[int, float] = {}           # guild -> last ember-drop monotonic
         self._qp_cd: dict[int, float] = {}              # guild -> last QP-reward monotonic
         self._duel_cd: dict[tuple[int, int], float] = {}  # (guild,challenger) -> last duel
         self._duel_pair_cd: dict = {}                     # (guild, frozenset{a,b}) -> last duel
@@ -1462,6 +1463,30 @@ class ContractsCog(commands.Cog):
                 and random.random() < cg.GRAIL_BOX_CHANCE):
             self._box_cd[gid] = now
             await self._spawn_box(message.channel)
+            return
+        if (now - self._ember_cd.get(gid, 0.0) >= cg.EMBER_DROP_COOLDOWN
+                and random.random() < cg.EMBER_DROP_CHANCE):
+            self._ember_cd[gid] = now
+            await self._spawn_ember(message.channel)
+
+    async def _spawn_ember(self, channel: discord.abc.Messageable) -> None:
+        host = random.choice(list(EMBER_HOSTS.values()))
+        s = self.bot.servants.get(host["servant_id"])
+        embed = discord.Embed(
+            title="\N{FIRE} An Ember of Wisdom Appears!",
+            description=(
+                f"**{host['name']}:** *\"{random.choice(host['appear'])}\"*\n\n"
+                "An Ember of Wisdom has manifested!\nBe the first to claim it!"
+            ),
+            color=discord.Color.orange(),
+        )
+        if s and s.face:
+            embed.set_thumbnail(url=s.face)
+        view = EmberDropView(self, host)
+        try:
+            view.message = await channel.send(embed=embed, view=view)
+        except discord.HTTPException:
+            pass
 
     async def _award_qp(self, channel: discord.abc.Messageable, user) -> None:
         """Bunyan-style QP reward: auto-award `user` a random (exponential) QP amount with a
@@ -1830,6 +1855,57 @@ class SingleGrailView(discord.ui.View):
         await interaction.response.edit_message(embed=embed, view=self)
         try:
             await interaction.message.delete(delay=6)
+        except discord.HTTPException:
+            pass
+
+
+class EmberDropView(discord.ui.View):
+    """An Ember of Wisdom drop (random Chaldea-staff host). The first whitelisted user claims a
+    bundle of embers, then it self-deletes; an unclaimed one self-deletes on timeout."""
+
+    def __init__(self, cog: ContractsCog, host: dict) -> None:
+        super().__init__(timeout=contract_game.GRAIL_EVENT_TTL)
+        self.cog = cog
+        self.host = host
+        self.claimed = False
+        self.message: discord.Message | None = None
+
+    async def on_timeout(self) -> None:
+        if not self.claimed and self.message is not None:
+            try:
+                await self.message.delete()
+            except discord.HTTPException:
+                pass
+
+    @discord.ui.button(label="Claim Ember", style=discord.ButtonStyle.primary, emoji="\N{FIRE}")
+    async def claim(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not self.cog._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        if self.claimed:
+            return await interaction.response.send_message("Someone already claimed it.", ephemeral=True)
+        self.claimed = True  # set before any await: callbacks run serially, so first wins
+        button.disabled = True
+        self.stop()
+        n = random.randint(contract_game.EMBER_DROP_MIN, contract_game.EMBER_DROP_MAX)
+        total = await self.cog.bot.contracts.grant_xp_item(
+            interaction.guild_id, interaction.user.id, "embers", n
+        )
+        line = random.choice(self.host["claim"]).format(user=interaction.user.display_name)
+        s = self.cog.bot.servants.get(self.host["servant_id"])
+        embed = discord.Embed(
+            title="\N{FIRE} Ember of Wisdom Claimed!",
+            description=(
+                f"**{self.host['name']}:** *\"{line}\"*\n\n"
+                f"{interaction.user.mention} claimed **{n}** Ember{'s' if n != 1 else ''} of Wisdom "
+                f"(now **{total}**) -- feed a servant with /ember."
+            ),
+            color=discord.Color.orange(),
+        )
+        if s and s.face:
+            embed.set_thumbnail(url=s.face)
+        await interaction.response.edit_message(embed=embed, view=self)
+        try:
+            await interaction.message.delete(delay=8)
         except discord.HTTPException:
             pass
 
