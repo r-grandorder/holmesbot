@@ -368,7 +368,8 @@ function gatherRaidDef(){
     const ph = { threshold: parseFloat(p.querySelector(".ph-threshold").value),
       name: p.querySelector(".ph-name").value.trim(), flavor: p.querySelector(".ph-flavor").value.trim(),
       atk_mult: parseFloat(p.querySelector(".ph-atk").value) || 1 };
-    const sid = _spriteId("phase-"+i); if (sid) ph.sprite_id = sid;
+    const sEl = p.querySelector(".sprite-id");  // read from within this phase (index-independent)
+    if (sEl && sEl.value) ph.sprite_id = parseInt(sEl.value, 10);
     const kitName = p.querySelector(".ph-kit-name").value.trim();
     if (kitName || eff.length) ph.kit = { name: kitName, trigger: p.querySelector(".ph-kit-trigger").value, effects: eff };
     return ph;
@@ -418,15 +419,15 @@ $("raid-editor").addEventListener("click", e => {
 });
 $("raid-editor").addEventListener("change", async e => {
   if (!e.target.classList.contains("sprite-file")) return;
-  const key = e.target.dataset.key, f = e.target.files[0];
-  if (!f) return;
+  const slot = e.target.closest(".fld"), f = e.target.files[0];  // set the sibling id/preview
+  if (!f || !slot) return;
   try {
     const fd = new FormData(); fd.append("file", f);
     const r = await fetch(API_BASE+"/api/raids/sprite", {method:"POST", headers:authHeaders(), body:fd});
     const d = await r.json();
     if (!r.ok || !d.ok) throw new Error((d.errors||["upload failed"]).join("; "));
-    document.querySelector(`.sprite-id[data-key="${key}"]`).value = d.id;
-    const prev = document.querySelector(`.sprite-prev[data-key="${key}"]`);
+    slot.querySelector(".sprite-id").value = d.id;
+    const prev = slot.querySelector(".sprite-prev");
     prev.src = API_BASE+"/api/raids/sprite/"+d.id; prev.hidden = false;
   } catch(err){ alert("Sprite upload failed: " + err.message); }
 });
