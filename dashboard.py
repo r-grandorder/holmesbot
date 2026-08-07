@@ -29,6 +29,7 @@ from aiohttp import web
 
 from data import contract_game
 from data.autobattle import battle_stats
+from data.kits import validate_kit, EFFECT_TYPES, TARGETS, TRIGGERS
 
 log = logging.getLogger("holmesbot.dashboard")
 
@@ -90,6 +91,14 @@ def _require_uid(request: web.Request) -> int:
         raise web.HTTPUnauthorized(text='{"error":"not authenticated"}',
                                    content_type="application/json")
     return int(payload["uid"])
+
+
+def _require_mod(request: web.Request) -> int:
+    """Like _require_uid, but also require the user to be in the dashboard_mod_ids allowlist."""
+    uid = _require_uid(request)
+    if uid not in request.app["bot"].config.dashboard_mod_ids:
+        raise web.HTTPForbidden(text='{"error":"not authorized"}', content_type="application/json")
+    return uid
 
 
 async def _resolve_name(bot, guild, uid: int) -> str:
@@ -351,6 +360,85 @@ async def wars_detail(request: web.Request) -> web.Response:
     })
 
 
+# --- kit editor (mod-only, write) ------------------------------------------------------------
+def _sid_arg(request: web.Request) -> int:
+    try:
+        return int(request.match_info["sid"])
+    except (KeyError, ValueError):
+        raise web.HTTPBadRequest(text="bad servant id")
+
+
+async def kit_get(request: web.Request) -> web.Response:
+    """The effective kit for a servant (override if any, else the baked one) + the vocab the
+    editor needs for its dropdowns. Mod-only, since it's the editor's data source."""
+    bot = request.app["bot"]
+    _require_mod(request)
+    if bot.kits is None:
+        raise web.HTTPNotFound(text='{"error":"autobattle disabled"}', content_type="application/json")
+    sid = _sid_arg(request)
+    override = await bot.kit_service.get_override(sid)
+    sk = bot.kits.get(sid)
+    servant = bot.servants.get(sid) if bot.servants else None
+    if override is not None:
+        kit = override
+    elif sk is not None:
+        kit = {"id": sid, **sk.to_dict()}
+    else:
+        kit = None
+    return _json({
+        "servant_id": sid,
+        "servant_name": servant.name if servant else f"#{sid}",
+        "class": servant.class_name if servant else None,
+        "face": servant.face if servant else None,
+        "has_override": override is not None,
+        "kit": kit,
+        "vocab": {"triggers": sorted(TRIGGERS), "targets": sorted(TARGETS),
+                  "effect_types": sorted(EFFECT_TYPES)},
+    })
+
+
+async def kit_put(request: web.Request) -> web.Response:
+    """Validate + save a kit override, then re-apply it live (next battle uses it). Mod-only."""
+    bot = request.app["bot"]
+    uid = _require_mod(request)
+    if bot.kits is None:
+        raise web.HTTPNotFound(text='{"error":"autobattle disabled"}', content_type="application/json")
+    sid = _sid_arg(request)
+    try:
+        kit = await request.json()
+    except Exception:
+        raise web.HTTPBadRequest(text="invalid JSON body")
+    if not isinstance(kit, dict):
+        raise web.HTTPBadRequest(text="body must be a kit object")
+    kit["id"] = sid  # the path is authoritative for the id
+    servant = bot.servants.get(sid) if bot.servants else None
+    if servant:  # keep the battle-log labels even if the client omitted them
+        kit.setdefault("servant_name", servant.name)
+        kit.setdefault("class_name", servant.class_name)
+    errors = validate_kit(kit)
+    if errors:
+        return _json({"ok": False, "errors": errors}, status=400)
+    await bot.kit_service.set_override(sid, kit, uid)
+    await bot.reload_kits()
+    await bot.kit_service.audit(uid, "kit_edit",
+                               {"servant_id": sid, "name": kit.get("name"),
+                                "effects": len(kit.get("effects", []))})
+    return _json({"ok": True, "has_override": True})
+
+
+async def kit_delete(request: web.Request) -> web.Response:
+    """Revert a servant to its baked kit by dropping the override, then re-apply live. Mod-only."""
+    bot = request.app["bot"]
+    uid = _require_mod(request)
+    if bot.kits is None:
+        raise web.HTTPNotFound(text='{"error":"autobattle disabled"}', content_type="application/json")
+    sid = _sid_arg(request)
+    await bot.kit_service.delete_override(sid)
+    await bot.reload_kits()
+    await bot.kit_service.audit(uid, "kit_revert", {"servant_id": sid})
+    return _json({"ok": True, "has_override": False})
+
+
 # --- CORS + mounting -------------------------------------------------------------------------
 def _cors_middleware(origin: str):
     @web.middleware
@@ -365,7 +453,7 @@ def _cors_middleware(origin: str):
             except web.HTTPException as ex:
                 resp = ex
         resp.headers["Access-Control-Allow-Origin"] = origin
-        resp.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        resp.headers["Access-Control-Allow-Methods"] = "GET, PUT, DELETE, OPTIONS"
         resp.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
         resp.headers["Vary"] = "Origin"
         return resp
@@ -391,6 +479,9 @@ def setup_dashboard(app: web.Application, bot) -> None:
     r.add_get("/api/wars/banner", wars_banner)
     r.add_get("/api/wars/history", wars_history)
     r.add_get("/api/wars/{war_id}", wars_detail)
+    r.add_get("/api/kits/{sid}", kit_get)
+    r.add_put("/api/kits/{sid}", kit_put)
+    r.add_delete("/api/kits/{sid}", kit_delete)
     # OPTIONS preflight for every /api/* path (CORS middleware fills in the response).
     r.add_route("OPTIONS", "/api/{tail:.*}", lambda req: web.Response(status=204))
     log.info("dashboard API mounted (guild %d, frontend %s)", _guild_id(bot),

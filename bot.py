@@ -12,12 +12,13 @@ import branding
 from config import Config
 from data import host
 from data.ce import CeIndex
-from data.kits import KitIndex
+from data.kits import KitIndex, Skill
 from data.servants import ServantIndex
 from data.shadows import ShadowCatalog
 from db import Database
 from services.aliases import AliasService
 from services.backup import BackupService
+from services.kits import KitService
 from services.contracts import ContractService
 from services.games import GameService
 from services.guild_config import GuildConfigService
@@ -73,6 +74,7 @@ class HolmesBot(commands.Bot):
         self.games: GameService | None = None
         self.contracts: ContractService | None = None
         self.backups: BackupService | None = None
+        self.kit_service: KitService | None = None
         self._health_runner: web.AppRunner | None = None
 
     async def setup_hook(self) -> None:
@@ -115,8 +117,19 @@ class HolmesBot(commands.Bot):
         # Autobattle is experimental; its cog only loads when AUTOBATTLE_ENABLED is set.
         if self.config.autobattle_enabled:
             self.kits = KitIndex.load()
+            # Layer any live, mod-edited kit overrides (data/kits/*.json stays the baked seed).
+            self.kit_service = KitService(self.db.pool)
+            overrides = await self.kit_service.all_overrides()
+            for sid, kit in overrides:
+                try:
+                    self.kits.set(int(sid), Skill.from_dict(kit))
+                except Exception:
+                    log.warning("skipping bad kit override for %s", sid)
             await self.load_extension("cogs.autobattle")
-            log.info("autobattle feature enabled (%d kits loaded)", len(self.kits))
+            log.info(
+                "autobattle feature enabled (%d kits, %d overrides)",
+                len(self.kits), len(overrides),
+            )
 
         # Automated DB backups ship dark: only when a (private) S3 bucket is configured.
         if self.config.backup_s3_bucket:
@@ -176,6 +189,18 @@ class HolmesBot(commands.Bot):
         await web.TCPSite(runner, "0.0.0.0", self.config.health_port).start()
         self._health_runner = runner
         log.info("health server listening on :%d", self.config.health_port)
+
+    async def reload_kits(self) -> None:
+        """Re-apply DB kit overrides over a fresh baked load, in place, so live battles pick up an
+        edit without a restart. No-op when autobattle is off."""
+        if self.kits is None or self.kit_service is None:
+            return
+        self.kits.reset(dict(KitIndex.load().items()))
+        for sid, kit in await self.kit_service.all_overrides():
+            try:
+                self.kits.set(int(sid), Skill.from_dict(kit))
+            except Exception:
+                log.warning("skipping bad kit override for %s", sid)
 
     async def on_ready(self) -> None:
         log.info("connected as %s", self.user)

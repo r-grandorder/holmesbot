@@ -90,6 +90,15 @@ class SkillEffect:
             buff_duration=d.get("buff_duration"),
         )
 
+    def to_dict(self) -> dict:
+        d = {"effect_type": self.effect_type, "value": self.value,
+             "duration": self.duration, "target": self.target}
+        if self.unremovable:
+            d["unremovable"] = True
+        if self.buff_duration is not None:
+            d["buff_duration"] = self.buff_duration
+        return d
+
 
 @dataclass(frozen=True)
 class Skill:
@@ -114,6 +123,53 @@ class Skill:
             cooldown=d.get("cooldown", 0),
             max_uses=d.get("max_uses", -1),
         )
+
+    def to_dict(self) -> dict:
+        d = {"name": self.name, "description": self.description,
+             "trigger": self.trigger, "effects": [e.to_dict() for e in self.effects]}
+        if self.servant_name:
+            d["servant_name"] = self.servant_name
+        if self.class_name:
+            d["class_name"] = self.class_name
+        if self.cooldown:
+            d["cooldown"] = self.cooldown
+        if self.max_uses != -1:
+            d["max_uses"] = self.max_uses
+        return d
+
+
+def validate_kit(kit: dict) -> "list[str]":
+    """Schema-check one kit dict; returns error strings (empty = valid). Shared with the web kit
+    editor so it rejects exactly what the build compiler (scripts/build_kits.py) would."""
+    errors: list[str] = []
+    for k in ("id", "name", "trigger", "effects"):
+        if k not in kit:
+            errors.append(f"missing field: {k}")
+    if errors:
+        return errors
+    if not isinstance(kit["id"], int) or isinstance(kit["id"], bool):
+        errors.append("id must be an int")
+    if not isinstance(kit["name"], str) or not kit["name"].strip():
+        errors.append("name must be a non-empty string")
+    if kit["trigger"] not in TRIGGERS:
+        errors.append(f"bad trigger: {kit['trigger']!r}")
+    if not isinstance(kit["effects"], list) or not kit["effects"]:
+        errors.append("effects must be a non-empty list")
+    else:
+        for i, e in enumerate(kit["effects"]):
+            loc = f"effect[{i}]"
+            if not isinstance(e, dict):
+                errors.append(f"{loc}: must be an object")
+                continue
+            if e.get("effect_type") not in EFFECT_TYPES:
+                errors.append(f"{loc}: bad effect_type {e.get('effect_type')!r}")
+            if e.get("target") not in TARGETS:
+                errors.append(f"{loc}: bad target {e.get('target')!r}")
+            if not isinstance(e.get("value"), (int, float)) or isinstance(e.get("value"), bool):
+                errors.append(f"{loc}: value must be a number")
+            if not isinstance(e.get("duration"), int) or isinstance(e.get("duration"), bool):
+                errors.append(f"{loc}: duration must be an int")
+    return errors
 
 
 class KitIndex:
@@ -140,3 +196,11 @@ class KitIndex:
     def items(self) -> "list[tuple[int, Skill]]":
         """(servant_id, Skill) for every kitted servant -- used by the /ab kit lookup."""
         return list(self._by_id.items())
+
+    def set(self, servant_id: int, skill: "Skill") -> None:
+        """Layer one (validated) kit onto the live index; applies to the next battle."""
+        self._by_id[servant_id] = skill
+
+    def reset(self, kits: "dict[int, Skill]") -> None:
+        """Replace all kits -- used to re-apply overrides over a fresh baked load."""
+        self._by_id = dict(kits)

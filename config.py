@@ -62,6 +62,9 @@ class Config:
     dashboard_api_base_url: str
     dashboard_frontend_url: str
     dashboard_guild_id: int
+    # Discord user ids allowed to use the dashboard's write features (the kit editor). Explicit
+    # allowlist -- kit edits are powerful, so we gate on named ids rather than a Discord role.
+    dashboard_mod_ids: frozenset[int]
 
     @property
     def dashboard_enabled(self) -> bool:
@@ -125,6 +128,10 @@ class Config:
             dashboard_api_base_url=(os.environ.get("DASHBOARD_API_BASE_URL") or "").strip().rstrip("/"),
             dashboard_frontend_url=(os.environ.get("DASHBOARD_FRONTEND_URL") or "").strip().rstrip("/"),
             dashboard_guild_id=int(os.environ.get("DASHBOARD_GUILD_ID") or "0"),
+            dashboard_mod_ids=frozenset(
+                int(x) for x in (os.environ.get("DASHBOARD_MOD_IDS") or "").replace(",", " ").split()
+                if x.isdigit() and int(x) > 0
+            ),
         )
 
 
