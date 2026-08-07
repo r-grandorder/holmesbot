@@ -49,7 +49,7 @@ function renderNavAuth() {
     el.innerHTML = `<button class="btn ghost" id="navLogout">Log out</button>`;
     document.getElementById("navLogout").onclick = () => { clearToken(); location.reload(); };
   } else {
-    el.innerHTML = `<a class="btn" href="${API_BASE}/api/auth/login">Login with Discord</a>`;
+    el.innerHTML = `<a class="btn-discord" href="${API_BASE}/api/auth/login">Log in with Discord</a>`;
   }
 }
 

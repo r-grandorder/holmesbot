@@ -51,6 +51,17 @@ a{color:var(--blue); text-decoration:none;}
 .btn:hover{filter:brightness(1.06);}
 .btn.ghost{background:transparent; color:var(--text); border:1px solid var(--line);}
 .btn.ghost:hover{background:rgba(255,255,255,.05); filter:none;}
+/* Canonical Discord "Log in with Discord" button: blurple, bold, with a raised pressable edge. */
+.btn-discord{
+  display:inline-flex; align-items:center; gap:9px; background:#5865f2; color:#fff;
+  font-weight:700; font-size:14px; border:none; border-radius:12px; padding:10px 18px;
+  text-decoration:none; cursor:pointer; white-space:nowrap;
+  box-shadow:0 4px 0 #4149c9, 0 6px 12px rgba(0,0,0,.32);
+  transition:background .12s, transform .06s, box-shadow .06s;
+}
+.btn-discord:hover{background:#4f5bda;}
+.btn-discord:active{transform:translateY(3px); box-shadow:0 1px 0 #4149c9, 0 2px 6px rgba(0,0,0,.3);}
+.btn-discord svg{width:20px; height:20px; fill:currentColor;}
 
 /* ---- layout ---- */
 header.page{padding:24px 22px 4px; max-width:1180px; margin:0 auto;}
