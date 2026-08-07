@@ -58,7 +58,8 @@ _EVENTS = [
     ("qp_reward", "QP reward (a chatter finds QP)"),
     ("grail_single", "Single grail (Draco)"),
     ("grail_box", "Grail present box (Gilgamesh)"),
-    ("ember", "Embers of Wisdom (Chaldea staff)"),
+    ("ember", "Single ember (Chaldea staff)"),
+    ("ember_box", "Ember present box (Chaldea staff)"),
 ]
 _EVENT_CHOICES = [app_commands.Choice(name=lbl, value=val) for val, lbl in _EVENTS]
 _EVENT_LABEL = {val: lbl for val, lbl in _EVENTS}
@@ -67,6 +68,7 @@ _EVENT_SPAWN = {
     "grail_single": "_spawn_single",
     "grail_box": "_spawn_box",
     "ember": "_spawn_ember",
+    "ember_box": "_spawn_ember_box",
 }
 
 
@@ -137,7 +139,8 @@ class ContractsCog(commands.Cog):
         self._xp_cd: dict[tuple[int, int], float] = {}  # (guild,user) -> last xp monotonic
         self._single_cd: dict[int, float] = {}          # guild -> last single-grail monotonic
         self._box_cd: dict[int, float] = {}             # guild -> last grail-box monotonic
-        self._ember_cd: dict[int, float] = {}           # guild -> last ember-drop monotonic
+        self._ember_cd: dict[int, float] = {}           # guild -> last single-ember-drop monotonic
+        self._ember_box_cd: dict[int, float] = {}       # guild -> last ember-box monotonic
         self._qp_cd: dict[int, float] = {}              # guild -> last QP-reward monotonic
         self._duel_cd: dict[tuple[int, int], float] = {}  # (guild,challenger) -> last duel
         self._duel_pair_cd: dict = {}                     # (guild, frozenset{a,b}) -> last duel
@@ -1480,6 +1483,20 @@ class ContractsCog(commands.Cog):
                 and random.random() < cg.EMBER_DROP_CHANCE):
             self._ember_cd[gid] = now
             await self._spawn_ember(message.channel)
+            return
+        if (now - self._ember_box_cd.get(gid, 0.0) >= cg.EMBER_BOX_COOLDOWN
+                and random.random() < cg.EMBER_BOX_CHANCE):
+            self._ember_box_cd[gid] = now
+            await self._spawn_ember_box(message.channel)
+
+    async def _spawn_ember_box(self, channel: discord.abc.Messageable) -> None:
+        host = random.choice(list(EMBER_HOSTS.values()))
+        uses = random.randint(contract_game.EMBER_BOX_USES_MIN, contract_game.EMBER_BOX_USES_MAX)
+        view = EmberBoxView(self, host, uses)
+        try:
+            view.message = await channel.send(embed=view.render(), view=view)
+        except discord.HTTPException:
+            pass
 
     async def _spawn_ember(self, channel: discord.abc.Messageable) -> None:
         host = random.choice(list(EMBER_HOSTS.values()))
@@ -1936,6 +1953,82 @@ class EmberDropView(discord.ui.View):
             await interaction.message.delete(delay=8)
         except discord.HTTPException:
             pass
+
+
+class EmberBoxView(discord.ui.View):
+    """An ember present box (random Chaldea-staff host). Whitelisted users each open it once for a
+    handful of embers until it runs out, then it self-deletes; leftovers self-delete on timeout."""
+
+    def __init__(self, cog: ContractsCog, host: dict, uses: int) -> None:
+        super().__init__(timeout=contract_game.GRAIL_EVENT_TTL)
+        self.cog = cog
+        self.host = host
+        self.uses = uses
+        self.remaining = uses
+        self.claims: dict[int, int] = {}   # user_id -> embers taken
+        self.appear = random.choice(host["appear"])
+        self.message: discord.Message | None = None
+
+    def render(self, *, empty: bool = False) -> discord.Embed:
+        if empty:
+            line = random.choice(self.host["claim"]).format(user="everyone")
+            body = f"**{self.host['name']}:** *\"{line}\"*\n\nThe box is empty."
+        else:
+            body = (
+                f"**{self.host['name']}:** *\"{self.appear}\"*\n\n"
+                "A box of embers turned up. Each opening gives a handful.\n\n"
+                f"**{self.remaining}** of **{self.uses}** openings left."
+            )
+        embed = discord.Embed(
+            title="\N{FIRE} An Ember Present Box Appears!",
+            description=body,
+            color=discord.Color.orange(),
+        )
+        s = self.cog.bot.servants.get(self.host["servant_id"])
+        if s and s.face:
+            embed.set_thumbnail(url=s.face)
+        if self.claims:
+            embed.add_field(
+                name="Opened by",
+                value=" ".join(f"<@{uid}> (+{n})" for uid, n in self.claims.items())[:1024],
+                inline=False,
+            )
+        return embed
+
+    async def on_timeout(self) -> None:
+        if self.message is not None:
+            try:
+                await self.message.delete()
+            except discord.HTTPException:
+                pass
+
+    @discord.ui.button(label="Open the box", style=discord.ButtonStyle.primary, emoji="\N{FIRE}")
+    async def claim(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not self.cog._allowed(interaction.user.id):
+            return await interaction.response.send_message(_DENY, ephemeral=True)
+        if interaction.user.id in self.claims:
+            return await interaction.response.send_message("You already opened it.", ephemeral=True)
+        if self.remaining <= 0:
+            return await interaction.response.send_message("The box is empty.", ephemeral=True)
+        self.remaining -= 1  # set before any await: callbacks run serially, so claims can't race
+        n = random.randint(
+            contract_game.EMBER_BOX_PER_CLAIM_MIN, contract_game.EMBER_BOX_PER_CLAIM_MAX
+        )
+        self.claims[interaction.user.id] = n
+        await self.cog.bot.contracts.grant_xp_item(
+            interaction.guild_id, interaction.user.id, "embers", n
+        )
+        if self.remaining <= 0:
+            for child in self.children:
+                child.disabled = True
+            self.stop()
+            await interaction.response.edit_message(embed=self.render(empty=True), view=self)
+            try:
+                await interaction.message.delete(delay=6)
+            except discord.HTTPException:
+                pass
+        else:
+            await interaction.response.edit_message(embed=self.render(), view=self)
 
 
 class BoxGrailView(discord.ui.View):

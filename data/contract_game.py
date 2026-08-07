@@ -50,7 +50,12 @@ HELLFIRE_XP = 6000        # XP per Hellfire of Wisdom (~a fresh servant to Lv60)
 EMBER_SHOP_COST = 2000    # QP to buy one Ember in /shop (Da Vinci's Workshop)
 EMBER_DROP_COOLDOWN = 40 * 60   # seconds; at most one Ember drop per guild per window
 EMBER_DROP_CHANCE = 0.02        # chance per qualifying message once off cooldown
-EMBER_DROP_MIN, EMBER_DROP_MAX = 1, 4   # bundle size the first claimer takes
+EMBER_DROP_MIN, EMBER_DROP_MAX = 1, 4   # bundle size the single-ember drop's first claimer takes
+# Ember present box: like the grail box -- several people each grab a handful until it's empty.
+EMBER_BOX_COOLDOWN = 90 * 60
+EMBER_BOX_CHANCE = 0.01
+EMBER_BOX_USES_MIN, EMBER_BOX_USES_MAX = 3, 6           # how many people can open the box
+EMBER_BOX_PER_CLAIM_MIN, EMBER_BOX_PER_CLAIM_MAX = 1, 3  # embers each opening gives
 WAR_HELLFIRE_REWARD = 2   # Hellfire of Wisdom to each member of the winning faction
 
 # --- QP reward event (Bunyan's qp_reward: a chatter randomly finds QP, auto-awarded). The
