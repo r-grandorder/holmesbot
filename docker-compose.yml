@@ -36,5 +36,17 @@ services:
     # Only update containers labeled watchtower.enable=true (the bot), every 5 min.
     command: --cleanup --label-enable --interval 300
 
+  # Cloudflare Tunnel exposing the bot's :8080 (dashboard API) at a public hostname, with no
+  # inbound ports opened. Opt-in: only starts with `docker compose --profile tunnel up -d`.
+  # Set TUNNEL_TOKEN in .env from the remotely-managed tunnel you create in the CF Zero Trust
+  # dashboard, and point that tunnel's public hostname at the service http://bot:8080.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    profiles: ["tunnel"]
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+
 volumes:
   holmes-data:

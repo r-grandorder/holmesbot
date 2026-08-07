@@ -77,27 +77,39 @@ An optional Discord-login dashboard for **viewing** inventory, servants, leaderb
 The bot stays the only way to *change* anything. It ships dark: the API only mounts when all four
 `DASHBOARD_*` vars (plus `DISCORD_CLIENT_SECRET`) are set. Two pieces: the API runs inside the bot
 on `:8080` (same process, same SQLite connection); the SPA (`web/dashboard.html`) is served by the
-existing Cloudflare Pages site.
+existing Cloudflare Pages site. Layout (domain `sherlockholmesbot.com`):
 
-Because the API lives on your self-hosted box, the browser reaches it through a **Cloudflare
-Tunnel** (the Pages site can't see your DB directly). One-time setup:
+- `https://sherlockholmesbot.com` -> Pages (kit browser at `/`, dashboard at `/dashboard.html`)
+- `https://api.sherlockholmesbot.com` -> the bot's `:8080`, via a Cloudflare Tunnel
 
-1. **Expose the API** with a Cloudflare Tunnel (`cloudflared`) mapping a public hostname (e.g.
-   `https://api.holmesbot.example`) to `http://localhost:8080`. No inbound ports opened.
-2. **Discord OAuth:** in the app's OAuth2 settings, add the redirect
-   `https://api.holmesbot.example/api/auth/callback`.
-3. **Configure `.env`:**
+### One-time setup
+0. **Domain on Cloudflare.** If bought via Cloudflare Registrar it's already there. Otherwise:
+   CF dashboard -> Add a site -> `sherlockholmesbot.com` (Free) -> change the nameservers at your
+   registrar to the two CF gives you, and wait for "Active". (Make sure WHOIS privacy is on.)
+1. **Frontend domain (Pages).** Workers & Pages -> `holmesbot-kits` -> Custom domains -> add
+   `sherlockholmesbot.com`. CF creates the DNS record + cert automatically.
+2. **API tunnel.** Zero Trust -> Networks -> Tunnels -> Create a tunnel -> Cloudflared -> name it
+   (e.g. `holmesbot`). Copy the **token**, put it in `.env` as `TUNNEL_TOKEN=`. Then under the
+   tunnel's **Public Hostnames**, add: subdomain `api`, domain `sherlockholmesbot.com`, service
+   `HTTP` `http://bot:8080` (the compose service name). CF creates the `api` DNS record.
+3. **Discord OAuth.** Developer Portal -> your app -> OAuth2 -> Redirects -> add
+   `https://api.sherlockholmesbot.com/api/auth/callback` -> Save.
+4. **`.env`** (see `.env.example` -- the domain values are pre-filled there):
    ```
    DASHBOARD_SESSION_SECRET=<openssl rand -hex 32>
-   DASHBOARD_API_BASE_URL=https://api.holmesbot.example
-   DASHBOARD_FRONTEND_URL=https://holmesbot-kits.pages.dev
+   DASHBOARD_API_BASE_URL=https://api.sherlockholmesbot.com
+   DASHBOARD_FRONTEND_URL=https://sherlockholmesbot.com
    DASHBOARD_GUILD_ID=0            # 0 = first of GUILD_IDS
+   TUNNEL_TOKEN=<from step 2>
    ```
-   then `docker compose up -d` (boot log shows `dashboard API mounted ...`).
-4. **Point the SPA at the API:** edit the `API_BASE` constant at the top of `web/dashboard.html`
-   to your tunnel URL, commit, and let the site workflow deploy. Visit
-   `https://holmesbot-kits.pages.dev/dashboard.html`.
+5. **Bring it up** with the tunnel profile:
+   ```
+   docker compose --profile tunnel up -d
+   ```
+   Boot log shows `dashboard API mounted ...`; `curl https://api.sherlockholmesbot.com/health` -> `ok`.
+6. **Ship the SPA.** `web/dashboard.html` already points `API_BASE` at `api.sherlockholmesbot.com`,
+   so just let the site workflow deploy. Visit `https://sherlockholmesbot.com/dashboard.html`.
 
-Auth is a signed bearer token (HMAC) the SPA keeps in `localStorage` -- no cookies, so it works
-cross-origin on `*.pages.dev` with no custom domain. Everything is read-only; the token grants no
-write access. If you later add a custom domain for both, this can move to a same-site cookie.
+Auth is a signed bearer token (HMAC) the SPA keeps in `localStorage` -- no cookies, so no
+third-party-cookie issues. Everything is read-only; the token grants no write access. With the
+custom domain in place you *could* later switch to a same-site cookie, but it isn't necessary.
