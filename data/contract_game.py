@@ -42,6 +42,17 @@ GRAIL_BOX_CHANCE = 0.01
 GRAIL_BOX_USES_MIN, GRAIL_BOX_USES_MAX = 3, 8   # how many one-grail claims the box holds
 GRAIL_EVENT_TTL = 120.0           # seconds an unfinished event lingers before self-deleting
 
+# --- XP items (fed to any servant via /ember, capped by its grail cap; the XP curve is cheap
+# below Lv60 so keep these modest). Ember: small tier, chat drops + Da Vinci's Workshop. Hellfire:
+# big tier, war rewards + mod grant only. See EMBER_HOSTS for the drop announcers. ---
+EMBER_XP = 1500           # XP per Ember of Wisdom
+HELLFIRE_XP = 6000        # XP per Hellfire of Wisdom (~a fresh servant to Lv60)
+EMBER_SHOP_COST = 2000    # QP to buy one Ember in /shop (Da Vinci's Workshop)
+EMBER_DROP_COOLDOWN = 40 * 60   # seconds; at most one Ember drop per guild per window
+EMBER_DROP_CHANCE = 0.02        # chance per qualifying message once off cooldown
+EMBER_DROP_MIN, EMBER_DROP_MAX = 1, 4   # bundle size the first claimer takes
+WAR_HELLFIRE_REWARD = 2   # Hellfire of Wisdom to each member of the winning faction
+
 # --- QP reward event (Bunyan's qp_reward: a chatter randomly finds QP, auto-awarded). The
 # amount comes from the HOST's wealth tier (a triangular roll), so a rich host like Gilgamesh
 # (up to ~10 summons) pays far more than a poor one like Jinako. Self-deletes. ---

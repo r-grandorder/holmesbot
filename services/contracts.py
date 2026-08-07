@@ -122,6 +122,40 @@ class ContractService:
                 )
                 return row["servant_id"], row["level"], new_level, cap
 
+    async def add_xp_to(
+        self, guild_id: int, user_id: int, servant_id: int, amount: int
+    ) -> "tuple[int, int, int] | None":
+        """Add xp to a specific owned servant (not just the active one) and roll it into levels --
+        used by /ember. Returns (old_level, new_level, cap), or None if the servant isn't
+        contracted. If it's already at cap, returns (level, level, cap) WITHOUT writing, so the
+        caller can refuse rather than waste the item (apply_xp discards xp past the cap)."""
+        async with self.pool.acquire() as conn:
+            async with conn.transaction():
+                row = await conn.fetchrow(
+                    "SELECT level, xp, grails_used FROM servant_contracts "
+                    "WHERE guild_id = $1 AND user_id = $2 AND servant_id = $3",
+                    guild_id,
+                    user_id,
+                    servant_id,
+                )
+                if row is None:
+                    return None
+                cap = contract_game.level_cap(row["grails_used"])
+                if row["level"] >= cap:
+                    return row["level"], row["level"], cap
+                new_level, new_xp = contract_game.apply_xp(row["level"], row["xp"] + amount, cap)
+                await conn.execute(
+                    "UPDATE servant_contracts SET level = $4, xp = $5, "
+                    "updated_at = CURRENT_TIMESTAMP "
+                    "WHERE guild_id = $1 AND user_id = $2 AND servant_id = $3",
+                    guild_id,
+                    user_id,
+                    servant_id,
+                    new_level,
+                    new_xp,
+                )
+                return row["level"], new_level, cap
+
     async def set_active_level(self, guild_id: int, user_id: int, level: int) -> None:
         """Mod override: set the active servant's level, resetting intra-level xp to 0. The
         caller validates `level` against the grail cap first."""
@@ -208,6 +242,28 @@ class ContractService:
             n,
         )
         return n
+
+    async def xp_items(self, guild_id: int, user_id: int) -> "tuple[int, int]":
+        """(embers, hellfire) the user holds -- the XP-feeding items spent via /ember."""
+        row = await self.pool.fetchrow(
+            "SELECT embers, hellfire FROM grail_balance WHERE guild_id = $1 AND user_id = $2",
+            guild_id,
+            user_id,
+        )
+        return (row["embers"], row["hellfire"]) if row else (0, 0)
+
+    async def grant_xp_item(self, guild_id: int, user_id: int, kind: str, n: int) -> int:
+        """Adjust an XP-item balance (kind 'embers'|'hellfire') by n (grant +, spend -); floors at
+        0. Returns the new balance."""
+        col = {"embers": "embers", "hellfire": "hellfire"}[kind]  # whitelist the column name
+        return await self.pool.fetchval(
+            f"INSERT INTO grail_balance (guild_id, user_id, {col}) VALUES ($1, $2, MAX(0, $3)) "
+            f"ON CONFLICT (guild_id, user_id) DO UPDATE SET {col} = MAX(0, {col} + $3) "
+            f"RETURNING {col}",
+            guild_id,
+            user_id,
+            n,
+        )
 
     async def apply_grail(
         self, guild_id: int, giver_id: int, target_id: int
