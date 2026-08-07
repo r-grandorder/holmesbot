@@ -54,6 +54,23 @@ class Config:
     backup_s3_prefix: str
     backup_interval_hours: int
     backup_retention: int
+    # Read-only web dashboard (Discord-OAuth). Ships dark: mounted on the :8080 app only when all
+    # of session_secret + api_base_url + frontend_url + DISCORD_CLIENT_SECRET are set. api_base_url
+    # is the API's public URL (the Cloudflare Tunnel hostname), frontend_url is where the SPA lives
+    # (also the allowed CORS origin), guild_id scopes it (defaults to the first configured guild).
+    dashboard_session_secret: str
+    dashboard_api_base_url: str
+    dashboard_frontend_url: str
+    dashboard_guild_id: int
+
+    @property
+    def dashboard_enabled(self) -> bool:
+        return bool(
+            self.dashboard_session_secret
+            and self.dashboard_api_base_url
+            and self.dashboard_frontend_url
+            and self.client_secret
+        )
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -104,6 +121,10 @@ class Config:
             backup_s3_prefix=(os.environ.get("BACKUP_S3_PREFIX") or "db-backups/").strip(),
             backup_interval_hours=int(os.environ.get("BACKUP_INTERVAL_HOURS") or "6"),
             backup_retention=int(os.environ.get("BACKUP_RETENTION") or "30"),
+            dashboard_session_secret=(os.environ.get("DASHBOARD_SESSION_SECRET") or "").strip(),
+            dashboard_api_base_url=(os.environ.get("DASHBOARD_API_BASE_URL") or "").strip().rstrip("/"),
+            dashboard_frontend_url=(os.environ.get("DASHBOARD_FRONTEND_URL") or "").strip().rstrip("/"),
+            dashboard_guild_id=int(os.environ.get("DASHBOARD_GUILD_ID") or "0"),
         )
 
 

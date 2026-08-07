@@ -71,3 +71,33 @@ safe while the bot keeps writing), gzips it, uploads a timestamped object, and p
 aws s3 cp s3://<bucket>/db-backups/<file>.sqlite3.gz - | gunzip > holmesbot.sqlite3
 docker compose cp ./holmesbot.sqlite3 bot:/data/holmesbot.sqlite3 && docker compose restart bot
 ```
+
+## Web dashboard (read-only)
+An optional Discord-login dashboard for **viewing** inventory, servants, leaderboards, and wars.
+The bot stays the only way to *change* anything. It ships dark: the API only mounts when all four
+`DASHBOARD_*` vars (plus `DISCORD_CLIENT_SECRET`) are set. Two pieces: the API runs inside the bot
+on `:8080` (same process, same SQLite connection); the SPA (`web/dashboard.html`) is served by the
+existing Cloudflare Pages site.
+
+Because the API lives on your self-hosted box, the browser reaches it through a **Cloudflare
+Tunnel** (the Pages site can't see your DB directly). One-time setup:
+
+1. **Expose the API** with a Cloudflare Tunnel (`cloudflared`) mapping a public hostname (e.g.
+   `https://api.holmesbot.example`) to `http://localhost:8080`. No inbound ports opened.
+2. **Discord OAuth:** in the app's OAuth2 settings, add the redirect
+   `https://api.holmesbot.example/api/auth/callback`.
+3. **Configure `.env`:**
+   ```
+   DASHBOARD_SESSION_SECRET=<openssl rand -hex 32>
+   DASHBOARD_API_BASE_URL=https://api.holmesbot.example
+   DASHBOARD_FRONTEND_URL=https://holmesbot-kits.pages.dev
+   DASHBOARD_GUILD_ID=0            # 0 = first of GUILD_IDS
+   ```
+   then `docker compose up -d` (boot log shows `dashboard API mounted ...`).
+4. **Point the SPA at the API:** edit the `API_BASE` constant at the top of `web/dashboard.html`
+   to your tunnel URL, commit, and let the site workflow deploy. Visit
+   `https://holmesbot-kits.pages.dev/dashboard.html`.
+
+Auth is a signed bearer token (HMAC) the SPA keeps in `localStorage` -- no cookies, so it works
+cross-origin on `*.pages.dev` with no custom domain. Everything is read-only; the token grants no
+write access. If you later add a custom domain for both, this can move to a same-site cookie.

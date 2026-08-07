@@ -166,6 +166,11 @@ class HolmesBot(commands.Bot):
 
         app = web.Application()
         app.router.add_get("/health", health)
+        # Read-only web dashboard shares this app (and the one SQLite connection). Ships dark.
+        if self.config.dashboard_enabled:
+            from dashboard import setup_dashboard
+
+            setup_dashboard(app, self)
         runner = web.AppRunner(app)
         await runner.setup()
         await web.TCPSite(runner, "0.0.0.0", self.config.health_port).start()
