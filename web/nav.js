@@ -26,7 +26,7 @@ function renderTopNav() {
   if (!host) return;
   host.outerHTML = `
     <header class="topnav">
-      <a class="brand" href="/"><img class="brandlogo" src="icons/logo.png" alt="" onerror="this.remove()">Holmes&nbsp;Bot</a>
+      <a class="brand" href="/"><img class="brandlogo" src="icons/logo.png" alt="" onerror="this.remove()"><span class="brandtext">Holmes&nbsp;Bot</span></a>
       <nav class="mainnav">
         <a href="/" data-nav="kits">Autobattle Kits</a>
         <a href="/dashboard.html#me" data-nav="me">My stuff</a>

@@ -215,3 +215,6 @@ section.on{display:block; animation:fade .2s ease;}
   header.page,main{padding-left:14px; padding-right:14px;}
   .effrow{grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
 }
+@media (max-width:480px){
+  .brandtext{display:none;}  /* portrait phones: keep just the logo; the wordmark crowds the nav row */
+}
