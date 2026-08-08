@@ -257,11 +257,11 @@ function renderRaidDefs(defs){
   const el = $("raid-defs");
   if (!defs.length){ el.innerHTML = `<div class="empty">No raids configured yet.</div>`; return; }
   el.innerHTML = defs.map(d=>`<div class="card"><div class="body">
-    <div class="name">${esc(d.display_name)} <span class="dim">(${esc(d.name)})</span> ${d.enabled?'<span class="badge">Live</span>':''}</div>
+    <div class="name">${esc(d.display_name)} <span class="dim">(${esc(d.name)})</span> ${d.running?'<span class="badge">Live</span>':''}</div>
     <div style="margin-top:8px;display:flex;gap:8px">
       <button class="editbtn" data-edit="${esc(d.name)}">Edit</button>
       <button class="editbtn" data-dup="${esc(d.name)}">Duplicate</button>
-      <button class="editbtn" data-toggle="${esc(d.name)}" data-on="${d.enabled?1:0}">${d.enabled?"Disable":"Enable"}</button>
+      <button class="editbtn" data-toggle="${esc(d.name)}" data-on="${d.running?1:0}">${d.running?"End raid":"Start raid"}</button>
     </div></div></div>`).join("");
   el.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openRaidEditor(b.dataset.edit));
   el.querySelectorAll("[data-dup]").forEach(b=>b.onclick=()=>openRaidEditor(b.dataset.dup, {duplicate:true}));

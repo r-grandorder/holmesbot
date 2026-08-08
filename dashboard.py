@@ -459,13 +459,18 @@ async def kit_overrides_all(request: web.Request) -> web.Response:
 
 # --- raids: staff config (mod-only) + public status/history ----------------------------------
 async def raids_list(request: web.Request) -> web.Response:
-    """Public: all raid definitions (name/display/enabled) for the config list + client menus."""
+    """Public: all raid definitions for the config list + client menus. `enabled` is the persistent
+    /raidstart gate; `running` is whether a raid instance is actually live right now. These differ: a
+    raid can end on its own (boss defeated / expiry) while the def stays enabled, so the UI badge
+    should track `running`, not `enabled`."""
     bot = request.app["bot"]
     if bot.raids is None:
         return _json({"raids": []})
+    active = await bot.raids.active(_guild_id(bot))
+    running_def = active["def_name"] if active else None
     return _json({"raids": [
         {"name": n, "display_name": d.get("display_name", n), "enabled": e,
-         "boss_servant_id": d.get("boss_servant_id")}
+         "running": n == running_def, "boss_servant_id": d.get("boss_servant_id")}
         for n, d, e in await bot.raids.all_defs()
     ]})
 
