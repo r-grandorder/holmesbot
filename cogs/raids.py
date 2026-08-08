@@ -159,6 +159,8 @@ class Raids(commands.Cog):
             kit = self.bot.kits.get(sid) if (sid and self.bot.kits) else None
         c = engine.combatant(boss, int(defn.get("boss_level", 120)), 0, kit=kit)
         c["max_hp"] = c["current_hp"] = battle_hp
+        c["ik_immune"] = True    # raid bosses are immune to instant-kill by default
+        c["seal_immune"] = True  # ...and to skill seal, so the boss kit always fires
         c["atk"] = int(c["atk"] * float((phase or {}).get("atk_mult", 1)))
         c["name"] = (phase or {}).get("name") or defn.get("display_name") or c["name"]
         return c, boss

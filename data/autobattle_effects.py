@@ -182,6 +182,10 @@ def apply_effect(servant: dict, effect: Effect, battle_log: "list[str] | None" =
                 return False
 
     if effect.type == EffectType.SKILL_SEAL:
+        if servant.get("seal_immune"):  # e.g. raid bosses: skill can never be sealed
+            if battle_log is not None:
+                battle_log.append(f"{servant['name']} is immune to skill seal.")
+            return False
         resist = get_effect(servant, EffectType.SKILL_SEAL_RESIST)
         if resist and random.random() < resist.value:
             if battle_log is not None:

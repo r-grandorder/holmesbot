@@ -228,12 +228,16 @@ def check_and_trigger_skills(trigger, user, user_team, enemy_team, battle_log, s
     state = user.get("skill_state")
     if not skill or not state or skill.trigger != trigger:
         return
+    # seal_immune (e.g. raid bosses) ignores both an applied skill-seal debuff AND the on-enter
+    # "sealed_by_enemy" path (the latter never consults skill_seal_resist), so the kit always fires.
+    immune = user.get("seal_immune")
+    sealed = has_effect(user, EffectType.SKILL_SEAL) and not immune
     if trigger == ON_ENTER:
-        if sealed_by_enemy or has_effect(user, EffectType.SKILL_SEAL):
+        if (sealed_by_enemy and not immune) or sealed:
             battle_log.append(f"{format_name(user)}'s skill is sealed!")
             return
     else:
-        if state["activated_this_battle"] or has_effect(user, EffectType.SKILL_SEAL):
+        if state["activated_this_battle"] or sealed:
             return
     execute_skill(skill, user, user_team, enemy_team, battle_log)
 
@@ -311,6 +315,9 @@ def check_instant_kill(attacker: dict, defender: dict, battle_log: list) -> bool
     if not ik:
         return False
     if random.random() < ik.value:
+        if defender.get("ik_immune"):  # e.g. raid bosses: can't be one-shot out of their battle HP
+            battle_log.append(f"{format_name(defender)} resists instant death!")
+            return False
         defender["current_hp"] = 0
         battle_log.append(f"{format_name(attacker)} instantly defeats {format_name(defender)}!")
         return True
