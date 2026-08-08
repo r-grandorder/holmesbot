@@ -43,6 +43,7 @@ async function api(path){
 }
 
 const $ = id => document.getElementById(id);
+const authHeaders = () => token() ? {Authorization:"Bearer "+token()} : {};  // for raid fetches outside api()
 const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const stars = n => `<span class="stars">${"★".repeat(n||0)}</span>`;
 const prettyClass = s => (s||"").replace(/([a-z])([A-Z])/g,"$1 $2").replace(/\b\w/g,c=>c.toUpperCase());
