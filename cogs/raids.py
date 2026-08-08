@@ -234,9 +234,13 @@ class Raids(commands.Cog):
         # QP is already grindable elsewhere, so capping raid participation is just friction. Keep a
         # short per-user cooldown as light anti-spam (stops double-submits + burst-draining the pool).
         now = time.monotonic()
-        if now - self._cd.get((gid, uid), 0.0) < R.RAID_FIGHT_COOLDOWN:
-            wait = int(R.RAID_FIGHT_COOLDOWN - (now - self._cd.get((gid, uid), 0.0))) + 1
-            return await interaction.response.send_message(f"On cooldown -- try again in {wait}s.", ephemeral=True)
+        elapsed = now - self._cd.get((gid, uid), 0.0)
+        if elapsed < R.RAID_FIGHT_COOLDOWN:
+            # <t:unix:R> renders as a live-updating "in N seconds". _cd is monotonic (good for the
+            # cooldown math but not a wall clock), so derive the ready time from time.time() + remaining.
+            ready = round(time.time() + (R.RAID_FIGHT_COOLDOWN - elapsed))
+            return await interaction.response.send_message(
+                f"On cooldown -- try again <t:{ready}:R>.", ephemeral=True)
         self._cd[(gid, uid)] = now
 
         ab = self._ab()
