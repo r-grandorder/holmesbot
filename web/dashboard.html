@@ -312,12 +312,14 @@ function phaseBlock(ph, i){
     <button class="ghostbtn ph-addeff">+ Add effect</button></div>`;
 }
 function rankRow(t){
-  t = t || {top:1, qp:0, grails:0, tickets:0};
+  t = t || {top:1, qp:0, grails:0, tickets:0, embers:0, hellfire:0};
   return `<div class="rankrow">
     <input class="rk-top" type="number" placeholder="top N" value="${t.top||1}" title="top N">
     <input class="rk-qp" type="number" placeholder="QP" value="${t.qp||0}" title="QP">
     <input class="rk-grails" type="number" placeholder="grails" value="${t.grails||0}" title="grails">
     <input class="rk-tickets" type="number" placeholder="tickets" value="${t.tickets||0}" title="tickets">
+    <input class="rk-embers" type="number" placeholder="embers" value="${t.embers||0}" title="embers">
+    <input class="rk-hellfire" type="number" placeholder="hellfire" value="${t.hellfire||0}" title="hellfire">
     <button class="e-del">&times;</button></div>`;
 }
 async function openRaidEditor(name){
@@ -344,11 +346,23 @@ async function openRaidEditor(name){
       ${spriteSlot("default", defn.default_sprite_id)}
       <div class="h2">Rewards</div>
       <label class="fld">Per-fight QP<input id="rd-perfight" type="number" value="${rw.per_fight_qp||0}"></label>
-      <label class="fld">Participation QP<input id="rd-part-qp" type="number" value="${part.qp||0}"></label>
-      <label class="fld">Participation embers<input id="rd-part-em" type="number" value="${part.embers||0}"></label>
-      <label class="fld">Last-hit QP<input id="rd-lh-qp" type="number" value="${lh.qp||0}"></label>
-      <label class="fld">Last-hit hellfire<input id="rd-lh-hf" type="number" value="${lh.hellfire||0}"></label>
-      <div class="fld">Rank tiers (top N -> QP / grails / tickets)</div>
+      <div class="fld">Participation (everyone who dealt damage): QP / embers / hellfire / grails / tickets</div>
+      <div class="rankrow">
+        <input id="rd-part-qp" type="number" placeholder="QP" value="${part.qp||0}" title="QP">
+        <input id="rd-part-em" type="number" placeholder="embers" value="${part.embers||0}" title="embers">
+        <input id="rd-part-hf" type="number" placeholder="hellfire" value="${part.hellfire||0}" title="hellfire">
+        <input id="rd-part-gr" type="number" placeholder="grails" value="${part.grails||0}" title="grails">
+        <input id="rd-part-tk" type="number" placeholder="tickets" value="${part.tickets||0}" title="tickets">
+      </div>
+      <div class="fld">Last hit (killing blow bonus): QP / embers / hellfire / grails / tickets</div>
+      <div class="rankrow">
+        <input id="rd-lh-qp" type="number" placeholder="QP" value="${lh.qp||0}" title="QP">
+        <input id="rd-lh-em" type="number" placeholder="embers" value="${lh.embers||0}" title="embers">
+        <input id="rd-lh-hf" type="number" placeholder="hellfire" value="${lh.hellfire||0}" title="hellfire">
+        <input id="rd-lh-gr" type="number" placeholder="grails" value="${lh.grails||0}" title="grails">
+        <input id="rd-lh-tk" type="number" placeholder="tickets" value="${lh.tickets||0}" title="tickets">
+      </div>
+      <div class="fld">Rank tiers (top N -> QP / grails / tickets / embers / hellfire)</div>
       <div id="rd-ranks">${(rw.ranks||[]).map(rankRow).join("")}</div>
       <button id="rd-addrank" class="ghostbtn">+ Add rank tier</button>
       <div class="h2">Phases</div>
@@ -380,9 +394,12 @@ function gatherRaidDef(){
     if (kitName || eff.length) ph.kit = { name: kitName, trigger: p.querySelector(".ph-kit-trigger").value, effects: eff };
     return ph;
   });
-  const ranks = [...document.querySelectorAll("#rd-ranks .rankrow")].map(r => ({
-    top: parseInt(r.querySelector(".rk-top").value,10), qp: parseInt(r.querySelector(".rk-qp").value,10)||0,
-    grails: parseInt(r.querySelector(".rk-grails").value,10)||0, tickets: parseInt(r.querySelector(".rk-tickets").value,10)||0 }));
+  const ranks = [...document.querySelectorAll("#rd-ranks .rankrow")].map(r => {
+    const rv = c => parseInt(r.querySelector(c).value,10)||0;
+    return { top: parseInt(r.querySelector(".rk-top").value,10), qp: rv(".rk-qp"),
+      grails: rv(".rk-grails"), tickets: rv(".rk-tickets"), embers: rv(".rk-embers"), hellfire: rv(".rk-hellfire") };
+  });
+  const gi = id => parseInt($(id).value,10)||0;
   const def = {
     display_name: $("rd-display").value.trim(),
     boss_level: parseInt($("rd-level").value,10) || 120,
@@ -392,9 +409,9 @@ function gatherRaidDef(){
     boss_scale: parseFloat($("rd-scale").value) || 1.5,
     phases,
     rewards: {
-      per_fight_qp: parseInt($("rd-perfight").value,10)||0,
-      participation: { qp: parseInt($("rd-part-qp").value,10)||0, embers: parseInt($("rd-part-em").value,10)||0 },
-      last_hit: { qp: parseInt($("rd-lh-qp").value,10)||0, hellfire: parseInt($("rd-lh-hf").value,10)||0 },
+      per_fight_qp: gi("rd-perfight"),
+      participation: { qp: gi("rd-part-qp"), embers: gi("rd-part-em"), hellfire: gi("rd-part-hf"), grails: gi("rd-part-gr"), tickets: gi("rd-part-tk") },
+      last_hit: { qp: gi("rd-lh-qp"), embers: gi("rd-lh-em"), hellfire: gi("rd-lh-hf"), grails: gi("rd-lh-gr"), tickets: gi("rd-lh-tk") },
       ranks,
     },
   };
