@@ -230,12 +230,9 @@ class Raids(commands.Cog):
         team_ids = await self.bot.contracts.battle_team(gid, uid)
         if not team_ids:
             return await interaction.response.send_message("Set a team first with /ab team.", ephemeral=True)
-        # daily attempt cap + short cooldown (so no one solo-nukes the pool)
-        if await self.bot.contracts.ab_reward_count(gid, uid, "raid") >= R.RAID_ATTEMPT_DAILY_CAP:
-            return await interaction.response.send_message(
-                f"You've hit today's raid cap ({R.RAID_ATTEMPT_DAILY_CAP} fights). Back tomorrow!",
-                ephemeral=True,
-            )
+        # No daily fight cap: a raid is a time-limited event bounded by its HP pool + duration, and
+        # QP is already grindable elsewhere, so capping raid participation is just friction. Keep a
+        # short per-user cooldown as light anti-spam (stops double-submits + burst-draining the pool).
         now = time.monotonic()
         if now - self._cd.get((gid, uid), 0.0) < R.RAID_FIGHT_COOLDOWN:
             wait = int(R.RAID_FIGHT_COOLDOWN - (now - self._cd.get((gid, uid), 0.0))) + 1
@@ -263,13 +260,12 @@ class Raids(commands.Cog):
         if remaining < 0:  # raced to defeat/expiry between the active() read and now
             return await interaction.followup.send("The raid just ended.")
 
-        # per-fight QP within the daily cap
+        # per-fight QP (uncapped; per-user attempts are already tracked in raid_participation)
         per_fight = int(defn.get("rewards", {}).get("per_fight_qp", 0))
         reward_bits = []
         if per_fight > 0:
             await self.bot.scoring.add_qp(gid, uid, per_fight)
             reward_bits.append(f"+{qp(per_fight)}")
-        await self.bot.contracts.bump_ab_reward(gid, uid, "raid")
 
         mine = await self.bot.raids.participation(inst["id"], uid)
         total_mine = mine["damage"] if mine else dmg

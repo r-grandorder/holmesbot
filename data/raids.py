@@ -28,8 +28,7 @@ from __future__ import annotations
 
 from data.kits import validate_kit
 
-RAID_ATTEMPT_DAILY_CAP = 20     # fights per user per active raid per day (rewarded fights)
-RAID_FIGHT_COOLDOWN = 20.0      # seconds between a user's raid fights
+RAID_FIGHT_COOLDOWN = 20.0      # seconds between a user's raid fights (light anti-spam; no daily cap)
 RAID_RANK_LIMIT = 10            # leaderboard size
 RAID_EXPIRY_TICK = 5            # minutes between expiry sweeps
 
