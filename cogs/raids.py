@@ -94,12 +94,46 @@ class Raids(commands.Cog):
     def _is_mod(self, user) -> bool:
         return user.id in self.bot.config.dashboard_mod_ids or is_mod(user)
 
-    def _name(self, guild, uid: int) -> str:
-        m = guild.get_member(uid) if guild else None
-        if m:
-            return m.display_name
-        u = self.bot.get_user(uid)
-        return (u.global_name or u.name) if u else f"User {uid}"
+    @staticmethod
+    def _mention(uid: int) -> str:
+        # A mention renders as the user's current display name client-side, so it resolves even for
+        # members the bot hasn't cached (common in large, unchunked guilds, which is why the raw id
+        # was showing). Safe in embeds: mentions in embed fields/descriptions never ping.
+        return f"<@{uid}>"
+
+    _REWARD_ITEMS = (("qp", "QP"), ("embers", "ember"), ("hellfire", "hellfire"),
+                     ("grails", "grail"), ("tickets", "ticket"))
+
+    @classmethod
+    def _reward_bits(cls, d: "dict | None") -> str:
+        """Compact 'X QP, N embers, ...' summary of one reward bundle (skips zeros)."""
+        parts = []
+        for key, label in cls._REWARD_ITEMS:
+            v = int((d or {}).get(key) or 0)
+            if v <= 0:
+                continue
+            parts.append(f"{v:,} QP" if key == "qp" else f"{v} {label}{'s' if v != 1 else ''}")
+        return ", ".join(parts)
+
+    @classmethod
+    def _rewards_field(cls, rewards: "dict | None") -> str:
+        """Multi-line reward tiers for an embed, or '' if nothing is configured."""
+        rewards = rewards or {}
+        lines = []
+        pf = int(rewards.get("per_fight_qp") or 0)
+        if pf:
+            lines.append(f"**Per fight:** {pf:,} QP")
+        part = cls._reward_bits(rewards.get("participation"))
+        if part:
+            lines.append(f"**Everyone who fought:** {part}")
+        for tier in sorted(rewards.get("ranks", []) or [], key=lambda t: int(t.get("top", 0) or 0)):
+            bits = cls._reward_bits(tier)
+            if bits:
+                lines.append(f"**Top {int(tier.get('top', 0) or 0)}:** {bits}")
+        lh = cls._reward_bits(rewards.get("last_hit"))
+        if lh:
+            lines.append(f"**Last hit:** {lh}")
+        return "\n".join(lines)
 
     def _sprite_url(self, defn: dict, phase: "dict | None", boss) -> "str | None":
         api = self.bot.config.dashboard_api_base_url
@@ -361,7 +395,7 @@ class Raids(commands.Cog):
         lb = await self.bot.raids.leaderboard(inst["id"], R.RAID_RANK_LIMIT)
         medals = {1: "\N{FIRST PLACE MEDAL}", 2: "\N{SECOND PLACE MEDAL}", 3: "\N{THIRD PLACE MEDAL}"}
         rows = "\n".join(
-            f"{medals.get(i, f'{i}.')} {self._name(interaction.guild, r['user_id'])} -- {r['damage']:,}"
+            f"{medals.get(i, f'{i}.')} {self._mention(r['user_id'])} -- {r['damage']:,}"
             for i, r in enumerate(lb, 1)
         ) or "No contributions yet."
         desc = (f"*{(phase or {}).get('flavor')}*\n\n" if phase and phase.get("flavor") else "")
@@ -373,6 +407,9 @@ class Raids(commands.Cog):
         sprite = self._sprite_url(defn, phase, boss)
         if sprite:
             embed.set_thumbnail(url=sprite)
+        rw = self._rewards_field(defn.get("rewards"))
+        if rw:
+            embed.add_field(name="Rewards on defeat", value=rw, inline=False)
         embed.add_field(name="Top contributors", value=rows, inline=False)
         await interaction.response.send_message(embed=embed)
 
@@ -418,6 +455,9 @@ class Raids(commands.Cog):
                          "Fight it with **/raid** (your /ab team). Check progress with **/raidstatus**."),
             color=discord.Color.gold(),
         )
+        rw = self._rewards_field(defn.get("rewards"))
+        if rw:
+            embed.add_field(name="Rewards on defeat", value=rw, inline=False)
         sprite = self._sprite_url(defn, phase, boss)
         if sprite:
             embed.set_image(url=sprite)
@@ -493,7 +533,7 @@ class RaidHistoryView(discord.ui.View):
         lb = await self.cog.bot.raids.leaderboard(instance_id, 10)
         medals = {1: "\N{FIRST PLACE MEDAL}", 2: "\N{SECOND PLACE MEDAL}", 3: "\N{THIRD PLACE MEDAL}"}
         rows = "\n".join(
-            f"{medals.get(i, f'{i}.')} {self.cog._name(self.guild, x['user_id'])} -- {x['damage']:,}"
+            f"{medals.get(i, f'{i}.')} {self.cog._mention(x['user_id'])} -- {x['damage']:,}"
             for i, x in enumerate(lb, 1)
         ) or "No contributors."
         outcome = "\N{FIRE} Defeated" if r["status"] == "defeated" else "\N{HOURGLASS} Expired"
