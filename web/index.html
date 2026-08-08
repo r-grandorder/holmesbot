@@ -64,6 +64,8 @@ function fmtEffect(e){
   else if (T==="instant_kill") label = "Instant Kill "+pct;
   else if (T==="heal_on_damage") label = "Drain "+Math.round(e.value);
   else if (T==="guts") label = "Guts "+Math.round(e.value);
+  else if (T==="skill_seal_resist") label = "Skill Seal Resist "+pct;
+  else if (["atk_up_on_damage","atk_up_on_hurt","atk_up_on_kill","def_up_on_kill"].includes(T)) label = titleize(T)+" +"+pct;
   else label = titleize(T);
   return `${label} <span class="t">(${tgt}, ${dur})</span>`;
 }

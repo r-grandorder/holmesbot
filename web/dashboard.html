@@ -296,9 +296,10 @@ const EFFECT_VALUE_HELP = {
   instant_kill:"chance to instantly kill on hit, 0 to 1 (0.3 = 30%)",
   piercing:"fraction of damage that also hits the back line (0.5 = 50%)",
   order_change:"-1 = move to back, 1 = move to front, 0 = swap with an ally",
+  skill_seal_resist:"chance to resist skill seal, 0 to 1 (0.8 = 80%)",
 };
 const EFFECT_NO_VALUE = new Set(["evade","anti_purge","ignore_evade","guts_pierce","pass_buffs",
-  "cleanse","curse_immunity","skill_seal_resist","stun","sleep","skill_seal","sacrifice","buff_removal"]);
+  "cleanse","curse_immunity","stun","sleep","skill_seal","sacrifice","buff_removal"]);
 function effHintText(type){
   const v = EFFECT_VALUE_HELP[type] || (EFFECT_NO_VALUE.has(type)
             ? "not used by this effect (leave it as is)" : "depends on this effect");
