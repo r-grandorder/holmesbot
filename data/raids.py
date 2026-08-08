@@ -73,6 +73,9 @@ def validate_raid_def(defn: dict) -> "list[str]":
             errors.append(f"{k} must be a positive int")
     if _pos_int(defn.get("battle_hp")) and _pos_int(defn.get("total_hp")) and defn["battle_hp"] > defn["total_hp"]:
         errors.append("battle_hp must be <= total_hp")
+    bs = defn.get("boss_scale", 1)
+    if not isinstance(bs, (int, float)) or isinstance(bs, bool) or bs <= 0:
+        errors.append("boss_scale must be a positive number")
 
     phases = defn.get("phases", [])
     if not isinstance(phases, list):
@@ -91,6 +94,9 @@ def validate_raid_def(defn: dict) -> "list[str]":
             am = ph.get("atk_mult", 1)
             if not isinstance(am, (int, float)) or isinstance(am, bool) or am <= 0:
                 errors.append(f"{loc}: atk_mult must be a positive number")
+            ss = ph.get("sprite_scale", 1)
+            if not isinstance(ss, (int, float)) or isinstance(ss, bool) or ss <= 0:
+                errors.append(f"{loc}: sprite_scale must be a positive number")
             if "battle_hp" in ph and not _pos_int(ph["battle_hp"]):
                 errors.append(f"{loc}: battle_hp must be a positive int")
             kit = ph.get("kit")

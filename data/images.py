@@ -132,10 +132,13 @@ def battle_preview(bg: bytes, left_sprites, right_sprites) -> bytes:
     sprites laid over the battle background -- the player team on the left (mirrored to face in),
     the enemy team on the right.
 
-    Each team is a list of (png_bytes, is_face) pairs. Regular full-body sprites (command cards /
-    figures) scale to full height and stand on a common ground line; only `is_face` sprites -- the
-    square custom-unit face portraits -- scale to a shorter height (so they don't balloon wider than
-    everyone else) and are centered vertically within the card band rather than sunk to the ground."""
+    Each team is a list of (png_bytes, is_face) or (png_bytes, is_face, scale) items. Regular
+    full-body sprites (command cards / figures) scale to full height and stand on a common ground
+    line; only `is_face` sprites -- the square custom-unit face portraits -- scale to a shorter
+    height (so they don't balloon wider than everyone else) and are centered vertically within the
+    card band. An optional `scale` multiplies a sprite's target height and is applied EXACTLY (up or
+    down) -- used to render a raid boss larger than the player units, deterministically from config
+    rather than from the source sprite's dimensions (scale defaults to 1.0 = the original behavior)."""
     base = Image.open(io.BytesIO(bg)).convert("RGBA")
     bw, bh = base.size
     card_h = max(1, int(bh * 0.30))       # regular command-card / figure sprites (unchanged)
@@ -144,15 +147,19 @@ def battle_preview(bg: bytes, left_sprites, right_sprites) -> bytes:
 
     def _place(sprites, x0: int, width: int, mirror: bool) -> None:
         tiles = []
-        for data, is_face in sprites:
+        for item in sprites:
+            data, is_face = item[0], item[1]
+            sc = float(item[2]) if len(item) > 2 else 1.0
             try:
                 img = Image.open(io.BytesIO(data)).convert("RGBA")
             except Exception:  # a bad/undecodable sprite just drops out
                 continue
-            target = face_h if is_face else card_h
-            if img.height > target:
-                scale = target / img.height
-                img = img.resize((max(1, int(img.width * scale)), target), Image.LANCZOS)
+            target = max(1, int((face_h if is_face else card_h) * sc))
+            if sc != 1.0:  # explicit scale (e.g. a boss): size deterministically, up or down
+                if img.height != target:
+                    img = img.resize((max(1, int(img.width * target / img.height)), target), Image.LANCZOS)
+            elif img.height > target:  # default: only shrink oversized sprites (unchanged /ab look)
+                img = img.resize((max(1, int(img.width * target / img.height)), target), Image.LANCZOS)
             if mirror:
                 img = img.transpose(Image.FLIP_LEFT_RIGHT)
             tiles.append((img, is_face))

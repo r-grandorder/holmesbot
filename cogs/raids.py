@@ -17,6 +17,8 @@ Team-building, the composite battle image, and the status blocks are reused from
 from __future__ import annotations
 
 import datetime as dt
+import io
+import random
 import time
 
 import discord
@@ -24,7 +26,9 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from branding import qp
+from data import autobattle
 from data import autobattle_engine as engine
+from data import images
 from data import raids as R
 from data.kits import Skill
 from permissions import is_mod
@@ -111,6 +115,48 @@ class Raids(commands.Cog):
         filled = max(0, min(length, round(length * max(0, cur) / mx)))
         return "\N{DARK SHADE}" * filled + "\N{LIGHT SHADE}" * (length - filled)
 
+    def _boss_scale(self, defn: dict, phase: "dict | None") -> float:
+        """The boss's render scale: the phase override, else the def's boss_scale, else 1.5 (bosses
+        loom larger than player units by default; set boss_scale=1 for a regular-sized boss)."""
+        return float((phase or {}).get("sprite_scale") or defn.get("boss_scale", 1.5) or 1.5)
+
+    async def _boss_sprite_bytes(self, session, defn, phase, boss_servant) -> "bytes | None":
+        """Image bytes for the boss: the uploaded phase/default sprite (BLOB) if set, else the
+        servant's full-body/art sprite."""
+        sid = (phase or {}).get("sprite_id") or defn.get("default_sprite_id")
+        if sid:
+            data = await self.bot.raids.get_sprite(int(sid))
+            if data:
+                return bytes(data)
+        if boss_servant is not None:
+            url, _ = self._ab()._sprite_url(boss_servant)
+            if url:
+                try:
+                    return await images.fetch_bytes(session, url)
+                except Exception:
+                    return None
+        return None
+
+    async def _raid_image(self, defn, phase, boss_servant, team_ids) -> "discord.File | None":
+        """Composite scene: player team (left) vs the boss (right), the boss drawn at boss_scale so
+        it looms larger than the units. None on any hiccup (the image is cosmetic; caller falls back)."""
+        session = self.bot.http_session
+        if not session:
+            return None
+        bgs = autobattle.pvp_backgrounds()
+        bg_url = random.choice(bgs).get("bg_image") if bgs else None
+        if not bg_url:
+            return None
+        try:
+            bg = await images.fetch_bytes(session, bg_url)
+            left = await self._ab()._sprites(session, team_ids)   # [(bytes, is_face)]
+            boss = await self._boss_sprite_bytes(session, defn, phase, boss_servant)
+            right = [(boss, False, self._boss_scale(defn, phase))] if boss else []
+            png = images.battle_preview(bg, left, right)
+            return discord.File(io.BytesIO(png), filename="raid.png")
+        except Exception:
+            return None
+
     # ---- /raid : fight the active boss ----
     @app_commands.command(name="raid", description="Fight the active raid boss with your /ab team.")
     @app_commands.guild_only()
@@ -174,15 +220,20 @@ class Raids(commands.Cog):
         total_mine = mine["damage"] if mine else dmg
         reward_bits.append(f"**{dmg:,}** damage (your total: {total_mine:,})")
 
+        field_ids = [c["servant_id"] for c in player_team]
+        battle_file = await self._raid_image(defn, phase, boss_servant, field_ids)
+
         def render(log_name, log_text):
             e = self._fight_embed(defn, phase, boss_servant, state, remaining, inst["total_hp"],
-                                  defeated, item_lines, reward_bits)
+                                  defeated, item_lines, reward_bits, has_image=battle_file is not None)
             if log_name is not None:
                 e.add_field(name=log_name, value=log_text or "No battle log.", inline=False)
             return e
 
         pager = LogPager(render, state["battle_log"])
-        kwargs = {"view": pager} if pager.pages > 1 else {}
+        kwargs = {"file": battle_file} if battle_file else {}
+        if pager.pages > 1:
+            kwargs["view"] = pager
         await interaction.followup.send(embed=pager.page_embed(), **kwargs)
 
         if defeated:
@@ -190,7 +241,7 @@ class Raids(commands.Cog):
             await self._distribute_rewards(fresh, defeated=True, channel=interaction.channel)
 
     def _fight_embed(self, defn, phase, boss_servant, state, remaining, total_hp, defeated,
-                     item_lines, reward_bits) -> discord.Embed:
+                     item_lines, reward_bits, has_image=False) -> discord.Embed:
         ab = self._ab()
         title = "\N{FIRE} RAID DEFEATED!" if defeated else f"\N{CROSSED SWORDS} {defn.get('display_name','Raid')}"
         color = discord.Color.gold() if defeated else discord.Color.dark_red()
@@ -201,9 +252,12 @@ class Raids(commands.Cog):
         embed = discord.Embed(title=title, description=desc, color=color)
         if phase_name:
             embed.set_author(name=phase_name)
-        sprite = self._sprite_url(defn, phase, boss_servant)
-        if sprite:
-            embed.set_thumbnail(url=sprite)
+        if has_image:  # the composite scene (boss drawn larger); else fall back to a sprite thumbnail
+            embed.set_image(url="attachment://raid.png")
+        else:
+            sprite = self._sprite_url(defn, phase, boss_servant)
+            if sprite:
+                embed.set_thumbnail(url=sprite)
         embed.add_field(name="Your Team", value=ab._team_status(state["player_servants"]), inline=True)
         embed.add_field(name="Boss", value=ab._team_status(state["enemy_servants"]), inline=True)
         if reward_bits:

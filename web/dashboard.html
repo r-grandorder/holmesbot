@@ -302,6 +302,7 @@ function phaseBlock(ph, i){
     <label class="fld">Name<input class="ph-name" value="${esc(ph.name||"")}"></label>
     <label class="fld">Flavor text<input class="ph-flavor" value="${esc(ph.flavor||"")}"></label>
     <label class="fld">ATK multiplier<input class="ph-atk" type="number" step="0.1" value="${ph.atk_mult||1}"></label>
+    <label class="fld">Sprite size override (blank = boss size)<input class="ph-scale" type="number" step="0.1" value="${ph.sprite_scale||""}"></label>
     ${spriteSlot("phase-"+i, ph.sprite_id)}
     <label class="fld">Skill name<input class="ph-kit-name" value="${esc(kit.name||"")}"></label>
     <label class="fld">Skill trigger<select class="ph-kit-trigger">${RAID_VOCAB.triggers.map(t=>selTag(t,kit.trigger)).join("")}</select></label>
@@ -336,6 +337,7 @@ async function openRaidEditor(name){
       <label class="fld">Total HP (shared pool)<input id="rd-total" type="number" value="${defn.total_hp||1000000}"></label>
       <label class="fld">Per-battle HP (each fight)<input id="rd-battle" type="number" value="${defn.battle_hp||50000}"></label>
       <label class="fld">Duration (hours)<input id="rd-hours" type="number" value="${defn.duration_hours||24}"></label>
+      <label class="fld">Boss size (1 = normal, 1.5 = big, 2.5 = huge)<input id="rd-scale" type="number" step="0.1" value="${defn.boss_scale||1.5}"></label>
       ${spriteSlot("default", defn.default_sprite_id)}
       <div class="h2">Rewards</div>
       <label class="fld">Per-fight QP<input id="rd-perfight" type="number" value="${rw.per_fight_qp||0}"></label>
@@ -368,6 +370,7 @@ function gatherRaidDef(){
     const ph = { threshold: parseFloat(p.querySelector(".ph-threshold").value),
       name: p.querySelector(".ph-name").value.trim(), flavor: p.querySelector(".ph-flavor").value.trim(),
       atk_mult: parseFloat(p.querySelector(".ph-atk").value) || 1 };
+    const psc = parseFloat(p.querySelector(".ph-scale").value); if (psc > 0) ph.sprite_scale = psc;
     const sEl = p.querySelector(".sprite-id");  // read from within this phase (index-independent)
     if (sEl && sEl.value) ph.sprite_id = parseInt(sEl.value, 10);
     const kitName = p.querySelector(".ph-kit-name").value.trim();
@@ -384,6 +387,7 @@ function gatherRaidDef(){
     total_hp: parseInt($("rd-total").value,10),
     battle_hp: parseInt($("rd-battle").value,10),
     duration_hours: parseInt($("rd-hours").value,10),
+    boss_scale: parseFloat($("rd-scale").value) || 1.5,
     phases,
     rewards: {
       per_fight_qp: parseInt($("rd-perfight").value,10)||0,
