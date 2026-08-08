@@ -182,9 +182,11 @@ section.on{display:block; animation:fade .2s ease;}
 .fld input,.fld select{display:block; width:100%; margin-top:5px; background:var(--panel); color:var(--text);
   border:1px solid var(--soft); border-radius:8px; padding:9px 11px; font-size:14px;}
 #ed-effects{display:flex; flex-direction:column; gap:7px; margin-top:6px;}
-.effrow{display:grid; grid-template-columns:1.5fr .7fr .7fr 1fr auto auto; gap:6px; align-items:center;}
+.effrow{display:grid; grid-template-columns:1.5fr .7fr .7fr 1fr auto auto; gap:6px; align-items:end;}
 .effrow select,.effrow input[type=number]{background:var(--panel); color:var(--text); border:1px solid var(--soft);
-  border-radius:7px; padding:7px 8px; font-size:13px; min-width:0;}
+  border-radius:7px; padding:7px 8px; font-size:13px; min-width:0; width:100%; box-sizing:border-box;}
+.effrow .ecell{display:flex; flex-direction:column; gap:3px; font-size:11px; color:var(--dim); min-width:0;}
+.effrow .effhint{grid-column:1 / -1; font-size:11px; color:var(--dim); margin:2px 0 2px; line-height:1.4;}
 .effrow .e-unrem{font-size:11px; color:var(--dim); display:flex; align-items:center; gap:3px; white-space:nowrap;}
 .e-del{background:transparent; border:none; color:var(--danger); font-size:20px; line-height:1; cursor:pointer;}
 .ghostbtn{margin-top:10px; background:transparent; border:1px dashed var(--line); color:var(--gold2);

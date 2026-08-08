@@ -279,15 +279,41 @@ async function toggleRaid(name, on){
 
 // ---- raid editor ----
 const selTag = (v, sel) => `<option value="${esc(v)}" ${v===sel?"selected":""}>${esc(prettyClass(v))}</option>`;
+// What the "Value" field means per effect type (its meaning is effect-specific), shown as a live hint.
+const EFFECT_VALUE_HELP = {
+  attack_up:"+% ATK (0.5 = +50%)", attack_down:"-% ATK (0.3 = -30%)",
+  defense_up:"% less damage taken (0.5 = takes 50% less)", defense_down:"% more damage taken (0.5 = takes 50% more)",
+  atk_up_on_damage:"ATK +% gained when it deals damage (0.2 = +20%)",
+  atk_up_on_hurt:"ATK +% gained when it takes damage (0.2 = +20%)",
+  atk_up_on_kill:"ATK +% gained on a kill (0.2 = +20%)",
+  def_up_on_kill:"DEF +% gained on a kill (0.2 = +20%)",
+  poison:"fraction of max HP lost per turn (0.1 = 10%/turn)",
+  healing_per_turn:"if <=1, fraction of max HP healed per turn (0.1 = 10%); if >1, flat HP/turn",
+  max_hp_up:"fraction of max HP added (0.2 = +20%); a large number = flat HP",
+  heal:"flat HP restored (instant)", heal_on_damage:"flat HP healed each time it deals damage",
+  curse:"flat damage per turn", burn:"flat damage per turn (also -10% the burned unit's ATK)",
+  guts:"number of revives (each brings it back at 1 HP)",
+  instant_kill:"chance to instantly kill on hit, 0 to 1 (0.3 = 30%)",
+  piercing:"fraction of damage that also hits the back line (0.5 = 50%)",
+  order_change:"-1 = move to back, 1 = move to front, 0 = swap with an ally",
+};
+const EFFECT_NO_VALUE = new Set(["evade","anti_purge","ignore_evade","guts_pierce","pass_buffs",
+  "cleanse","curse_immunity","skill_seal_resist","stun","sleep","skill_seal","sacrifice","buff_removal"]);
+function effHintText(type){
+  const v = EFFECT_VALUE_HELP[type] || (EFFECT_NO_VALUE.has(type)
+            ? "not used by this effect (leave it as is)" : "depends on this effect");
+  return `Value = ${v}. Duration = turns active (-1 = permanent, 1 = this turn only).`;
+}
 function raidEffRow(e){
   e = e || {effect_type:RAID_VOCAB.effect_types[0], value:1, duration:-1, target:"self"};
   return `<div class="effrow">
-    <select class="e-type">${RAID_VOCAB.effect_types.map(t=>selTag(t,e.effect_type)).join("")}</select>
-    <input class="e-val" type="number" step="any" value="${e.value}" title="value">
-    <input class="e-dur" type="number" step="1" value="${e.duration}" title="duration (-1 = perm)">
-    <select class="e-tgt">${RAID_VOCAB.targets.map(t=>selTag(t,e.target)).join("")}</select>
+    <label class="ecell">Effect<select class="e-type">${RAID_VOCAB.effect_types.map(t=>selTag(t,e.effect_type)).join("")}</select></label>
+    <label class="ecell">Value<input class="e-val" type="number" step="any" value="${e.value}"></label>
+    <label class="ecell">Duration<input class="e-dur" type="number" step="1" value="${e.duration}" title="-1 = permanent"></label>
+    <label class="ecell">Target<select class="e-tgt">${RAID_VOCAB.targets.map(t=>selTag(t,e.target)).join("")}</select></label>
     <label class="e-unrem"><input type="checkbox" ${e.unremovable?"checked":""}> unrem</label>
-    <button class="e-del">&times;</button></div>`;
+    <button class="e-del">&times;</button>
+    <div class="effhint">${effHintText(e.effect_type)}</div></div>`;
 }
 function spriteSlot(key, id){
   const url = id ? API_BASE+"/api/raids/sprite/"+id : "";
@@ -455,6 +481,11 @@ $("raid-editor").addEventListener("click", e => {
   }
 });
 $("raid-editor").addEventListener("change", async e => {
+  if (e.target.classList.contains("e-type")){  // refresh the value/duration explainer for this row
+    const hint = e.target.closest(".effrow")?.querySelector(".effhint");
+    if (hint) hint.textContent = effHintText(e.target.value);
+    return;
+  }
   if (!e.target.classList.contains("sprite-file")) return;
   const slot = e.target.closest(".fld"), f = e.target.files[0];  // set the sibling id/preview
   if (!f || !slot) return;
