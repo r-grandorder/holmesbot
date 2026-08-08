@@ -540,7 +540,7 @@ async def raid_enable(request: web.Request) -> web.Response:
         expires = (dt.datetime.now(dt.timezone.utc)
                    + dt.timedelta(hours=int(defn["duration_hours"]))).strftime("%Y-%m-%d %H:%M:%S")
         iid = await bot.raids.start(gid, name, defn.get("display_name", name),
-                                    int(defn["boss_servant_id"]), int(defn["total_hp"]), expires)
+                                    int(defn.get("boss_servant_id") or 0), int(defn["total_hp"]), expires)
         started = iid is not None
     else:
         await bot.raids.set_enabled(name, False, uid)

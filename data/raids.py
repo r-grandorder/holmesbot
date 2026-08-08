@@ -59,15 +59,24 @@ def validate_raid_def(defn: dict) -> "list[str]":
     errors: list[str] = []
     if not isinstance(defn, dict):
         return ["definition must be an object"]
-    for k in ("display_name", "boss_servant_id", "total_hp", "battle_hp", "duration_hours"):
+    for k in ("display_name", "total_hp", "battle_hp", "duration_hours"):
         if k not in defn:
             errors.append(f"missing field: {k}")
     if errors:
         return errors
     if not isinstance(defn["display_name"], str) or not defn["display_name"].strip():
         errors.append("display_name must be a non-empty string")
-    if not isinstance(defn["boss_servant_id"], int) or isinstance(defn["boss_servant_id"], bool):
-        errors.append("boss_servant_id must be an int")
+    # Boss is either an existing servant (borrows its ATK/class/art) OR a fully custom boss with its
+    # own boss_atk (+ optional boss_class) and an uploaded sprite.
+    sid = defn.get("boss_servant_id")
+    if sid is not None and (not isinstance(sid, int) or isinstance(sid, bool) or sid <= 0):
+        errors.append("boss_servant_id must be a positive int (or omit it for a custom boss)")
+    if not sid and not _pos_int(defn.get("boss_atk")):
+        errors.append("a custom boss (no boss_servant_id) needs a positive boss_atk")
+    if defn.get("boss_atk") is not None and not _pos_int(defn["boss_atk"]):
+        errors.append("boss_atk must be a positive int")
+    if defn.get("boss_class") is not None and not isinstance(defn["boss_class"], str):
+        errors.append("boss_class must be a string")
     for k in ("total_hp", "battle_hp", "duration_hours"):
         if not _pos_int(defn.get(k)):
             errors.append(f"{k} must be a positive int")
@@ -102,7 +111,7 @@ def validate_raid_def(defn: dict) -> "list[str]":
             kit = ph.get("kit")
             if kit is not None:
                 k = dict(kit)
-                k.setdefault("id", defn["boss_servant_id"])  # phase kits inherit the boss id
+                k.setdefault("id", defn.get("boss_servant_id") or 0)  # phase kits inherit the boss id
                 errors.extend(f"{loc}: {e}" for e in validate_kit(k))
 
     rewards = defn.get("rewards", {})

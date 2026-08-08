@@ -58,6 +58,23 @@ def _time_left(expires_at: "str | None") -> str:
     return f"{h}h {m}m" if h else f"{m}m"
 
 
+class _CustomBoss:
+    """A servant-less raid boss: just enough of the Servant shape for the engine + sprite lookups,
+    so a raid boss need not be tied to a real servant (uses configured ATK/class + an uploaded sprite)."""
+
+    def __init__(self, name: str, class_name: str, atk: int, hp: int) -> None:
+        self.id = 0
+        self.name = name or "Boss"
+        self.class_name = class_name or ""
+        self.rarity = 5
+        self.atk_base = self.atk_max = max(1, int(atk))
+        self.hp_base = self.hp_max = max(1, int(hp))
+        self.art: dict = {}
+        self.figure: dict = {}
+        self.commands: dict = {}
+        self.face = None
+
+
 class Raids(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -94,15 +111,19 @@ class Raids(commands.Cog):
         return None
 
     def _boss_combatant(self, defn: dict, phase: "dict | None", current_hp: int, total_hp: int):
-        boss = self.bot.servants.get(defn["boss_servant_id"])
-        if boss is None:
-            return None, None
-        if phase and phase.get("kit"):
-            kit = Skill.from_dict({**phase["kit"], "id": defn["boss_servant_id"]})
-        else:
-            kit = self.bot.kits.get(defn["boss_servant_id"]) if self.bot.kits else None
-        c = engine.combatant(boss, int(defn.get("boss_level", 120)), 0, kit=kit)
         battle_hp = int((phase or {}).get("battle_hp") or defn["battle_hp"])
+        sid = defn.get("boss_servant_id") or 0
+        boss = self.bot.servants.get(sid) if sid else None
+        if sid and boss is None:
+            return None, None  # a servant id was configured but doesn't exist
+        if boss is None:  # fully custom boss (no servant): synthesize from configured ATK/class
+            boss = _CustomBoss(defn.get("display_name", "Boss"), defn.get("boss_class", ""),
+                               defn.get("boss_atk", 10000), battle_hp)
+        if phase and phase.get("kit"):
+            kit = Skill.from_dict({**phase["kit"], "id": getattr(boss, "id", 0)})
+        else:
+            kit = self.bot.kits.get(sid) if (sid and self.bot.kits) else None
+        c = engine.combatant(boss, int(defn.get("boss_level", 120)), 0, kit=kit)
         c["max_hp"] = c["current_hp"] = battle_hp
         c["atk"] = int(c["atk"] * float((phase or {}).get("atk_mult", 1)))
         c["name"] = (phase or {}).get("name") or defn.get("display_name") or c["name"]
@@ -384,12 +405,12 @@ class Raids(commands.Cog):
             return await interaction.response.send_message("Definition is invalid: " + "; ".join(errs[:3]), ephemeral=True)
         expires = (dt.datetime.now(_UTC) + dt.timedelta(hours=int(defn["duration_hours"]))).strftime("%Y-%m-%d %H:%M:%S")
         iid = await self.bot.raids.start(gid, definition, defn.get("display_name", definition),
-                                         int(defn["boss_servant_id"]), int(defn["total_hp"]), expires,
+                                         int(defn.get("boss_servant_id") or 0), int(defn["total_hp"]), expires,
                                          channel_id=interaction.channel_id)
         if iid is None:
             return await interaction.response.send_message("A raid is already active -- /raidend it first.", ephemeral=True)
         await self.bot.raids.audit(interaction.user.id, "raid_start", {"def": definition, "instance": iid})
-        boss = self.bot.servants.get(int(defn["boss_servant_id"]))
+        boss = self.bot.servants.get(int(defn.get("boss_servant_id") or 0))
         phase = R.active_phase(defn, int(defn["total_hp"]), int(defn["total_hp"]))
         embed = discord.Embed(
             title=f"\N{CROSSED SWORDS} A raid appears: {defn.get('display_name', definition)}!",

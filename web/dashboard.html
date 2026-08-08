@@ -333,7 +333,9 @@ async function openRaidEditor(name){
       <div class="ed-title">${name ? ("Edit raid: " + esc(name)) : "New raid"}</div>
       <label class="fld">Slug / id${name ? "" : " (lowercase, no spaces)"}<input id="rd-name" value="${esc(name||"")}" ${name?"readonly":""}></label>
       <label class="fld">Display name<input id="rd-display" value="${esc(defn.display_name||"")}"></label>
-      <label class="fld">Boss servant id<input id="rd-boss" type="number" value="${esc(defn.boss_servant_id||"")}"></label>
+      <label class="fld">Boss servant id (blank = custom boss)<input id="rd-boss" type="number" value="${esc(defn.boss_servant_id||"")}"></label>
+      <label class="fld">Boss ATK (custom boss only; ignored if a servant id is set)<input id="rd-atk" type="number" value="${defn.boss_atk||""}"></label>
+      <label class="fld">Boss class (optional, e.g. beast/saber)<input id="rd-class" value="${esc(defn.boss_class||"")}"></label>
       <label class="fld">Boss level<input id="rd-level" type="number" value="${defn.boss_level||120}"></label>
       <label class="fld">Total HP (shared pool)<input id="rd-total" type="number" value="${defn.total_hp||1000000}"></label>
       <label class="fld">Per-battle HP (each fight)<input id="rd-battle" type="number" value="${defn.battle_hp||50000}"></label>
@@ -383,7 +385,6 @@ function gatherRaidDef(){
     grails: parseInt(r.querySelector(".rk-grails").value,10)||0, tickets: parseInt(r.querySelector(".rk-tickets").value,10)||0 }));
   const def = {
     display_name: $("rd-display").value.trim(),
-    boss_servant_id: parseInt($("rd-boss").value,10),
     boss_level: parseInt($("rd-level").value,10) || 120,
     total_hp: parseInt($("rd-total").value,10),
     battle_hp: parseInt($("rd-battle").value,10),
@@ -397,6 +398,12 @@ function gatherRaidDef(){
       ranks,
     },
   };
+  const bsid = parseInt($("rd-boss").value, 10);
+  if (Number.isFinite(bsid) && bsid > 0) def.boss_servant_id = bsid;  // else a custom boss
+  const batk = parseInt($("rd-atk").value, 10);
+  if (Number.isFinite(batk) && batk > 0) def.boss_atk = batk;
+  const bcls = $("rd-class").value.trim();
+  if (bcls) def.boss_class = bcls;
   const dsid = _spriteId("default"); if (dsid) def.default_sprite_id = dsid;
   return def;
 }
