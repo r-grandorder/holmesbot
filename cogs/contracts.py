@@ -517,20 +517,26 @@ class ContractsCog(commands.Cog):
 
     @app_commands.command(name="grail", description="Spend a grail to raise a servant's cap (yours or another player's).")
     @app_commands.guild_only()
-    @app_commands.describe(member="Whose servant to grail (defaults to yours)")
+    @app_commands.describe(member="Whose servant to grail (defaults to yours)",
+                           servant="A specific servant to grail (defaults to the active one)")
     async def grail(
-        self, interaction: discord.Interaction, member: discord.Member | None = None
+        self, interaction: discord.Interaction, member: discord.Member | None = None,
+        servant: int | None = None,
     ) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
         target = member or interaction.user
         is_self = target.id == interaction.user.id
         status, cap, servant_id = await self.bot.contracts.apply_grail(
-            interaction.guild_id, interaction.user.id, target.id
+            interaction.guild_id, interaction.user.id, target.id, servant
         )
         if status == "no_contract":
             msg = ("You have no active contract. Use /summon first." if is_self
                    else f"{target.display_name} has no active contract.")
+            return await interaction.response.send_message(msg, ephemeral=True)
+        if status == "not_owned":
+            msg = ("You have not contracted that servant -- check /servants for your roster." if is_self
+                   else f"{target.display_name} has not contracted that servant.")
             return await interaction.response.send_message(msg, ephemeral=True)
         if status == "no_grails":
             return await interaction.response.send_message(
@@ -561,6 +567,30 @@ class ContractsCog(commands.Cog):
         await interaction.response.send_message(
             embed=embed, allowed_mentions=discord.AllowedMentions(users=[target])
         )
+
+    @grail.autocomplete("servant")
+    async def _grail_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[int]]:
+        # Roster of whoever is being grailed (the member option if set, else the invoker), so you can
+        # target a specific benched servant rather than only the active one. Mirrors /switch.
+        m = getattr(interaction.namespace, "member", None)
+        target_id = (m.id if hasattr(m, "id") else m) or interaction.user.id
+        rows = await self.bot.contracts.owned(interaction.guild_id, target_id)
+        q = current.strip().lower()
+        out: list[app_commands.Choice[int]] = []
+        for r in rows:
+            s = self.bot.servants.get(r["servant_id"])
+            if s is None or (q and q not in s.name.lower()):
+                continue
+            cap = contract_game.level_cap(r["grails_used"])
+            tag = " (active)" if r["active"] else ""
+            out.append(
+                app_commands.Choice(name=f"{s.name[:60]} (Lv {r['level']}/{cap}){tag}", value=s.id)
+            )
+            if len(out) >= 25:
+                break
+        return out
 
     @app_commands.command(name="wish", description="Choose the servant your guaranteed summon delivers (NPC bosses excluded).")
     @app_commands.guild_only()

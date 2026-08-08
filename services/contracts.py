@@ -279,23 +279,34 @@ class ContractService:
         return n
 
     async def apply_grail(
-        self, guild_id: int, giver_id: int, target_id: int
+        self, guild_id: int, giver_id: int, target_id: int, servant_id: "int | None" = None
     ) -> "tuple[str, int | None, int | None]":
-        """Spend one of giver's grails to raise target's active servant cap by GRAIL_STEP
-        (giver == target for a self-grail). Allowed at any level -- it just banks another +5 of
-        headroom. Returns (status, new_cap, servant_id) -- status in
-        {'ok','no_contract','no_grails'}; cap is None unless 'ok', servant_id None only for
-        'no_contract'."""
+        """Spend one of giver's grails to raise a target servant's cap by GRAIL_STEP (giver ==
+        target for a self-grail). Defaults to the target's ACTIVE servant; pass servant_id to grail
+        a specific owned (possibly benched) servant instead -- its cap headroom banks for when it is
+        next active. Allowed at any level. Returns (status, new_cap, servant_id) -- status in
+        {'ok','no_contract','not_owned','no_grails'}; cap is None unless 'ok'."""
         async with self.pool.acquire() as conn:
             async with conn.transaction():
-                row = await conn.fetchrow(
-                    "SELECT servant_id, grails_used FROM servant_contracts "
-                    "WHERE guild_id = $1 AND user_id = $2 AND active = 1",
-                    guild_id,
-                    target_id,
-                )
-                if row is None:
-                    return "no_contract", None, None
+                if servant_id is not None:
+                    row = await conn.fetchrow(
+                        "SELECT servant_id, grails_used FROM servant_contracts "
+                        "WHERE guild_id = $1 AND user_id = $2 AND servant_id = $3",
+                        guild_id,
+                        target_id,
+                        servant_id,
+                    )
+                    if row is None:
+                        return "not_owned", None, servant_id
+                else:
+                    row = await conn.fetchrow(
+                        "SELECT servant_id, grails_used FROM servant_contracts "
+                        "WHERE guild_id = $1 AND user_id = $2 AND active = 1",
+                        guild_id,
+                        target_id,
+                    )
+                    if row is None:
+                        return "no_contract", None, None
                 bal = await conn.fetchval(
                     "SELECT balance FROM grail_balance WHERE guild_id = $1 AND user_id = $2",
                     guild_id,
