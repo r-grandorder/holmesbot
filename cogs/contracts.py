@@ -1020,7 +1020,7 @@ class ContractsCog(commands.Cog):
             description=(
                 (f"*{clean_desc}*\n\n" if clean_desc else "")
                 + "Factions: " + ", ".join(f"**{n}**" for n in names)
-                + ".\nPlayers, /warjoin a side -- every level you gain scores for your faction.\n"
+                + ".\nPlayers, /warjoin -- you'll be placed on the side that needs you most, and every level you gain scores for it.\n"
                 + f"Ends <t:{ends_at}:R>."
             ),
             color=discord.Color.orange(),
@@ -1031,37 +1031,28 @@ class ContractsCog(commands.Cog):
             file = discord.File(io.BytesIO(banner_bytes), filename="banner.png")
         await interaction.response.send_message(embed=embed, file=file)
 
-    @app_commands.command(name="warjoin", description="Join the faction war (pick a side, or leave blank to join the weakest by points).")
+    @app_commands.command(name="warjoin", description="Join the faction war -- you're auto-placed on the underdog side to keep it fair.")
     @app_commands.guild_only()
-    @app_commands.describe(faction="Which faction to join (blank = auto-placed on the weakest side by points)")
-    async def warjoin(self, interaction: discord.Interaction, faction: str | None = None) -> None:
+    async def warjoin(self, interaction: discord.Interaction) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
         if not await self.bot.wars.active(interaction.guild_id):
             return await interaction.response.send_message("No war is running right now.", ephemeral=True)
-        name, already = await self.bot.wars.join(interaction.guild_id, interaction.user.id, faction)
+        # No side-picking: wars.join always auto-places on the weakest faction, so new players
+        # reinforce the underdog instead of stacking onto whoever is already winning.
+        name, already = await self.bot.wars.join(interaction.guild_id, interaction.user.id)
         if name is None:
             return await interaction.response.send_message(
-                "No faction by that name -- check /warstatus for the sides.", ephemeral=True
+                "This war has no factions set up -- ask a mod.", ephemeral=True
             )
         if already:
             return await interaction.response.send_message(
                 f"You're already fighting for **{name}** this season.", ephemeral=True
             )
         await interaction.response.send_message(
-            f"You've joined **{name}**! Your level-ups now score for them.", ephemeral=True
+            f"You've been placed on **{name}**, the side that needs you most. Your level-ups now score for them.",
+            ephemeral=True,
         )
-
-    @warjoin.autocomplete("faction")
-    async def _warjoin_autocomplete(
-        self, interaction: discord.Interaction, current: str
-    ) -> list[app_commands.Choice[str]]:
-        standings = await self.bot.wars.standings(interaction.guild_id)
-        return [
-            app_commands.Choice(name=f["name"], value=f["name"])
-            for f in standings
-            if current.lower() in f["name"].lower()
-        ][:25]
 
     @app_commands.command(name="warstatus", description="Show the faction war standings.")
     @app_commands.guild_only()

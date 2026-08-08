@@ -196,13 +196,11 @@ class WarService:
             user_id,
         )
 
-    async def join(
-        self, guild_id: int, user_id: int, choice: "str | None" = None
-    ) -> "tuple[str | None, bool]":
-        """Place the user on a faction, locked for the season. `choice` (a faction name) picks
-        that side; otherwise auto-place on the WEAKEST faction by points (score), breaking ties
-        by smallest roster. Returns (faction_name, already_joined); name is None if there are no
-        factions or `choice` matches none."""
+    async def join(self, guild_id: int, user_id: int) -> "tuple[str | None, bool]":
+        """Auto-place the user on the WEAKEST faction by points (score), ties broken by smallest
+        roster then slot, locked for the season. Players can't pick a side -- this keeps new joiners
+        reinforcing the underdog instead of snowballing the leader. Returns (faction_name,
+        already_joined); name is None only if the war has no factions."""
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 existing = await conn.fetchrow(
@@ -220,25 +218,15 @@ class WarService:
                 )
                 if not factions:
                     return None, False
-                if choice is not None and choice.strip():
-                    target = next(
-                        (f for f in factions if f["name"].lower() == choice.strip().lower()), None
-                    )
-                    if target is None:
-                        return None, False
-                else:
-                    counts = {f["slot"]: 0 for f in factions}
-                    for r in await conn.fetch(
-                        "SELECT slot, COUNT(*) AS n FROM war_members WHERE guild_id = $1 GROUP BY slot",
-                        guild_id,
-                    ):
-                        counts[r["slot"]] = r["n"]
-                    # Weakest faction by points. When scores tie (e.g. war start, all 0) fall
-                    # back to the smallest roster, then slot, so early joiners spread out
-                    # instead of stacking onto slot 0.
-                    target = min(
-                        factions, key=lambda f: (f["score"], counts[f["slot"]], f["slot"])
-                    )
+                counts = {f["slot"]: 0 for f in factions}
+                for r in await conn.fetch(
+                    "SELECT slot, COUNT(*) AS n FROM war_members WHERE guild_id = $1 GROUP BY slot",
+                    guild_id,
+                ):
+                    counts[r["slot"]] = r["n"]
+                # Weakest faction by points. When scores tie (e.g. war start, all 0) fall back to
+                # the smallest roster, then slot, so early joiners spread out instead of stacking.
+                target = min(factions, key=lambda f: (f["score"], counts[f["slot"]], f["slot"]))
                 await conn.execute(
                     "INSERT INTO war_members (guild_id, user_id, slot, score) VALUES ($1, $2, $3, 0)",
                     guild_id,
