@@ -297,6 +297,19 @@ class Raids(commands.Cog):
             fresh = await self.bot.raids.instance(inst["id"])
             await self._distribute_rewards(fresh, defeated=True, channel=interaction.channel)
 
+    @staticmethod
+    def _cap_field(value: str, limit: int = 1024) -> str:
+        """Discord rejects an embed field value over 1024 chars. A long team-status block (several
+        buff/debuff emotes across 3 servants with long names over a drawn-out fight) can exceed that,
+        so truncate on a newline/space boundary -- never mid custom-emote (<:name:id>)."""
+        if len(value) <= limit:
+            return value
+        head = value[:limit - 4]
+        cut = head.rfind("\n")
+        if cut < limit // 2:
+            cut = head.rfind(" ")
+        return (head[:cut] if cut > 0 else head) + " ..."
+
     def _fight_embed(self, defn, phase, boss_servant, state, remaining, total_hp, defeated,
                      item_lines, reward_bits, has_image=False) -> discord.Embed:
         ab = self._ab()
@@ -315,12 +328,12 @@ class Raids(commands.Cog):
             sprite = self._sprite_url(defn, phase, boss_servant)
             if sprite:
                 embed.set_thumbnail(url=sprite)
-        embed.add_field(name="Your Team", value=ab._team_status(state["player_servants"]), inline=True)
-        embed.add_field(name="Boss", value=ab._team_status(state["enemy_servants"]), inline=True)
+        embed.add_field(name="Your Team", value=self._cap_field(ab._team_status(state["player_servants"])), inline=True)
+        embed.add_field(name="Boss", value=self._cap_field(ab._team_status(state["enemy_servants"])), inline=True)
         if reward_bits:
-            embed.add_field(name="Your strike", value=" \N{MIDDLE DOT} ".join(reward_bits), inline=False)
+            embed.add_field(name="Your strike", value=self._cap_field(" \N{MIDDLE DOT} ".join(reward_bits)), inline=False)
         if item_lines:
-            embed.add_field(name="Items used", value="\n".join(item_lines), inline=False)
+            embed.add_field(name="Items used", value=self._cap_field("\n".join(item_lines)), inline=False)
         return embed
 
     # ---- rewards ----
