@@ -182,11 +182,12 @@ section.on{display:block; animation:fade .2s ease;}
 .fld input,.fld select{display:block; width:100%; margin-top:5px; background:var(--panel); color:var(--text);
   border:1px solid var(--soft); border-radius:8px; padding:9px 11px; font-size:14px;}
 #ed-effects{display:flex; flex-direction:column; gap:7px; margin-top:6px;}
+.effitem{margin:10px 0; padding-bottom:10px; border-bottom:1px solid var(--line);}
 .effrow{display:grid; grid-template-columns:1.5fr .7fr .7fr 1fr auto auto; gap:6px; align-items:end;}
 .effrow select,.effrow input[type=number]{background:var(--panel); color:var(--text); border:1px solid var(--soft);
   border-radius:7px; padding:7px 8px; font-size:13px; min-width:0; width:100%; box-sizing:border-box;}
 .effrow .ecell{display:flex; flex-direction:column; gap:3px; font-size:11px; color:var(--dim); min-width:0;}
-.effrow .effhint{grid-column:1 / -1; font-size:11px; color:var(--dim); margin:2px 0 2px; line-height:1.4;}
+.effhint{font-size:11px; color:var(--dim); margin:6px 0 0; line-height:1.4;}
 .effrow .e-unrem{font-size:11px; color:var(--dim); display:flex; align-items:center; gap:3px; white-space:nowrap;}
 .e-del{background:transparent; border:none; color:var(--danger); font-size:20px; line-height:1; cursor:pointer;}
 .ghostbtn{margin-top:10px; background:transparent; border:1px dashed var(--line); color:var(--gold2);
@@ -196,8 +197,15 @@ section.on{display:block; animation:fade .2s ease;}
 /* raid editor extras */
 .phase{border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin:10px 0; background:rgba(255,255,255,.02);}
 .phase>.row{display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;}
-.rankrow{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:6px 0;}
-.rankrow input{width:88px; background:var(--panel); color:var(--text); border:1px solid var(--soft); border-radius:7px; padding:7px 8px; font-size:13px; min-width:0;}
+.rankrow{display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; margin:8px 0;}
+.rankrow .rwfield{width:92px;}
+.rwfield{display:flex; flex-direction:column; gap:3px; font-size:11px; color:var(--dim); min-width:0;}
+.rwfield input{width:100%; box-sizing:border-box; background:var(--panel); color:var(--text); border:1px solid var(--soft); border-radius:7px; padding:7px 8px; font-size:13px; min-width:0;}
+.rwcol{margin:4px 0 14px;}
+.rwrow{display:grid; grid-template-columns:110px 1fr; gap:10px; align-items:center; margin:6px 0; max-width:340px;}
+.rwrow>span{font-size:12px; color:var(--dim);}
+.rwrow input{width:100%; box-sizing:border-box; background:var(--panel); color:var(--text); border:1px solid var(--soft); border-radius:7px; padding:7px 8px; font-size:13px; min-width:0;}
+.ed-note{font-size:12px; color:var(--dim); line-height:1.5; border-left:2px solid var(--gold2); padding:6px 10px; margin:12px 0; background:rgba(255,255,255,.02); border-radius:0 7px 7px 0;}
 .sprite-file{display:block; margin-top:5px; font-size:12px; color:var(--dim);}
 .sprite-prev{display:block; margin-top:8px; border-radius:8px; border:1px solid var(--soft); object-fit:cover;}
 

@@ -306,13 +306,13 @@ function effHintText(type){
 }
 function raidEffRow(e){
   e = e || {effect_type:RAID_VOCAB.effect_types[0], value:1, duration:-1, target:"self"};
-  return `<div class="effrow">
+  return `<div class="effitem"><div class="effrow">
     <label class="ecell">Effect<select class="e-type">${RAID_VOCAB.effect_types.map(t=>selTag(t,e.effect_type)).join("")}</select></label>
     <label class="ecell">Value<input class="e-val" type="number" step="any" value="${e.value}"></label>
     <label class="ecell">Duration<input class="e-dur" type="number" step="1" value="${e.duration}" title="-1 = permanent"></label>
     <label class="ecell">Target<select class="e-tgt">${RAID_VOCAB.targets.map(t=>selTag(t,e.target)).join("")}</select></label>
     <label class="e-unrem"><input type="checkbox" ${e.unremovable?"checked":""}> unrem</label>
-    <button class="e-del">&times;</button>
+    <button class="e-del">&times;</button></div>
     <div class="effhint">${effHintText(e.effect_type)}</div></div>`;
 }
 function spriteSlot(key, id){
@@ -342,13 +342,13 @@ function phaseBlock(ph, i){
 function rankRow(t){
   t = t || {top:1, qp:0, grails:0, tickets:0, embers:0, hellfire:0};
   return `<div class="rankrow">
-    <input class="rk-top" type="number" placeholder="top N" value="${t.top||1}" title="top N">
-    <input class="rk-qp" type="number" placeholder="QP" value="${t.qp||0}" title="QP">
-    <input class="rk-grails" type="number" placeholder="grails" value="${t.grails||0}" title="grails">
-    <input class="rk-tickets" type="number" placeholder="tickets" value="${t.tickets||0}" title="tickets">
-    <input class="rk-embers" type="number" placeholder="embers" value="${t.embers||0}" title="embers">
-    <input class="rk-hellfire" type="number" placeholder="hellfire" value="${t.hellfire||0}" title="hellfire">
-    <button class="e-del">&times;</button></div>`;
+    <label class="rwfield">Top N<input class="rk-top" type="number" value="${t.top||1}"></label>
+    <label class="rwfield">QP<input class="rk-qp" type="number" value="${t.qp||0}"></label>
+    <label class="rwfield">Grails<input class="rk-grails" type="number" value="${t.grails||0}"></label>
+    <label class="rwfield">Tickets<input class="rk-tickets" type="number" value="${t.tickets||0}"></label>
+    <label class="rwfield">Embers<input class="rk-embers" type="number" value="${t.embers||0}"></label>
+    <label class="rwfield">Hellfire<input class="rk-hellfire" type="number" value="${t.hellfire||0}"></label>
+    <button class="e-del" title="remove tier">&times;</button></div>`;
 }
 async function openRaidEditor(name, {duplicate=false}={}){
   const box = $("raid-editor"), body = $("raid-ed-body");
@@ -378,25 +378,26 @@ async function openRaidEditor(name, {duplicate=false}={}){
       <label class="fld">Duration (hours)<input id="rd-hours" type="number" value="${defn.duration_hours||24}"></label>
       <label class="fld">Boss size (1 = normal, 1.5 = big, 2.5 = huge)<input id="rd-scale" type="number" step="0.1" value="${defn.boss_scale||1.5}"></label>
       ${spriteSlot("default", defn.default_sprite_id)}
+      <div class="ed-note">Raid bosses are always immune to instant-kill and skill-seal, so players cannot one-shot the boss or stop its skill from firing. This is built in and not configurable.</div>
       <div class="h2">Rewards</div>
       <label class="fld">Per-fight QP<input id="rd-perfight" type="number" value="${rw.per_fight_qp||0}"></label>
-      <div class="fld">Participation (everyone who dealt damage): QP / embers / hellfire / grails / tickets</div>
-      <div class="rankrow">
-        <input id="rd-part-qp" type="number" placeholder="QP" value="${part.qp||0}" title="QP">
-        <input id="rd-part-em" type="number" placeholder="embers" value="${part.embers||0}" title="embers">
-        <input id="rd-part-hf" type="number" placeholder="hellfire" value="${part.hellfire||0}" title="hellfire">
-        <input id="rd-part-gr" type="number" placeholder="grails" value="${part.grails||0}" title="grails">
-        <input id="rd-part-tk" type="number" placeholder="tickets" value="${part.tickets||0}" title="tickets">
+      <div class="fld">Participation rewards (everyone who dealt damage)</div>
+      <div class="rwcol">
+        <label class="rwrow"><span>QP</span><input id="rd-part-qp" type="number" value="${part.qp||0}"></label>
+        <label class="rwrow"><span>Embers</span><input id="rd-part-em" type="number" value="${part.embers||0}"></label>
+        <label class="rwrow"><span>Hellfire</span><input id="rd-part-hf" type="number" value="${part.hellfire||0}"></label>
+        <label class="rwrow"><span>Grails</span><input id="rd-part-gr" type="number" value="${part.grails||0}"></label>
+        <label class="rwrow"><span>Tickets</span><input id="rd-part-tk" type="number" value="${part.tickets||0}"></label>
       </div>
-      <div class="fld">Last hit (killing blow bonus): QP / embers / hellfire / grails / tickets</div>
-      <div class="rankrow">
-        <input id="rd-lh-qp" type="number" placeholder="QP" value="${lh.qp||0}" title="QP">
-        <input id="rd-lh-em" type="number" placeholder="embers" value="${lh.embers||0}" title="embers">
-        <input id="rd-lh-hf" type="number" placeholder="hellfire" value="${lh.hellfire||0}" title="hellfire">
-        <input id="rd-lh-gr" type="number" placeholder="grails" value="${lh.grails||0}" title="grails">
-        <input id="rd-lh-tk" type="number" placeholder="tickets" value="${lh.tickets||0}" title="tickets">
+      <div class="fld">Last-hit rewards (killing-blow bonus)</div>
+      <div class="rwcol">
+        <label class="rwrow"><span>QP</span><input id="rd-lh-qp" type="number" value="${lh.qp||0}"></label>
+        <label class="rwrow"><span>Embers</span><input id="rd-lh-em" type="number" value="${lh.embers||0}"></label>
+        <label class="rwrow"><span>Hellfire</span><input id="rd-lh-hf" type="number" value="${lh.hellfire||0}"></label>
+        <label class="rwrow"><span>Grails</span><input id="rd-lh-gr" type="number" value="${lh.grails||0}"></label>
+        <label class="rwrow"><span>Tickets</span><input id="rd-lh-tk" type="number" value="${lh.tickets||0}"></label>
       </div>
-      <div class="fld">Rank tiers (top N -> QP / grails / tickets / embers / hellfire)</div>
+      <div class="fld">Rank tiers (ranked by damage dealt; each tier rewards the top N players)</div>
       <div id="rd-ranks">${(rw.ranks||[]).map(rankRow).join("")}</div>
       <button id="rd-addrank" class="ghostbtn">+ Add rank tier</button>
       <div class="h2">Phases</div>
@@ -475,14 +476,14 @@ $("raid-ed-cancel").onclick = () => { $("raid-editor").hidden = true; };
 $("raid-editor").addEventListener("click", e => {
   if (e.target.classList.contains("e-del")){
     if (e.target.dataset.delphase) e.target.closest(".phase").remove();
-    else e.target.closest(".effrow, .rankrow")?.remove();
+    else e.target.closest(".effitem, .rankrow")?.remove();
   } else if (e.target.classList.contains("ph-addeff")){
     e.target.previousElementSibling.insertAdjacentHTML("beforeend", raidEffRow(null));
   }
 });
 $("raid-editor").addEventListener("change", async e => {
   if (e.target.classList.contains("e-type")){  // refresh the value/duration explainer for this row
-    const hint = e.target.closest(".effrow")?.querySelector(".effhint");
+    const hint = e.target.closest(".effitem")?.querySelector(".effhint");
     if (hint) hint.textContent = effHintText(e.target.value);
     return;
   }
