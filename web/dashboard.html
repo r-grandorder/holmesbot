@@ -260,9 +260,11 @@ function renderRaidDefs(defs){
     <div class="name">${esc(d.display_name)} <span class="dim">(${esc(d.name)})</span> ${d.enabled?'<span class="badge">Live</span>':''}</div>
     <div style="margin-top:8px;display:flex;gap:8px">
       <button class="editbtn" data-edit="${esc(d.name)}">Edit</button>
+      <button class="editbtn" data-dup="${esc(d.name)}">Duplicate</button>
       <button class="editbtn" data-toggle="${esc(d.name)}" data-on="${d.enabled?1:0}">${d.enabled?"Disable":"Enable"}</button>
     </div></div></div>`).join("");
   el.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openRaidEditor(b.dataset.edit));
+  el.querySelectorAll("[data-dup]").forEach(b=>b.onclick=()=>openRaidEditor(b.dataset.dup, {duplicate:true}));
   el.querySelectorAll("[data-toggle]").forEach(b=>b.onclick=()=>toggleRaid(b.dataset.toggle, b.dataset.on!=="1"));
 }
 async function toggleRaid(name, on){
@@ -322,7 +324,7 @@ function rankRow(t){
     <input class="rk-hellfire" type="number" placeholder="hellfire" value="${t.hellfire||0}" title="hellfire">
     <button class="e-del">&times;</button></div>`;
 }
-async function openRaidEditor(name){
+async function openRaidEditor(name, {duplicate=false}={}){
   const box = $("raid-editor"), body = $("raid-ed-body");
   box.hidden = false; body.innerHTML = SPINNER; $("raid-ed-save").disabled = true;
   try {
@@ -331,9 +333,15 @@ async function openRaidEditor(name){
     const defn = d.def || {display_name:"", boss_servant_id:"", boss_level:120, total_hp:1000000,
       battle_hp:50000, duration_hours:24, phases:[], rewards:{}};
     const rw = defn.rewards || {}, part = rw.participation || {}, lh = rw.last_hit || {};
+    // duplicate: load an existing def's settings but as a NEW def (editable, distinct slug), so saving
+    // creates a copy and leaves the source untouched. editing: existing def, slug locked.
+    const editing = name && !duplicate;
+    const slug = editing ? name : (duplicate ? name + "_copy" : "");
+    const title = editing ? "Edit raid: " + esc(name)
+                : duplicate ? "New raid (copied from " + esc(name) + ")" : "New raid";
     body.innerHTML = `
-      <div class="ed-title">${name ? ("Edit raid: " + esc(name)) : "New raid"}</div>
-      <label class="fld">Slug / id${name ? "" : " (lowercase, no spaces)"}<input id="rd-name" value="${esc(name||"")}" ${name?"readonly":""}></label>
+      <div class="ed-title">${title}</div>
+      <label class="fld">Slug / id${editing ? "" : " (lowercase, no spaces)"}<input id="rd-name" value="${esc(slug)}" ${editing?"readonly":""}></label>
       <label class="fld">Display name<input id="rd-display" value="${esc(defn.display_name||"")}"></label>
       <label class="fld">Boss servant id (blank = custom boss)<input id="rd-boss" type="number" value="${esc(defn.boss_servant_id||"")}"></label>
       <label class="fld">Boss ATK (custom boss only; ignored if a servant id is set)<input id="rd-atk" type="number" value="${defn.boss_atk||""}"></label>
@@ -372,7 +380,7 @@ async function openRaidEditor(name){
     $("rd-addphase").onclick = () => { const c=$("rd-phases"); c.insertAdjacentHTML("beforeend", phaseBlock(null, c.children.length)); };
     $("rd-addrank").onclick = () => $("rd-ranks").insertAdjacentHTML("beforeend", rankRow(null));
     $("raid-ed-save").disabled = false;
-    $("raid-ed-save").onclick = () => saveRaid(name);
+    $("raid-ed-save").onclick = () => saveRaid();  // always PUTs to the current slug input (upsert)
   } catch(e){ body.innerHTML = `<div class="errbox">Couldn't load raid. ${esc(e.message)}</div>`; }
 }
 function _spriteId(key){ const el = document.querySelector(`.sprite-id[data-key="${key}"]`); const v = el && el.value; return v ? parseInt(v,10) : undefined; }
