@@ -36,3 +36,9 @@ class ShadowCatalog:
         gate = allow or (lambda _sid, _asc: True)
         pool = [(sid, asc) for sid, asc in self._entries if gate(sid, asc)]
         return random.choice(pool) if pool else None
+
+    def ascension_for(self, servant_id: int) -> "str | None":
+        """An ascension key that has a precomputed silhouette for this servant, or None. Ungated on
+        purpose: a silhouette is safe to show even when the servant's colored art is restricted
+        (used as the battle-scene sprite fallback for restricted servants)."""
+        return next((asc for sid, asc in self._entries if sid == servant_id), None)

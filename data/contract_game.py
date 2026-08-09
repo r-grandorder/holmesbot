@@ -134,7 +134,9 @@ def ticket_roll(index, wish: "int | None" = None, *, chance: float = 0.15,
         return any(gate(s.id, k) for k in s.art)
 
     wished = index.get(wish) if wish is not None else None
-    if wished is not None and is_wishable(wished) and _safe(wished) and random.random() < chance:
+    # The ticket wish delivers even a restricted servant (art hidden at display time); the random
+    # pool below stays gated by _safe, so natural ticket pulls never surface restricted art.
+    if wished is not None and is_wishable(wished) and random.random() < chance:
         return wished, True
     pool = [s for s in index._by_id.values() if not s.jp and s.art and _safe(s)]
     rare = [s for s in pool if s.npc or s.custom]
@@ -223,7 +225,10 @@ def roll_servant(index, *, force_5star: bool = False, wish: "int | None" = None,
     buckets, by_rarity = _summon_buckets(pool)
     if force_5star:  # pity guarantee: the wished servant (spark), else a random 5-star
         wished = index.get(wish) if wish is not None else None
-        if wished is not None and is_wishable(wished) and _has_safe_art(wished):
+        # The wish delivers even a content-restricted servant: their art is hidden at display time
+        # (embeds show no portrait, the battle scene uses a silhouette), so they're still ownable.
+        # The random-5* fallback below stays gated -- natural pulls never surface restricted art.
+        if wished is not None and is_wishable(wished):
             return wished
         return random.choice(by_rarity[5]) if by_rarity.get(5) else None
     if not buckets:

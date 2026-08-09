@@ -524,22 +524,44 @@ class Autobattle(commands.Cog):
         return "\n\n".join(blocks) or "(none)"
 
     @staticmethod
-    def _sprite_url(servant) -> "tuple[str | None, bool]":
-        """(url, is_face) for the composite: the command-card art (the same asset the legacy used)
-        when we have it, else the battle figure (charaFigure) -- both full-body, is_face=False --
-        else the face crop (is_face=True, so the composite shrinks it). Command cards populate after
-        a servant-data resync; the figure is the interim full-body sprite."""
+    def _sprite_url(servant, allow=None) -> "tuple[str | None, bool]":
+        """(url, is_face) for the composite: a SAFE-ascension command-card art (the legacy asset),
+        else the battle figure (charaFigure) -- both full-body, is_face=False -- else the face crop
+        (is_face=True). `allow(sid, ascension)` is the content-policy gate: a restricted ascension's
+        art is skipped, and a fully-restricted servant returns (None, False) so the caller can fall
+        back to a safe silhouette. allow=None gates nothing (original behavior)."""
         if servant is None:
             return None, False
+        gate = allow or (lambda _s, _k: True)
         for asset in (getattr(servant, "commands", None), servant.figure):
-            if asset:
-                return (asset.get("1") or next(iter(asset.values()))), False
-        return servant.face, True
+            if not asset:
+                continue
+            for key in ["1", *[k for k in asset if k != "1"]]:  # prefer ascension 1, then any safe key
+                if key in asset and gate(servant.id, key):
+                    return asset[key], False
+        # face isn't per-ascension; show it only if the servant has at least one safe ascension art
+        if servant.face and (allow is None or any(gate(servant.id, k) for k in (getattr(servant, "art", None) or {}))):
+            return servant.face, True
+        return None, False
 
-    async def _sprites(self, session, servant_ids) -> "list[tuple[bytes, bool]]":
+    def _silhouette_url(self, servant) -> "str | None":
+        """A servant's precomputed silhouette URL (safe even when their colored art is restricted),
+        or None if they have no silhouette in the manifest."""
+        base = self.bot.config.assets_base_url
+        if not base or servant is None:
+            return None
+        asc = self.bot.shadows.ascension_for(servant.id)
+        return f"{base}/shadow/v3/{servant.id}/{asc}.png" if asc else None
+
+    async def _sprites(self, session, servant_ids, allow=None) -> "list[tuple[bytes, bool]]":
+        if allow is None:  # gate art by the content policy; a restricted unit shows its silhouette
+            allow = await self.bot.restrictions.build_allow()
         out = []
         for sid in servant_ids:
-            url, is_face = self._sprite_url(self.bot.servants.get(sid))
+            s = self.bot.servants.get(sid)
+            url, is_face = self._sprite_url(s, allow)
+            if url is None and s is not None:  # restricted / no safe art -> safe silhouette fallback
+                url, is_face = self._silhouette_url(s), False
             if url:
                 try:
                     out.append((await images.fetch_bytes(session, url), is_face))
@@ -554,9 +576,10 @@ class Autobattle(commands.Cog):
         if not session or not bg_url:
             return None
         try:
+            allow = await self.bot.restrictions.build_allow()  # built once, shared by both sides
             bg = await images.fetch_bytes(session, bg_url)
             png = images.battle_preview(
-                bg, await self._sprites(session, left_ids), await self._sprites(session, right_ids)
+                bg, await self._sprites(session, left_ids, allow), await self._sprites(session, right_ids, allow)
             )
             return discord.File(io.BytesIO(png), filename="battle.png")
         except Exception:
