@@ -258,11 +258,20 @@ def get_next_alive_servant(servants: list) -> "dict | None":
     return None
 
 
+def _dot_amount(servant: dict, value: float) -> int:
+    """Per-turn DoT damage, one shared rule for poison/curse/burn: value <= 1 is a fraction of max HP
+    (0.1 = 10%/turn); value > 1 is flat damage. Same convention as HEALING_PER_TURN. This fixes the
+    old split where poison was always % of max HP (so a flat-looking 3000 melted raid bosses for
+    max_hp*3000) while curse/burn were always flat (so a fractional value truncated to 0)."""
+    dmg = int(servant["max_hp"] * value) if value <= 1 else int(value)
+    return max(0, dmg)
+
+
 def process_dot_effects(servant: dict, battle_log: list) -> int:
     total = 0
     poison = get_effect(servant, EffectType.POISON)
     if poison:
-        dmg = int(servant["max_hp"] * poison.value)
+        dmg = _dot_amount(servant, poison.value)
         servant["current_hp"] -= dmg
         total += dmg
         battle_log.append(f"{format_name(servant)} takes {dmg} poison damage.")
@@ -271,13 +280,13 @@ def process_dot_effects(servant: dict, battle_log: list) -> int:
         if has_effect(servant, EffectType.CURSE_IMMUNITY):
             battle_log.append(f"{format_name(servant)}'s curse immunity blocks the curse.")
         else:
-            dmg = int(curse.value)
+            dmg = _dot_amount(servant, curse.value)
             servant["current_hp"] -= dmg
             total += dmg
             battle_log.append(f"{format_name(servant)} takes {dmg} curse damage.")
     burn = get_effect(servant, EffectType.BURN)
     if burn:
-        dmg = int(burn.value)
+        dmg = _dot_amount(servant, burn.value)
         servant["current_hp"] -= dmg
         total += dmg
         battle_log.append(f"{format_name(servant)} takes {dmg} burn damage.")

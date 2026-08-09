@@ -54,7 +54,7 @@ function fmtEffect(e){
   let label;
   if (["attack_up","defense_up"].includes(T)) label = T.split("_")[0].toUpperCase()+" +"+pct;
   else if (["attack_down","defense_down"].includes(T)) label = T.split("_")[0].toUpperCase()+" -"+pct;
-  else if (["curse","burn","poison"].includes(T)) label = titleize(T)+" "+Math.round(e.value);
+  else if (["curse","burn","poison"].includes(T)) label = titleize(T)+" "+(e.value<=1 ? pct : Math.round(e.value));
   else if (T==="heal") label = "Heal "+Math.round(e.value);
   else if (T==="healing_per_turn") label = "Regen "+(e.value<=10?pct:Math.round(e.value));
   else if (T==="max_hp_up") label = "Max HP +"+(e.value<=10?pct:Math.round(e.value));
