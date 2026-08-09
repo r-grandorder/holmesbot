@@ -272,11 +272,17 @@ class ContractsCog(commands.Cog):
         await self.bot.contracts.set_pity(guild_id, user_id, pity_after)
         return servant, pity_after
 
-    async def _spark_name(self, guild_id: int, user_id: int) -> "str | None":
-        """Display name of the user's pity spark (their /wish), or None if unset/invalid."""
+    async def _spark_name(self, guild_id: int, user_id: int, allow=None) -> "str | None":
+        """Display name of the user's pity spark (their /wish), or None if unset/invalid/restricted.
+        Pass the restrictions `allow` gate so a spark that can't actually be delivered (all its art is
+        restricted) isn't advertised -- roll_servant would fall back to a random 5-star anyway."""
         wid = await self.bot.contracts.get_wish(guild_id, user_id)
         s = self.bot.servants.get(wid) if wid else None
-        return s.name if (s and contract_game.is_wishable(s)) else None
+        if not (s and contract_game.is_wishable(s)):
+            return None
+        if allow is not None and not any(allow(s.id, k) for k in s.art):
+            return None
+        return s.name
 
     async def _announce_channel(self, guild_id: int):
         """The configured contract-announcement channel, or None to post in-context."""
@@ -339,7 +345,7 @@ class ContractsCog(commands.Cog):
         )
         view = SummonView(self, interaction.user.id, servant)
         view.interaction = interaction
-        spark = await self._spark_name(interaction.guild_id, interaction.user.id)
+        spark = await self._spark_name(interaction.guild_id, interaction.user.id, allow)
         await interaction.response.send_message(
             embed=self._servant_embed(
                 servant, 1, title=self._summon_title(servant, is_new),
@@ -609,6 +615,15 @@ class ContractsCog(commands.Cog):
         if not contract_game.is_wishable(s):
             reason = "NPC bosses can't be wished." if s.npc else "That servant isn't summonable."
             return await interaction.response.send_message(reason, ephemeral=True)
+        # Also apply the content-policy gate roll_servant uses: a servant whose art is all restricted
+        # can never be delivered by the guarantee, so refuse to set it (else it silently rerolls to a
+        # random 5-star at the spark). This is the /wish-for-Abigail bug.
+        allow = await self.bot.restrictions.build_allow()
+        if not any(allow(s.id, k) for k in s.art):
+            return await interaction.response.send_message(
+                f"**{s.name}** is restricted right now, so a guaranteed summon can't deliver them. Pick another servant.",
+                ephemeral=True,
+            )
         await self.bot.contracts.set_wish(interaction.guild_id, interaction.user.id, s.id)
         await interaction.response.send_message(
             f"Set: your guaranteed summon now delivers **{s.name}** ({_stars(s.rarity)}). "
@@ -1899,7 +1914,7 @@ class SummonView(discord.ui.View):
             interaction.guild_id, self.user_id, self.servant.id
         )
         self.interaction = interaction  # freshest token, for greying out on timeout
-        spark = await self.cog._spark_name(interaction.guild_id, self.user_id)
+        spark = await self.cog._spark_name(interaction.guild_id, self.user_id, allow)
         await interaction.response.edit_message(
             embed=self.cog._servant_embed(
                 self.servant, 1, title=self.cog._summon_title(self.servant, is_new),
