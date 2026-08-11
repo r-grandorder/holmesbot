@@ -507,10 +507,11 @@ class ContractsCog(commands.Cog):
 
     @app_commands.command(name="shop", description="Visit Da Vinci's Workshop to spend QP on Holy Grails and Summon Tickets.")
     @app_commands.guild_only()
-    async def shop(self, interaction: discord.Interaction) -> None:
+    @app_commands.describe(quantity="Buy this many per tap (default 1)")
+    async def shop(self, interaction: discord.Interaction, quantity: int = 1) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
-        view = ShopView(self, interaction.user.id)
+        view = ShopView(self, interaction.user.id, quantity)
         await interaction.response.send_message(
             embed=await view.render(interaction.guild_id), view=view, ephemeral=True
         )
@@ -1739,25 +1740,28 @@ class ShopView(discord.ui.View):
     refreshes after each purchase so the running QP balance stays accurate. Purchases draw from
     the spendable balance only, so they never touch the (lifetime) QP leaderboard."""
 
-    def __init__(self, cog, user_id: int) -> None:
+    def __init__(self, cog, user_id: int, quantity: int = 1) -> None:
         super().__init__(timeout=180)
         self.cog = cog
         self.user_id = user_id
+        self.quantity = max(1, min(int(quantity or 1), 99))  # buy N per tap
         self.interaction: "discord.Interaction | None" = None
         self.line = random.choice(_SHOP_HOST_LINES)  # host greeting, stable for this session
         cfg = cog.bot.config
+        q = self.quantity
+        qtxt = f"{q}x " if q > 1 else ""
         grail_btn = discord.ui.Button(
-            label=f"Grail ({cfg.shop_grail_cost:,} QP)", style=discord.ButtonStyle.primary
+            label=f"{qtxt}Grail ({cfg.shop_grail_cost * q:,} QP)", style=discord.ButtonStyle.primary
         )
         grail_btn.callback = self._buy_grail
         self.add_item(grail_btn)
         ticket_btn = discord.ui.Button(
-            label=f"Summon Ticket ({cfg.shop_ticket_cost:,} QP)", style=discord.ButtonStyle.success
+            label=f"{qtxt}Summon Ticket ({cfg.shop_ticket_cost * q:,} QP)", style=discord.ButtonStyle.success
         )
         ticket_btn.callback = self._buy_ticket
         self.add_item(ticket_btn)
         ember_btn = discord.ui.Button(
-            label=f"Ember of Wisdom ({contract_game.EMBER_SHOP_COST:,} QP)",
+            label=f"{qtxt}Ember of Wisdom ({contract_game.EMBER_SHOP_COST * q:,} QP)",
             style=discord.ButtonStyle.secondary,
             emoji=discord.PartialEmoji.from_str(cfg.ember_emote) if cfg.ember_emote else None,
         )
@@ -1772,11 +1776,12 @@ class ShopView(discord.ui.View):
         embers, _ = await self.cog.bot.contracts.xp_items(guild_id, self.user_id)
         ge, te, ee = cfg.grail_emote, cfg.summon_ticket_emote, cfg.ember_emote
         host = self.cog.bot.servants.get(_SHOP_HOST_ID)
+        bulk = f"Buying **{self.quantity}x** per tap.\n" if self.quantity > 1 else ""
         embed = discord.Embed(
             title="QP Shop",
             description=(
                 f'*"{self.line}"*\n\n'
-                f"Your QP: **{qp(bal)}**\n\n"
+                f"Your QP: **{qp(bal)}**\n{bulk}\n"
                 f"**Holy Grail** ({qp(cfg.shop_grail_cost)}) -- goes to your stash; spend it with /grail to raise a cap by 5.\n"
                 f"**Summon Ticket** ({qp(cfg.shop_ticket_cost)}) -- redeem with /redeem for a boosted pull.\n"
                 f"**Ember of Wisdom** ({qp(contract_game.EMBER_SHOP_COST)}) -- feed XP to any servant with /ember."
@@ -1800,12 +1805,15 @@ class ShopView(discord.ui.View):
         # The shop message is ephemeral, so only its invoker can see or click it -- no
         # invoker-id guard needed (same as SummonView).
         gid = interaction.guild_id
-        if not await self.cog.bot.scoring.try_spend(gid, self.user_id, cost):
+        q = self.quantity
+        total = cost * q
+        if not await self.cog.bot.scoring.try_spend(gid, self.user_id, total):
             bal = await self.cog.bot.scoring.get_balance(gid, self.user_id)
+            want = f"{q}x {label}" if q > 1 else f"a {label}"
             return await interaction.response.send_message(
-                f"Not enough QP for a {label}: it costs {qp(cost)}, you have {qp(bal)}.", ephemeral=True
+                f"Not enough QP for {want}: it costs {qp(total)}, you have {qp(bal)}.", ephemeral=True
             )
-        await grant(gid, self.user_id, 1)
+        await grant(gid, self.user_id, q)
         await interaction.response.edit_message(embed=await self.render(gid), view=self)
 
     async def _buy_grail(self, interaction: discord.Interaction) -> None:
