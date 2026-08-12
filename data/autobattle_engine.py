@@ -409,10 +409,22 @@ def apply_on_damage_effects(servant: dict, damage_dealt: int, battle_log: list):
         apply_effect(servant, Effect(EffectType.ATTACK_UP, aod.value, aod.buff_duration))
 
 
-def apply_on_hurt_effects(servant: dict, damage_taken: int, battle_log: list, team: "list | None" = None):
+def _rage_on_attacked(servant: dict, battle_log: list) -> None:
+    """Fire ATK_UP_ON_HURT -- a counter/rage buff that triggers whenever the unit is ATTACKED, even
+    when the hit is evaded (Bazett's Fragarach powers up on being attacked, not only on taking
+    damage). Logs the gain so the reason for the ATK spike is visible."""
     aoh = get_effect(servant, EffectType.ATK_UP_ON_HURT)
-    if aoh and damage_taken > 0:
+    if aoh:
         apply_effect(servant, Effect(EffectType.ATTACK_UP, aoh.value, aoh.buff_duration))
+        battle_log.append(
+            f"  \N{RIGHTWARDS ARROW} {servant['name']}'s counter flares: "
+            f"{EFFECT_EMOJI.get('attack_up', '')} +{int(aoh.value * 100)}% ATK."
+        )
+
+
+def apply_on_hurt_effects(servant: dict, damage_taken: int, battle_log: list, team: "list | None" = None):
+    if damage_taken > 0:
+        _rage_on_attacked(servant, battle_log)  # also fired on a dodged hit (see the evade branch)
     item_id = servant.get("equipped_item")
     if item_id and damage_taken > 0:
         item = get_item(item_id)
@@ -651,6 +663,7 @@ def resolve(battle_state: dict, max_turns: int = 50) -> dict:
                 continue
             if has_effect(dfn, EffectType.EVADE) and not has_effect(atk, EffectType.IGNORE_EVADE):
                 log.append(f"{format_name(dfn)} evades.")
+                _rage_on_attacked(dfn, log)  # a counter (atk_up_on_hurt) still triggers on a dodge
                 continue
             if check_instant_kill(atk, dfn, log):
                 continue
