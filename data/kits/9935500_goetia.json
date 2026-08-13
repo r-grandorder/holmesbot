@@ -14,7 +14,7 @@
     },
     {
       "effect_type": "healing_per_turn",
-      "value": 2500,
+      "value": 0.1,
       "duration": -1,
       "target": "self"
     },
