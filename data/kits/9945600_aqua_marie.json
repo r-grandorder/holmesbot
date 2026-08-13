@@ -8,7 +8,7 @@
   "effects": [
     {
       "effect_type": "healing_per_turn",
-      "value": 3000,
+      "value": 0.1,
       "duration": -1,
       "target": "self"
     },
