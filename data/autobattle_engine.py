@@ -599,6 +599,15 @@ def resolve(battle_state: dict, max_turns: int = 50) -> dict:
             check_and_trigger_skills(ON_ENTER, s, enemy, player, log, sealed_by_enemy=enemy_sealed)
             apply_item_effects(s, "on_enter", log)
 
+    # Seed the "who is currently at the front" trackers with the starting frontliners (who just got
+    # their ON_ENTER above). Otherwise, if the front dies BEFORE turn 1's frontliner check sets these
+    # -- e.g. a DoT/succumb at turn start -- the replacement steps up while the tracker is still None,
+    # so `active is not None` is False and its ON_ENTER is skipped (incoming servant gets no skills).
+    _pf0 = get_next_alive_servant(player)
+    _ef0 = get_next_alive_servant(enemy)
+    player_active = _pf0["servant_id"] if _pf0 else None
+    enemy_active = _ef0["servant_id"] if _ef0 else None
+
     while turn < max_turns:
         log.append(f"-- Turn {turn + 1} --")
         for s in player + enemy:
