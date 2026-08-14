@@ -380,7 +380,7 @@ async function openRaidEditor(name, {duplicate=false}={}){
       <label class="fld">Duration (hours)<input id="rd-hours" type="number" value="${defn.duration_hours||24}"></label>
       <label class="fld">Boss size (1 = normal, 1.5 = big, 2.5 = huge)<input id="rd-scale" type="number" step="0.1" value="${defn.boss_scale||1.5}"></label>
       ${spriteSlot("default", defn.default_sprite_id)}
-      <div class="ed-note">Raid bosses are always immune to instant-kill and skill-seal, so players cannot one-shot the boss or stop its skill from firing. This is built in and not configurable.</div>
+      <div class="ed-note">Raid bosses are always immune to instant-kill, skill-seal, and percentage-based damage-over-time (a poison/curse/burn set as a fraction of max HP is ignored; flat DoTs still apply). So players cannot one-shot the boss, stop its skill firing, or melt it with %-HP burn. Built in, not configurable.</div>
       <div class="h2">Rewards</div>
       <label class="fld">Per-fight QP<input id="rd-perfight" type="number" value="${rw.per_fight_qp||0}"></label>
       <div class="fld">Participation rewards (everyone who dealt damage)</div>

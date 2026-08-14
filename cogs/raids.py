@@ -161,6 +161,7 @@ class Raids(commands.Cog):
         c["max_hp"] = c["current_hp"] = battle_hp
         c["ik_immune"] = True    # raid bosses are immune to instant-kill by default
         c["seal_immune"] = True  # ...and to skill seal, so the boss kit always fires
+        c["pct_dot_immune"] = True  # ...and to %-of-max-HP DoTs (they'd scale with battle HP); flat DoTs still land
         c["atk"] = int(c["atk"] * float((phase or {}).get("atk_mult", 1)))
         c["name"] = (phase or {}).get("name") or defn.get("display_name") or c["name"]
         return c, boss

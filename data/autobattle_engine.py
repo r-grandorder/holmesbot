@@ -260,36 +260,42 @@ def get_next_alive_servant(servants: list) -> "dict | None":
 
 def _dot_amount(servant: dict, value: float) -> int:
     """Per-turn DoT damage, one shared rule for poison/curse/burn: value <= 1 is a fraction of max HP
-    (0.1 = 10%/turn); value > 1 is flat damage. Same convention as HEALING_PER_TURN. This fixes the
-    old split where poison was always % of max HP (so a flat-looking 3000 melted raid bosses for
-    max_hp*3000) while curse/burn were always flat (so a fractional value truncated to 0)."""
-    dmg = int(servant["max_hp"] * value) if value <= 1 else int(value)
-    return max(0, dmg)
+    (0.1 = 10%/turn); value > 1 is flat damage. Same convention as HEALING_PER_TURN.
+    pct_dot_immune (raid bosses) shrugs off the %-of-max-HP variant -- it would otherwise scale with
+    the boss's huge battle HP -- but flat DoTs still land, so they can be chipped fairly."""
+    if value <= 1:  # percentage of max HP
+        return 0 if servant.get("pct_dot_immune") else max(0, int(servant["max_hp"] * value))
+    return max(0, int(value))  # flat
 
 
 def process_dot_effects(servant: dict, battle_log: list) -> int:
+    # dmg==0 (a %-DoT resisted by a pct_dot_immune boss, or a 0 value) is skipped silently -- no
+    # "takes 0 damage" line each turn.
     total = 0
     poison = get_effect(servant, EffectType.POISON)
     if poison:
         dmg = _dot_amount(servant, poison.value)
-        servant["current_hp"] -= dmg
-        total += dmg
-        battle_log.append(f"{format_name(servant)} takes {dmg} poison damage.")
+        if dmg > 0:
+            servant["current_hp"] -= dmg
+            total += dmg
+            battle_log.append(f"{format_name(servant)} takes {dmg} poison damage.")
     curse = get_effect(servant, EffectType.CURSE)
     if curse:
         if has_effect(servant, EffectType.CURSE_IMMUNITY):
             battle_log.append(f"{format_name(servant)}'s curse immunity blocks the curse.")
         else:
             dmg = _dot_amount(servant, curse.value)
-            servant["current_hp"] -= dmg
-            total += dmg
-            battle_log.append(f"{format_name(servant)} takes {dmg} curse damage.")
+            if dmg > 0:
+                servant["current_hp"] -= dmg
+                total += dmg
+                battle_log.append(f"{format_name(servant)} takes {dmg} curse damage.")
     burn = get_effect(servant, EffectType.BURN)
     if burn:
         dmg = _dot_amount(servant, burn.value)
-        servant["current_hp"] -= dmg
-        total += dmg
-        battle_log.append(f"{format_name(servant)} takes {dmg} burn damage.")
+        if dmg > 0:
+            servant["current_hp"] -= dmg
+            total += dmg
+            battle_log.append(f"{format_name(servant)} takes {dmg} burn damage.")
     return total
 
 
