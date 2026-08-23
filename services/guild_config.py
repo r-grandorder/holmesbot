@@ -113,9 +113,15 @@ class GuildConfigService:
         cfg = await self.get(guild_id)
         return json.loads(cfg["event_channel_ids"])
 
-    async def is_event_channel_allowed(self, guild_id: int, channel_id: int) -> bool:
-        # Opt-in: drops fire ONLY in explicitly-added channels (empty list = disabled).
-        return channel_id in await self.event_channels(guild_id)
+    async def is_event_channel_allowed(
+        self, guild_id: int, channel_id: int, parent_id: "int | None" = None
+    ) -> bool:
+        """Can drops fire here? Opt-in: ONLY in explicitly-added channels (empty list =
+        disabled). A thread inherits its parent's standing, the same as
+        is_channel_allowed, so drops follow players into threads spun up under an event
+        channel instead of stopping at the parent."""
+        chans = await self.event_channels(guild_id)
+        return channel_id in chans or (parent_id is not None and parent_id in chans)
 
     async def add_event_channel(self, guild_id: int, channel_id: int) -> None:
         chans = await self.event_channels(guild_id)

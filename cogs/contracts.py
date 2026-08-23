@@ -155,6 +155,12 @@ def _war_bar(score: int, leader: int, length: int = 10) -> str:
     return f"[{'█' * filled}{'░' * (length - filled)}]"
 
 
+# Drop cooldowns are keyed per (guild, channel), so their maps grow with every thread ever
+# seen. Once a map passes this many entries, expired rows are swept (an entry older than its
+# window is indistinguishable from a missing one, so dropping it changes nothing).
+_CD_PRUNE_AT = 512
+
+
 class ContractsCog(commands.Cog):
     """The contracted-servant QP sink. Gated by config.contract_whitelist: bot.py only loads
     this cog when the whitelist is non-empty, and every entrypoint re-checks membership so
@@ -163,11 +169,13 @@ class ContractsCog(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
         self._xp_cd: dict[tuple[int, int], float] = {}  # (guild,user) -> last xp monotonic
-        self._single_cd: dict[int, float] = {}          # guild -> last single-grail monotonic
-        self._box_cd: dict[int, float] = {}             # guild -> last grail-box monotonic
-        self._ember_cd: dict[int, float] = {}           # guild -> last single-ember-drop monotonic
-        self._ember_box_cd: dict[int, float] = {}       # guild -> last ember-box monotonic
-        self._qp_cd: dict[int, float] = {}              # guild -> last QP-reward monotonic
+        # Drop cooldowns run per (guild, CHANNEL) so a thread gets its own window rather
+        # than sharing the parent channel's -- see _maybe_drop_event.
+        self._single_cd: dict[tuple[int, int], float] = {}     # -> last single-grail monotonic
+        self._box_cd: dict[tuple[int, int], float] = {}        # -> last grail-box monotonic
+        self._ember_cd: dict[tuple[int, int], float] = {}      # -> last single-ember monotonic
+        self._ember_box_cd: dict[tuple[int, int], float] = {}  # -> last ember-box monotonic
+        self._qp_cd: dict[tuple[int, int], float] = {}         # -> last QP-reward monotonic
         self._duel_cd: dict[tuple[int, int], float] = {}  # (guild,challenger) -> last duel
         self._duel_pair_cd: dict = {}                     # (guild, frozenset{a,b}) -> last duel
         self._switch_cd: dict[tuple[int, int], float] = {}  # (guild,user) -> last active-swap
@@ -1514,38 +1522,52 @@ class ContractsCog(commands.Cog):
         except discord.HTTPException:
             pass
 
+    def _drop_ready(self, cd: dict, key, window: float, now: float) -> bool:
+        """Is this channel off cooldown for a drop? Sweeps expired rows once the map gets
+        large, since per-channel keys accumulate one entry per thread ever seen."""
+        if len(cd) > _CD_PRUNE_AT:
+            for stale in [k for k, ts in cd.items() if now - ts >= window]:
+                del cd[stale]
+        return now - cd.get(key, 0.0) >= window
+
     async def _maybe_drop_event(self, message: discord.Message) -> None:
+        channel = message.channel
+        parent_id = channel.parent_id if isinstance(channel, discord.Thread) else None
         if not await self.bot.guild_config.is_event_channel_allowed(
-            message.guild.id, message.channel.id
+            message.guild.id, channel.id, parent_id
         ):
             return
-        gid = message.guild.id
+        # Cooldowns are per CHANNEL, not per guild: a thread under an event channel gets
+        # its own window, so a busy parent can't eat every drop before a thread ever rolls
+        # one. This does multiply the guild-wide drop rate by the number of active
+        # channels -- bound it with the per-drop chances if that runs hot.
+        key = (message.guild.id, channel.id)
         now = time.monotonic()
         cg = contract_game
-        if (now - self._qp_cd.get(gid, 0.0) >= cg.QP_REWARD_COOLDOWN
+        if (self._drop_ready(self._qp_cd, key, cg.QP_REWARD_COOLDOWN, now)
                 and random.random() < cg.QP_REWARD_CHANCE):
-            self._qp_cd[gid] = now
-            await self._award_qp(message.channel, message.author)
+            self._qp_cd[key] = now
+            await self._award_qp(channel, message.author)
             return
-        if (now - self._single_cd.get(gid, 0.0) >= cg.GRAIL_SINGLE_COOLDOWN
+        if (self._drop_ready(self._single_cd, key, cg.GRAIL_SINGLE_COOLDOWN, now)
                 and random.random() < cg.GRAIL_SINGLE_CHANCE):
-            self._single_cd[gid] = now
-            await self._spawn_single(message.channel)
+            self._single_cd[key] = now
+            await self._spawn_single(channel)
             return
-        if (now - self._box_cd.get(gid, 0.0) >= cg.GRAIL_BOX_COOLDOWN
+        if (self._drop_ready(self._box_cd, key, cg.GRAIL_BOX_COOLDOWN, now)
                 and random.random() < cg.GRAIL_BOX_CHANCE):
-            self._box_cd[gid] = now
-            await self._spawn_box(message.channel)
+            self._box_cd[key] = now
+            await self._spawn_box(channel)
             return
-        if (now - self._ember_cd.get(gid, 0.0) >= cg.EMBER_DROP_COOLDOWN
+        if (self._drop_ready(self._ember_cd, key, cg.EMBER_DROP_COOLDOWN, now)
                 and random.random() < cg.EMBER_DROP_CHANCE):
-            self._ember_cd[gid] = now
-            await self._spawn_ember(message.channel)
+            self._ember_cd[key] = now
+            await self._spawn_ember(channel)
             return
-        if (now - self._ember_box_cd.get(gid, 0.0) >= cg.EMBER_BOX_COOLDOWN
+        if (self._drop_ready(self._ember_box_cd, key, cg.EMBER_BOX_COOLDOWN, now)
                 and random.random() < cg.EMBER_BOX_CHANCE):
-            self._ember_box_cd[gid] = now
-            await self._spawn_ember_box(message.channel)
+            self._ember_box_cd[key] = now
+            await self._spawn_ember_box(channel)
 
     async def _spawn_ember_box(self, channel: discord.abc.Messageable) -> None:
         host = random.choice(list(EMBER_HOSTS.values()))

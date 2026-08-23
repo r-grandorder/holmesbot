@@ -34,7 +34,7 @@ SPECIAL_WEIGHT = 2.0
 
 # --- grail events: two flavored random drops (random host each), independently tunable ---
 # Single grail: the first to claim takes exactly ONE grail, then it self-deletes.
-GRAIL_SINGLE_COOLDOWN = 40 * 60   # seconds; at most one single drop per guild per window
+GRAIL_SINGLE_COOLDOWN = 40 * 60   # seconds; at most one single drop per CHANNEL per window
 GRAIL_SINGLE_CHANCE = 0.02        # chance per qualifying message once off cooldown
 # Grail present box: USES people each grab one grail until it's empty, then it self-deletes.
 GRAIL_BOX_COOLDOWN = 90 * 60
@@ -48,7 +48,7 @@ GRAIL_EVENT_TTL = 120.0           # seconds an unfinished event lingers before s
 EMBER_XP = 500            # XP per Ember of Wisdom (~20 chat messages; a small nudge, not a shortcut)
 HELLFIRE_XP = 3000        # XP per Hellfire of Wisdom (6x an ember; the big war/mod tier)
 EMBER_SHOP_COST = 2000    # QP to buy one Ember in /shop (Da Vinci's Workshop)
-EMBER_DROP_COOLDOWN = 40 * 60   # seconds; at most one Ember drop per guild per window
+EMBER_DROP_COOLDOWN = 40 * 60   # seconds; at most one Ember drop per CHANNEL per window
 EMBER_DROP_CHANCE = 0.02        # chance per qualifying message once off cooldown
 EMBER_DROP_MIN, EMBER_DROP_MAX = 1, 4   # bundle size the single-ember drop's first claimer takes
 # Ember present box: like the grail box -- several people each grab a handful until it's empty.
@@ -61,7 +61,7 @@ WAR_HELLFIRE_REWARD = 2   # Hellfire of Wisdom to each member of the winning fac
 # --- QP reward event (Bunyan's qp_reward: a chatter randomly finds QP, auto-awarded). The
 # amount comes from the HOST's wealth tier (a triangular roll), so a rich host like Gilgamesh
 # (up to ~10 summons) pays far more than a poor one like Jinako. Self-deletes. ---
-QP_REWARD_COOLDOWN = 40 * 60      # seconds; at most one QP drop per guild per window
+QP_REWARD_COOLDOWN = 40 * 60      # seconds; at most one QP drop per CHANNEL per window
 QP_REWARD_CHANCE = 0.02           # chance per qualifying message once off cooldown
 QP_REWARD_TTL = 10               # seconds the notification lingers before self-deleting
 
