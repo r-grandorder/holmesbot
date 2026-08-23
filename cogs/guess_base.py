@@ -132,6 +132,20 @@ async def _retry(action, what: str, *, tries: int = 2, delay: float = 2.0):
             return None
 
 
+async def _resolve_channel(bot, channel_id: int):
+    """Resolve a channel id, falling back to a fetch on a cache miss. An ARCHIVED thread
+    drops out of the channel cache, so a round still running in one would otherwise lose
+    its reveal and its prompt edits (get_channel returns None). Sending into an archived
+    (unlocked) thread un-archives it, so the fetched handle is usable."""
+    channel = bot.get_channel(channel_id)
+    if channel is not None:
+        return channel
+    try:
+        return await bot.fetch_channel(channel_id)
+    except discord.HTTPException:
+        return None
+
+
 class PlayAgainView(discord.ui.View):
     """A 'Play Again' button on a reveal that re-runs the same game in-channel."""
 
@@ -659,7 +673,7 @@ class ChatRound:
         so a webhook edit then 401s with `50027 Invalid Webhook Token`."""
         if self.message is None or self.channel_id is None:
             return
-        channel = self.bot.get_channel(self.channel_id)
+        channel = await _resolve_channel(self.bot, self.channel_id)
         get_partial = getattr(channel, "get_partial_message", None)
         if get_partial is None:
             return
@@ -818,7 +832,9 @@ class ChatRound:
         # buried prompt; then slim the prompt itself.
         headline = f'*{host.line(self.host_id, "reveal", answer=self.servant.name)}*'
         embed, file = await self._build_reveal_embed(headline)
-        channel = self.bot.get_channel(self.channel_id) if self.channel_id else None
+        channel = (
+            await _resolve_channel(self.bot, self.channel_id) if self.channel_id else None
+        )
         if channel is not None:
             await self._post_reveal(channel, embed, file)
         await self._slim_prompt("Time's up.")
@@ -930,16 +946,29 @@ async def launch_round(
     if not bot.guild_config.game_enabled(cfg, game_type):
         await interaction.response.send_message("That game is turned off here.", ephemeral=True)
         return False
+    # A thread inherits its parent's standing, so any thread under a game channel is a
+    # game channel too. Rounds are keyed by channel id and a thread has its own, so each
+    # thread runs an independent round instead of the whole server queueing behind the
+    # single race in the parent channel.
+    parent_id = (
+        interaction.channel.parent_id
+        if isinstance(interaction.channel, discord.Thread)
+        else None
+    )
     channel_is_game = await bot.guild_config.is_channel_allowed(
-        interaction.guild_id, interaction.channel_id
+        interaction.guild_id, interaction.channel_id, parent_id
     )
     if not channel_is_game:
         # Regular players are confined to the configured game channel(s); mods (and
         # the owner) can still drop a round into any channel for the occasional run.
         if not (is_mod(interaction.user) or await bot.is_owner(interaction.user)):
-            channels = ", ".join(f"<#{c}>" for c in cfg["allowed_channel_ids"][:5])
+            # allowed_channel_ids is stored as a JSON string, so it has to be decoded
+            # before slicing -- slicing the raw string yields characters, not ids.
+            allowed = await bot.guild_config.allowed_channels(interaction.guild_id)
+            channels = ", ".join(f"<#{c}>" for c in allowed[:5])
             await interaction.response.send_message(
-                f"Games are played in {channels}. A mod can start a round in any channel.",
+                f"Games are played in {channels}, or any thread under them. "
+                "A mod can start a round in any channel.",
                 ephemeral=True,
             )
             return False
@@ -1115,12 +1144,9 @@ async def tidy_old_prompt(bot, channel_id: int, message_id, answer_name: str) ->
     guess a round that's already over."""
     if not message_id:
         return
-    channel = bot.get_channel(channel_id)
+    channel = await _resolve_channel(bot, channel_id)
     if channel is None:
-        try:
-            channel = await bot.fetch_channel(channel_id)
-        except discord.HTTPException:
-            return
+        return
     try:
         msg = await channel.fetch_message(message_id)
         embed = discord.Embed(title=f"It was {answer_name}!", description="Round ended.")
@@ -1141,12 +1167,9 @@ async def _post_audit_log(
     channel_id = cfg["log_channel_id"]
     if not channel_id:
         return
-    channel = bot.get_channel(channel_id)
+    channel = await _resolve_channel(bot, channel_id)
     if channel is None:
-        try:
-            channel = await bot.fetch_channel(channel_id)
-        except discord.HTTPException:
-            return
+        return
     embed = discord.Embed(title=f"Game started: {TITLES.get(game_type, game_type)}")
     embed.add_field(name="Answer", value=servant.name)
     embed.add_field(name="Servant ID", value=str(servant.id))

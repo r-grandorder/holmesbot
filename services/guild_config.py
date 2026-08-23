@@ -36,10 +36,25 @@ class GuildConfigService:
         col = GAME_COLUMN.get(game_type)
         return bool(cfg["enabled"] and (cfg[col] if col else True))
 
-    async def is_channel_allowed(self, guild_id: int, channel_id: int) -> bool:
+    async def is_channel_allowed(
+        self, guild_id: int, channel_id: int, parent_id: "int | None" = None
+    ) -> bool:
+        """Is this a game channel? An empty allowlist means every channel.
+
+        A thread inherits its PARENT's standing: pass the thread's parent_id and any
+        thread spun up under a game channel is a game channel too, with no per-thread
+        config. That is what lets several rounds run at once -- rounds are keyed by
+        channel id, and a thread has its own -- so players aren't all queued behind one
+        race in the single NA/JP channel."""
         cfg = await self.get(guild_id)
         allowed = json.loads(cfg["allowed_channel_ids"])
-        return not allowed or channel_id in allowed
+        if not allowed:
+            return True
+        return channel_id in allowed or (parent_id is not None and parent_id in allowed)
+
+    async def allowed_channels(self, guild_id: int) -> "list[int]":
+        cfg = await self.get(guild_id)
+        return json.loads(cfg["allowed_channel_ids"])
 
     async def set_game_enabled(
         self, guild_id: int, game_type: str, enabled: bool
