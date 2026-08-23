@@ -150,8 +150,9 @@ class Raids(commands.Cog):
         boss = self.bot.servants.get(sid) if sid else None
         if sid and boss is None:
             return None, None  # a servant id was configured but doesn't exist
+        cls = R.boss_class(defn, phase)
         if boss is None:  # fully custom boss (no servant): synthesize from configured ATK/class
-            boss = _CustomBoss(defn.get("display_name", "Boss"), defn.get("boss_class", ""),
+            boss = _CustomBoss(defn.get("display_name", "Boss"), cls,
                                defn.get("boss_atk", 10000), battle_hp)
         if phase and phase.get("kit"):
             kit = Skill.from_dict({**phase["kit"], "id": getattr(boss, "id", 0)})
@@ -164,6 +165,10 @@ class Raids(commands.Cog):
         c["pct_dot_immune"] = True  # ...and to %-of-max-HP DoTs (they'd scale with battle HP); flat DoTs still land
         c["atk"] = int(c["atk"] * float((phase or {}).get("atk_mult", 1)))
         c["name"] = (phase or {}).get("name") or defn.get("display_name") or c["name"]
+        if cls:
+            # A phase can swap the boss's class, flipping the class-advantage triangle partway
+            # through a raid. Blank keeps whatever the boss already is (the servant's real class).
+            c["className"] = cls
         return c, boss
 
     @staticmethod
@@ -172,6 +177,16 @@ class Raids(commands.Cog):
             return "\N{LIGHT SHADE}" * length
         filled = max(0, min(length, round(length * max(0, cur) / mx)))
         return "\N{DARK SHADE}" * filled + "\N{LIGHT SHADE}" * (length - filled)
+
+    @staticmethod
+    def _class_bit(defn: dict, phase: "dict | None", boss_servant) -> str:
+        """' - Class: <emoji> Berserker' for the status embed, or '' if the boss has no class.
+        Worth showing because a phase can change it, so the counter-team changes with it."""
+        cls = R.boss_class(defn, phase) or (getattr(boss_servant, "class_name", "") or "")
+        if not cls:
+            return ""
+        return (f" \N{MIDDLE DOT} **Class:** {engine.class_emoji(cls)} "
+                f"{autobattle.class_label(cls)}")
 
     def _boss_scale(self, defn: dict, phase: "dict | None") -> float:
         """The boss's render scale: the phase override, else the def's boss_scale, else 1.5 (bosses
@@ -417,7 +432,9 @@ class Raids(commands.Cog):
         desc = (f"*{(phase or {}).get('flavor')}*\n\n" if phase and phase.get("flavor") else "")
         desc += (f"**HP:** {max(0,inst['current_hp']):,} / {inst['total_hp']:,}\n"
                  f"`{self._pool_bar(inst['current_hp'], inst['total_hp'])}`\n"
-                 f"**Phase:** {(phase or {}).get('name', 'Opening')} \N{MIDDLE DOT} **Ends in:** {_time_left(inst['expires_at'])}")
+                 f"**Phase:** {(phase or {}).get('name', 'Opening')}"
+                 f"{self._class_bit(defn, phase, boss)}"
+                 f" \N{MIDDLE DOT} **Ends in:** {_time_left(inst['expires_at'])}")
         embed = discord.Embed(title=f"\N{CROSSED SWORDS} {inst.get('display_name','Raid')}", description=desc,
                               color=discord.Color.dark_red())
         sprite = self._sprite_url(defn, phase, boss)

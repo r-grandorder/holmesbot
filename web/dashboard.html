@@ -215,7 +215,7 @@ async function loadRaids(){
       html += `<div class="warcard">
         <div class="name">${esc(active.name)||"Raid"}</div>
         ${active.flavor?`<div class="meta">${esc(active.flavor)}</div>`:""}
-        <div class="meta">Phase: ${esc(active.phase||"Opening")} &middot; Ends ${when(active.expires_at)}</div>
+        <div class="meta">Phase: ${esc(active.phase||"Opening")}${active.class?" &middot; "+esc(classLabel(active.class)):""} &middot; Ends ${when(active.expires_at)}</div>
         <div class="fac"><div class="row"><span>HP</span><b>${num(active.current_hp)} / ${num(active.total_hp)}</b></div>
           <div class="bar"><span style="width:${pct}%"></span></div></div>
         <div style="margin-top:8px">${lb || '<span class="dim">No contributors yet.</span>'}</div></div>`;
@@ -279,6 +279,18 @@ async function toggleRaid(name, on){
 
 // ---- raid editor ----
 const selTag = (v, sel) => `<option value="${esc(v)}" ${v===sel?"selected":""}>${esc(prettyClass(v))}</option>`;
+// Classes whose slug doesn't title-case into the name people actually use.
+const CLASS_LABELS = {mooncancer:"Moon Cancer", alterego:"Alter Ego", unbeastolgamarie:"U-Olga Marie"};
+const classLabel = c => CLASS_LABELS[c] || prettyClass(c);
+// Options for a class picker. Blank first entry = inherit. An unrecognised saved value is kept
+// as an option so editing an old def can't silently drop it -- save-time validation flags it.
+function classOptions(cur, blankLabel){
+  const list = (RAID_VOCAB.classes||[]).slice();
+  const c = String(cur||"").trim().toLowerCase();
+  if (c && !list.includes(c)) list.push(c);
+  return `<option value="">${esc(blankLabel)}</option>` + list.map(v =>
+    `<option value="${esc(v)}" ${v===c?"selected":""}>${esc(classLabel(v))}</option>`).join("");
+}
 // What the "Value" field means per effect type (its meaning is effect-specific), shown as a live hint.
 const EFFECT_VALUE_HELP = {
   attack_up:"+% ATK (0.5 = +50%)", attack_down:"-% ATK (0.3 = -30%)",
@@ -325,7 +337,7 @@ function spriteSlot(key, id){
     <img class="sprite-prev" data-key="${key}" src="${url}" height="52" ${id?"":'hidden'}></div>`;
 }
 function phaseBlock(ph, i){
-  ph = ph || {threshold:1.0, name:"", flavor:"", atk_mult:1, kit:null};
+  ph = ph || {threshold:1.0, name:"", flavor:"", atk_mult:1, class:"", kit:null};
   const kit = ph.kit || {name:"", trigger:RAID_VOCAB.triggers[0], effects:[]};
   return `<div class="phase" data-phase="${i}">
     <div class="row"><b>Phase ${i+1}</b><button class="e-del" data-delphase="1">remove</button></div>
@@ -333,6 +345,7 @@ function phaseBlock(ph, i){
     <label class="fld">Name<input class="ph-name" value="${esc(ph.name||"")}"></label>
     <label class="fld">Flavor text<input class="ph-flavor" value="${esc(ph.flavor||"")}"></label>
     <label class="fld">ATK multiplier<input class="ph-atk" type="number" step="0.1" value="${ph.atk_mult||1}"></label>
+    <label class="fld">Class this phase<select class="ph-class">${classOptions(ph.class, "Inherit boss class")}</select></label>
     <label class="fld">Sprite size override (blank = boss size)<input class="ph-scale" type="number" step="0.1" value="${ph.sprite_scale||""}"></label>
     ${spriteSlot("phase-"+i, ph.sprite_id)}
     <label class="fld">Skill name<input class="ph-kit-name" value="${esc(kit.name||"")}"></label>
@@ -373,7 +386,7 @@ async function openRaidEditor(name, {duplicate=false}={}){
       <label class="fld">Display name<input id="rd-display" value="${esc(defn.display_name||"")}"></label>
       <label class="fld">Boss servant id (blank = custom boss)<input id="rd-boss" type="number" value="${esc(defn.boss_servant_id||"")}"></label>
       <label class="fld">Boss ATK (custom boss only; ignored if a servant id is set)<input id="rd-atk" type="number" value="${defn.boss_atk||""}"></label>
-      <label class="fld">Boss class (optional, e.g. beast/saber)<input id="rd-class" value="${esc(defn.boss_class||"")}"></label>
+      <label class="fld">Boss class (phases can override this)<select id="rd-class">${classOptions(defn.boss_class, "Use the servant's own class")}</select></label>
       <label class="fld">Boss level<input id="rd-level" type="number" value="${defn.boss_level||120}"></label>
       <label class="fld">Total HP (shared pool)<input id="rd-total" type="number" value="${defn.total_hp||1000000}"></label>
       <label class="fld">Per-battle HP (each fight)<input id="rd-battle" type="number" value="${defn.battle_hp||50000}"></label>
@@ -424,6 +437,7 @@ function gatherRaidDef(){
     const ph = { threshold: parseFloat(p.querySelector(".ph-threshold").value),
       name: p.querySelector(".ph-name").value.trim(), flavor: p.querySelector(".ph-flavor").value.trim(),
       atk_mult: parseFloat(p.querySelector(".ph-atk").value) || 1 };
+    const pcls = p.querySelector(".ph-class").value.trim(); if (pcls) ph.class = pcls;
     const psc = parseFloat(p.querySelector(".ph-scale").value); if (psc > 0) ph.sprite_scale = psc;
     const sEl = p.querySelector(".sprite-id");  // read from within this phase (index-independent)
     if (sEl && sEl.value) ph.sprite_id = parseInt(sEl.value, 10);

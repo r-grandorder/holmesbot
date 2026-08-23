@@ -75,6 +75,28 @@ _CLASS_ADVANTAGES = {
 }
 
 
+# Canonical class tokens the engine understands: every class named in _CLASS_ADVANTAGES plus
+# the two that only ever appear as defenders/decoration (shielder always takes neutral, beast
+# has no triangle). A token outside this set silently plays as a NEUTRAL matchup, which is why
+# raid configs validate against it instead of accepting free text.
+CLASS_NAMES = (
+    "saber", "archer", "lancer", "rider", "caster", "assassin", "berserker",
+    "ruler", "avenger", "alterego", "mooncancer", "foreigner", "pretender",
+    "beast", "shielder", "unbeastolgamarie",
+)
+
+
+# Display names for the classes whose slug doesn't title-case into the name people use.
+CLASS_LABELS = {"mooncancer": "Moon Cancer", "alterego": "Alter Ego",
+                "unbeastolgamarie": "U-Olga Marie"}
+
+
+def class_label(class_name: str) -> str:
+    """Human-facing name for a class token: 'mooncancer' -> 'Moon Cancer'."""
+    c = (class_name or "").strip().lower()
+    return CLASS_LABELS.get(c, c.replace("_", " ").title())
+
+
 def class_advantage(attacker_class: str, defender_class: str) -> float:
     """Damage multiplier from the class matchup. 1.0 neutral; Shielder always takes neutral."""
     atk = (attacker_class or "").lower()

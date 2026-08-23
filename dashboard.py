@@ -30,9 +30,9 @@ from aiohttp import web
 import datetime as dt
 
 from data import contract_game
-from data.autobattle import battle_stats
+from data.autobattle import battle_stats, CLASS_NAMES
 from data.kits import validate_kit, EFFECT_TYPES, TARGETS, TRIGGERS
-from data.raids import validate_raid_def, active_phase
+from data.raids import validate_raid_def, active_phase, boss_class
 
 log = logging.getLogger("holmesbot.dashboard")
 
@@ -486,7 +486,7 @@ async def raid_get(request: web.Request) -> web.Response:
         "def": got[0] if got else None,
         "enabled": got[1] if got else False,
         "vocab": {"triggers": sorted(TRIGGERS), "targets": sorted(TARGETS),
-                  "effect_types": sorted(EFFECT_TYPES)},
+                  "effect_types": sorted(EFFECT_TYPES), "classes": list(CLASS_NAMES)},
     })
 
 
@@ -568,7 +568,9 @@ async def raids_active(request: web.Request) -> web.Response:
     if not inst:
         return _json({"active": False})
     got = await bot.raids.get_def(inst["def_name"])
-    phase = active_phase(got[0], inst["current_hp"], inst["total_hp"]) if got else None
+    defn = got[0] if got else {}
+    phase = active_phase(defn, inst["current_hp"], inst["total_hp"]) if got else None
+    boss = bot.servants.get(inst["boss_id"]) if bot.servants else None
     guild = bot.get_guild(gid)
     lb = await bot.raids.leaderboard(inst["id"], 10)
     return _json({
@@ -577,6 +579,8 @@ async def raids_active(request: web.Request) -> web.Response:
         "current_hp": inst["current_hp"],
         "total_hp": inst["total_hp"],
         "phase": (phase or {}).get("name"),
+        # The class can differ per phase, so report the one in force right now.
+        "class": boss_class(defn, phase) or (getattr(boss, "class_name", "") or None),
         "flavor": (phase or {}).get("flavor"),
         "expires_at": inst["expires_at"],
         "leaderboard": [

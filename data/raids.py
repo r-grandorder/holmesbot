@@ -11,7 +11,8 @@ A raid definition (stored as JSON in raid_defs) looks like:
       "default_sprite_id": 12,        # optional; else the boss servant's art
       "phases": [                     # optional; kit/name/flavor/sprite swap at HP thresholds
         {"threshold": 1.0, "name": "...", "flavor": "...", "sprite_id": 12,
-         "atk_mult": 1.0, "battle_hp": 60000, "kit": {"name","trigger","effects":[...]}},
+         "atk_mult": 1.0, "battle_hp": 60000, "class": "berserker",
+         "kit": {"name","trigger","effects":[...]}},
         {"threshold": 0.5, "name": "Enraged", ...},
       ],
       "rewards": {
@@ -26,6 +27,7 @@ A raid definition (stored as JSON in raid_defs) looks like:
 """
 from __future__ import annotations
 
+from data.autobattle import CLASS_NAMES
 from data.kits import validate_kit
 
 RAID_FIGHT_COOLDOWN = 20.0      # seconds between a user's raid fights (light anti-spam; no daily cap)
@@ -46,6 +48,36 @@ def active_phase(defn: dict, current_hp: int, total_hp: int) -> "dict | None":
         if frac <= float(ph.get("threshold", 0)):
             match = ph  # keep the deepest (smallest-threshold) phase reached
     return match
+
+
+def boss_class(defn: dict, phase: "dict | None") -> str:
+    """The boss's class for this phase, lowercased: the phase's own override, else the
+    def-wide boss_class, else "" meaning 'keep whatever the boss already is' (the servant's
+    real class, or blank for a custom boss).
+
+    Per-phase classes let a boss change class as it is worn down (Saber that goes Berserker
+    when enraged), which flips the class-advantage triangle mid-raid, so the team that
+    countered the opening phase does not automatically counter the next one."""
+    # Strip BEFORE testing, so a blank/whitespace override falls through to the def-wide
+    # class rather than reading as "no class" -- validation already treats blank as inherit.
+    for value in ((phase or {}).get("class"), defn.get("boss_class")):
+        cls = str(value or "").strip().lower()
+        if cls:
+            return cls
+    return ""
+
+
+def _class_error(value, label: str) -> "str | None":
+    """None if `value` is an acceptable class token. Absent or blank means inherit, which is
+    always allowed; anything else has to be a name the engine actually knows, since an
+    unrecognised class silently degrades to a neutral matchup instead of erroring."""
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return None
+    if not isinstance(value, str):
+        return f"{label} must be a string"
+    if value.strip().lower() not in CLASS_NAMES:
+        return f"{label} must be one of: {', '.join(CLASS_NAMES)}"
+    return None
 
 
 def _pos_int(v) -> bool:
@@ -74,8 +106,9 @@ def validate_raid_def(defn: dict) -> "list[str]":
         errors.append("a custom boss (no boss_servant_id) needs a positive boss_atk")
     if defn.get("boss_atk") is not None and not _pos_int(defn["boss_atk"]):
         errors.append("boss_atk must be a positive int")
-    if defn.get("boss_class") is not None and not isinstance(defn["boss_class"], str):
-        errors.append("boss_class must be a string")
+    cls_err = _class_error(defn.get("boss_class"), "boss_class")
+    if cls_err:
+        errors.append(cls_err)
     for k in ("total_hp", "battle_hp", "duration_hours"):
         if not _pos_int(defn.get(k)):
             errors.append(f"{k} must be a positive int")
@@ -107,6 +140,9 @@ def validate_raid_def(defn: dict) -> "list[str]":
                 errors.append(f"{loc}: sprite_scale must be a positive number")
             if "battle_hp" in ph and not _pos_int(ph["battle_hp"]):
                 errors.append(f"{loc}: battle_hp must be a positive int")
+            ph_cls_err = _class_error(ph.get("class"), "class")
+            if ph_cls_err:
+                errors.append(f"{loc}: {ph_cls_err}")
             kit = ph.get("kit")
             if kit is not None:
                 k = dict(kit)
