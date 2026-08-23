@@ -279,13 +279,18 @@ class ContractService:
         return n
 
     async def apply_grail(
-        self, guild_id: int, giver_id: int, target_id: int, servant_id: "int | None" = None
-    ) -> "tuple[str, int | None, int | None]":
-        """Spend one of giver's grails to raise a target servant's cap by GRAIL_STEP (giver ==
-        target for a self-grail). Defaults to the target's ACTIVE servant; pass servant_id to grail
-        a specific owned (possibly benched) servant instead -- its cap headroom banks for when it is
-        next active. Allowed at any level. Returns (status, new_cap, servant_id) -- status in
-        {'ok','no_contract','not_owned','no_grails'}; cap is None unless 'ok'."""
+        self, guild_id: int, giver_id: int, target_id: int, servant_id: "int | None" = None,
+        quantity: int = 1,
+    ) -> "tuple[str, int | None, int | None, int]":
+        """Spend `quantity` of giver's grails to raise a target servant's cap by GRAIL_STEP each
+        (giver == target for a self-grail). Defaults to the target's ACTIVE servant; pass servant_id
+        to grail a specific owned (possibly benched) servant instead -- its cap headroom banks for
+        when it is next active. Allowed at any level.
+
+        A bulk grail is CLAMPED to the balance rather than refused: asking for more than you hold
+        spends everything you have and reports it, so a "grail all of these" never fails on an
+        off-by-a-few guess. Returns (status, new_cap, servant_id, applied) -- status in
+        {'ok','no_contract','not_owned','no_grails'}; cap is None and applied 0 unless 'ok'."""
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 if servant_id is not None:
@@ -297,7 +302,7 @@ class ContractService:
                         servant_id,
                     )
                     if row is None:
-                        return "not_owned", None, servant_id
+                        return "not_owned", None, servant_id, 0
                 else:
                     row = await conn.fetchrow(
                         "SELECT servant_id, grails_used FROM servant_contracts "
@@ -306,29 +311,37 @@ class ContractService:
                         target_id,
                     )
                     if row is None:
-                        return "no_contract", None, None
+                        return "no_contract", None, None, 0
                 bal = await conn.fetchval(
                     "SELECT balance FROM grail_balance WHERE guild_id = $1 AND user_id = $2",
                     guild_id,
                     giver_id,
                 )
                 if not bal:
-                    return "no_grails", None, row["servant_id"]
-                await conn.execute(
-                    "UPDATE grail_balance SET balance = balance - 1 "
-                    "WHERE guild_id = $1 AND user_id = $2",
+                    return "no_grails", None, row["servant_id"], 0
+                applied = min(max(1, int(quantity)), int(bal))
+                # Conditional debit: the balance is re-checked in the UPDATE itself, so the spend
+                # can never go negative even if the read above went stale.
+                spent = await conn.fetchrow(
+                    "UPDATE grail_balance SET balance = balance - $3 "
+                    "WHERE guild_id = $1 AND user_id = $2 AND balance >= $3 RETURNING balance",
                     guild_id,
                     giver_id,
+                    applied,
                 )
+                if spent is None:
+                    return "no_grails", None, row["servant_id"], 0
                 await conn.execute(
-                    "UPDATE servant_contracts SET grails_used = grails_used + 1, "
+                    "UPDATE servant_contracts SET grails_used = grails_used + $4, "
                     "updated_at = CURRENT_TIMESTAMP "
                     "WHERE guild_id = $1 AND user_id = $2 AND servant_id = $3",
                     guild_id,
                     target_id,
                     row["servant_id"],
+                    applied,
                 )
-                return "ok", contract_game.level_cap(row["grails_used"] + 1), row["servant_id"]
+                return ("ok", contract_game.level_cap(row["grails_used"] + applied),
+                        row["servant_id"], applied)
 
     async def board(self, guild_id: int) -> "list[Row]":
         """Each player's ACTIVE contract, ranked by level (then grails) -- one row per user, so

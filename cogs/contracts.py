@@ -525,20 +525,22 @@ class ContractsCog(commands.Cog):
         )
         view.interaction = interaction
 
-    @app_commands.command(name="grail", description="Spend a grail to raise a servant's cap (yours or another player's).")
+    @app_commands.command(name="grail", description="Spend grails to raise a servant's cap (yours or another player's).")
     @app_commands.guild_only()
     @app_commands.describe(member="Whose servant to grail (defaults to yours)",
-                           servant="A specific servant to grail (defaults to the active one)")
+                           servant="A specific servant to grail (defaults to the active one)",
+                           quantity="How many grails to spend at once (defaults to 1)")
     async def grail(
         self, interaction: discord.Interaction, member: discord.Member | None = None,
         servant: int | None = None,
+        quantity: app_commands.Range[int, 1, 1000] = 1,
     ) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
         target = member or interaction.user
         is_self = target.id == interaction.user.id
-        status, cap, servant_id = await self.bot.contracts.apply_grail(
-            interaction.guild_id, interaction.user.id, target.id, servant
+        status, cap, servant_id, applied = await self.bot.contracts.apply_grail(
+            interaction.guild_id, interaction.user.id, target.id, servant, quantity
         )
         if status == "no_contract":
             msg = ("You have no active contract. Use /summon first." if is_self
@@ -553,18 +555,25 @@ class ContractsCog(commands.Cog):
                 "You have no grails. Claim them from chat drops.", ephemeral=True
             )
         servant = self.bot.servants.get(servant_id) if servant_id else None
+        if applied < quantity:
+            # A bulk grail clamps to the balance rather than refusing, so name the shortfall.
+            lead = (f"You only had **{applied}** grail{'' if applied == 1 else 's'}, "
+                    f"so that is all that was used")
+        else:
+            lead = "Grail used" if applied == 1 else f"**{applied}** grails used"
         if is_self:
             who = f"your **{servant.name}**" if servant else "your servant"
             return await interaction.response.send_message(
-                f"Grail used -- {who}'s cap is now **{cap}**.", ephemeral=True
+                f"{lead} -- {who}'s cap is now **{cap}**.", ephemeral=True
             )
         # grailing another player's servant: a public, celebratory embed with its portrait
         allow = await self.bot.restrictions.build_allow()
         whose = f"**{servant.name}**" if servant else "servant"
+        times = "" if applied == 1 else f" **{applied} times**"
         embed = discord.Embed(
-            title="Grail Bestowed",
+            title="Grail Bestowed" if applied == 1 else "Grails Bestowed",
             description=(
-                f"{interaction.user.mention} grailed {target.mention}'s {whose} -- "
+                f"{interaction.user.mention} grailed {target.mention}'s {whose}{times} -- "
                 f"level cap raised to **{cap}**!"
             ),
             color=(_RARITY_COLOR.get(servant.rarity, discord.Color.blurple())
