@@ -1,125 +1,13 @@
 [
   {
-    "id": 2300700,
-    "name": "Kishinami Hakuno",
-    "className": "moonCancer",
-    "rarity": 4,
-    "gender": "male",
-    "attribute": "human",
-    "traits": [
-      "genderMale",
-      "classMoonCancer",
-      "attributeHuman",
-      "alignmentNeutral",
-      "alignmentGood",
-      "fourStarServant",
-      "servant",
-      "humanoid",
-      "brynhildsBeloved",
-      "hominidaeServant",
-      "mechanical",
-      "canBeInBattle",
-      "unknown"
-    ],
-    "art": {
-      "1": "https://static.atlasacademy.io/JP/CharaGraph/2300700/2300700a@1.png",
-      "2": "https://static.atlasacademy.io/JP/CharaGraph/2300700/2300700a@2.png",
-      "3": "https://static.atlasacademy.io/JP/CharaGraph/2300700/2300700b@1.png",
-      "4": "https://static.atlasacademy.io/JP/CharaGraph/2300700/2300700b@2.png"
-    },
-    "figure": {
-      "1": "https://static.atlasacademy.io/JP/CharaFigure/23007000/23007000_merged.png",
-      "2": "https://static.atlasacademy.io/JP/CharaFigure/23007001/23007001_merged.png",
-      "3": "https://static.atlasacademy.io/JP/CharaFigure/23007002/23007002_merged.png"
-    },
-    "face": "https://static.atlasacademy.io/JP/Faces/f_23007000.png",
-    "cv": "Abe Atsushi",
-    "jp": true,
-    "aliases": [
-      "hakuno"
-    ],
-    "skills": [
-      {
-        "num": 1,
-        "name": "スパークス・ルート∞ B",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00703.png"
-      },
-      {
-        "num": 2,
-        "name": "チェックメイト・インターセプター EX",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00317.png"
-      },
-      {
-        "num": 3,
-        "name": "Ｃ³・パニッシュメント B+",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00301.png"
-      }
-    ],
-    "summon_line": null
-  },
-  {
-    "id": 2300800,
-    "name": "Kishinami Hakuno",
-    "className": "moonCancer",
-    "rarity": 4,
-    "gender": "female",
-    "attribute": "human",
-    "traits": [
-      "genderFemale",
-      "classMoonCancer",
-      "attributeHuman",
-      "alignmentNeutral",
-      "alignmentGood",
-      "fourStarServant",
-      "servant",
-      "humanoid",
-      "brynhildsBeloved",
-      "hominidaeServant",
-      "mechanical",
-      "canBeInBattle",
-      "unknown"
-    ],
-    "art": {
-      "1": "https://static.atlasacademy.io/JP/CharaGraph/2300800/2300800a@1.png",
-      "2": "https://static.atlasacademy.io/JP/CharaGraph/2300800/2300800a@2.png",
-      "3": "https://static.atlasacademy.io/JP/CharaGraph/2300800/2300800b@1.png",
-      "4": "https://static.atlasacademy.io/JP/CharaGraph/2300800/2300800b@2.png"
-    },
-    "figure": {
-      "1": "https://static.atlasacademy.io/JP/CharaFigure/23008000/23008000_merged.png",
-      "2": "https://static.atlasacademy.io/JP/CharaFigure/23008001/23008001_merged.png",
-      "3": "https://static.atlasacademy.io/JP/CharaFigure/23008002/23008002_merged.png"
-    },
-    "face": "https://static.atlasacademy.io/JP/Faces/f_23008000.png",
-    "cv": "Yui Ishikawa",
-    "jp": true,
-    "aliases": [
-      "hakunon"
-    ],
-    "skills": [
-      {
-        "num": 1,
-        "name": "スパークス・ルート∞ B",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00703.png"
-      },
-      {
-        "num": 2,
-        "name": "チェックメイト・インターセプター EX",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00317.png"
-      },
-      {
-        "num": 3,
-        "name": "Ｃ³・パニッシュメント B+",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00301.png"
-      }
-    ],
-    "summon_line": null
-  },
-  {
     "id": 1001800,
     "name": "Kazuradrop",
     "className": "alterEgo",
     "rarity": 5,
+    "atk_base": 1734,
+    "atk_max": 11220,
+    "hp_base": 2027,
+    "hp_max": 13822,
     "gender": "female",
     "attribute": "earth",
     "traits": [
@@ -153,6 +41,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/10018002/10018002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_10018000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/1001800/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/1001800/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/1001800/card_servant_3.png"
+    },
     "cv": "Yamashita Nanami",
     "jp": true,
     "aliases": [
@@ -161,17 +54,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "ピクシー・フィンガー A",
+        "name": "Pixie Finger A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00513.png"
       },
       {
         "num": 2,
-        "name": "サクライーター A",
+        "name": "Sakura Eater A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00818.png"
       },
       {
         "num": 3,
-        "name": "月の蛹 A",
+        "name": "Moon's Pupa A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00608.png"
       }
     ],
@@ -182,6 +75,10 @@
     "name": "Tutankhamun",
     "className": "archer",
     "rarity": 5,
+    "atk_base": 1742,
+    "atk_max": 11276,
+    "hp_base": 2096,
+    "hp_max": 14295,
     "gender": "male",
     "attribute": "human",
     "traits": [
@@ -215,6 +112,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/2053002/2053002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_2053000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/205300/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/205300/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/205300/card_servant_3.png"
+    },
     "cv": "Abe Rika",
     "jp": true,
     "aliases": [
@@ -224,12 +126,12 @@
     "skills": [
       {
         "num": 1,
-        "name": "王家の谷 B",
+        "name": "Valley of the Kings B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       },
       {
         "num": 2,
-        "name": "掃滅のアマルナ EX",
+        "name": "The Annihilated el-Amarna EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00305.png"
       },
       {
@@ -245,6 +147,10 @@
     "name": "Van Gogh (Miner)",
     "className": "lancer",
     "rarity": 4,
+    "atk_base": 1543,
+    "atk_max": 9261,
+    "hp_base": 1947,
+    "hp_max": 12173,
     "gender": "female",
     "attribute": "human",
     "traits": [
@@ -278,6 +184,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/3056002/3056002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_3056000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/305600/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/305600/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/305600/card_servant_3.png"
+    },
     "cv": "Karin Takahashi",
     "jp": true,
     "aliases": [
@@ -290,17 +201,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "虚数美術（立体） B",
+        "name": "Void Space Art (Solid Geometry) B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00317.png"
       },
       {
         "num": 2,
-        "name": "ポテトイーター C",
+        "name": "De Aardappeleters C",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00412.png"
       },
       {
         "num": 3,
-        "name": "太陽との決別 EX",
+        "name": "Departure of the Sun EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00402.png"
       }
     ],
@@ -311,6 +222,10 @@
     "name": "Louhi",
     "className": "berserker",
     "rarity": 5,
+    "atk_base": 1983,
+    "atk_max": 12836,
+    "hp_base": 1764,
+    "hp_max": 12028,
     "gender": "female",
     "attribute": "earth",
     "traits": [
@@ -340,23 +255,28 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/7050002/7050002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_7050000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/705000/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/705000/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/705000/card_servant_3.png"
+    },
     "cv": "Kohara Konomi",
     "jp": true,
     "aliases": [],
     "skills": [
       {
         "num": 1,
-        "name": "天体軌道調整 B",
+        "name": "Celestial Orbit Tuning B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00316.png"
       },
       {
         "num": 2,
-        "name": "北の災厄 A",
+        "name": "Calamity of the North A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00508.png"
       },
       {
         "num": 3,
-        "name": "破滅の難題 B",
+        "name": "The Challenge in Destruction B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
@@ -367,6 +287,10 @@
     "name": "Abigail Williams (Santa)",
     "className": "pretender",
     "rarity": 4,
+    "atk_base": 1514,
+    "atk_max": 9088,
+    "hp_base": 1881,
+    "hp_max": 11756,
     "gender": "female",
     "attribute": "earth",
     "traits": [
@@ -399,6 +323,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/28008002/28008002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_28008000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/2800800/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/2800800/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/2800800/card_servant_3.png"
+    },
     "cv": "Hitomi Ohwada",
     "jp": true,
     "aliases": [
@@ -410,17 +339,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "金平糖の精の踊り EX",
+        "name": "Dance of the Sugar Plum Fair EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00305.png"
       },
       {
         "num": 2,
-        "name": "パ・ド・ドゥ A",
+        "name": "Pas de Deux A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00708.png"
       },
       {
         "num": 3,
-        "name": "聖夜の贈り物 A",
+        "name": "Gifts of the Holy Night A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
@@ -431,6 +360,10 @@
     "name": "Phantasmoon",
     "className": "pretender",
     "rarity": 5,
+    "atk_base": 1926,
+    "atk_max": 12465,
+    "hp_base": 1881,
+    "hp_max": 12825,
     "gender": "female",
     "attribute": "star",
     "traits": [
@@ -459,6 +392,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/28009002/28009002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_28009000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/2800900/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/2800900/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/2800900/card_servant_3.png"
+    },
     "cv": "Ikumi Hasegawa",
     "jp": true,
     "aliases": [
@@ -468,17 +406,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "アース・ハートリズム A",
+        "name": "Earth Heart Rhythm A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       },
       {
         "num": 2,
-        "name": "レッド・スターヴァンプ EX",
+        "name": "Red Star Vamp EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00819.png"
       },
       {
         "num": 3,
-        "name": "ブルー・グラスムーン EX",
+        "name": "Blue Glass Moon EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00603.png"
       }
     ],
@@ -489,6 +427,10 @@
     "name": "Biscione",
     "className": "lancer",
     "rarity": 5,
+    "atk_base": 1699,
+    "atk_max": 10995,
+    "hp_base": 2244,
+    "hp_max": 15300,
     "gender": "female",
     "attribute": "earth",
     "traits": [
@@ -524,6 +466,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/3057002/3057002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_3057000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/305700/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/305700/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/305700/card_servant_3.png"
+    },
     "cv": "Ichinose Kana",
     "jp": true,
     "aliases": [
@@ -532,17 +479,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "有毒の幻想 A",
+        "name": "Poisonous Dreams A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00510.png"
       },
       {
         "num": 2,
-        "name": "魔力放出（竜） B",
+        "name": "Mana Burst (Dragon) B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00316.png"
       },
       {
         "num": 3,
-        "name": "紋章の蛇 EX",
+        "name": "Serpent from the Coat of Arms EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00403.png"
       }
     ],
@@ -553,6 +500,10 @@
     "name": "Kurohime",
     "className": "saber",
     "rarity": 4,
+    "atk_base": 1622,
+    "atk_max": 9735,
+    "hp_base": 1899,
+    "hp_max": 11873,
     "gender": "female",
     "attribute": "earth",
     "traits": [
@@ -586,23 +537,28 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/1062002/1062002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_1062000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/106200/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/106200/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/106200/card_servant_3.png"
+    },
     "cv": "Kuroki Honoka",
     "jp": true,
     "aliases": [],
     "skills": [
       {
         "num": 1,
-        "name": "山神の加護 B",
+        "name": "Protection from the Mountain God B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00402.png"
       },
       {
         "num": 2,
-        "name": "霊妙なる御髪 A",
+        "name": "Miraculous Hair A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00314.png"
       },
       {
         "num": 3,
-        "name": "黄金律（蛇＆体） B",
+        "name": "Golden Rule (Serpent & Body) B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00700.png"
       }
     ],
@@ -610,9 +566,13 @@
   },
   {
     "id": 505800,
-    "name": "Ono no Komachi",
+    "name": "Ono-no-Komachi",
     "className": "caster",
     "rarity": 5,
+    "atk_base": 1766,
+    "atk_max": 11430,
+    "hp_base": 1920,
+    "hp_max": 13097,
     "gender": "female",
     "attribute": "sky",
     "traits": [
@@ -646,6 +606,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/5058002/5058002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_5058000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/505800/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/505800/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/505800/card_servant_3.png"
+    },
     "cv": "Kimura Juri & Yamanoi Jin",
     "jp": true,
     "aliases": [
@@ -654,17 +619,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "小町伝説・容彩 A",
+        "name": "Legend of Komachi - Colorful Guises A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00317.png"
       },
       {
         "num": 2,
-        "name": "恋のうた EX",
+        "name": "Song of Love EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00609.png"
       },
       {
         "num": 3,
-        "name": "篁のむすめ B+",
+        "name": "Daughter of Takamura B+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
       }
     ],
@@ -675,6 +640,10 @@
     "name": "Dante Alighieri",
     "className": "pretender",
     "rarity": 5,
+    "atk_base": 1751,
+    "atk_max": 11332,
+    "hp_base": 2100,
+    "hp_max": 14321,
     "gender": "male",
     "attribute": "star",
     "traits": [
@@ -687,6 +656,7 @@
       "servant",
       "humanoid",
       "hominidaeServant",
+      "hasCostume",
       "defender",
       "canBeInBattle",
       "unknown"
@@ -703,6 +673,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/28010002/28010002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_28010000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/2801000/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/2801000/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/2801000/card_servant_3.png"
+    },
     "cv": "Chiba Shōya",
     "jp": true,
     "aliases": [
@@ -712,17 +687,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "三世界放浪 EX",
+        "name": "Wandering Through Three Realms EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00317.png"
       },
       {
         "num": 2,
-        "name": "百歌の星 A+",
+        "name": "Star of a Hundred Poems A+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00603.png"
       },
       {
         "num": 3,
-        "name": "七罪の刻印 B",
+        "name": "Brand of the Seven Sins B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
@@ -733,6 +708,10 @@
     "name": "Metatron Jeanne",
     "className": "ruler",
     "rarity": 5,
+    "atk_base": 1847,
+    "atk_max": 11954,
+    "hp_base": 2019,
+    "hp_max": 13770,
     "gender": "female",
     "attribute": "sky",
     "traits": [
@@ -757,6 +736,7 @@
       "hasGoddessMetamorphosis",
       "servantsWithSkyAttribute",
       "canBeInBattle",
+      "unknown",
       "unknown"
     ],
     "art": {
@@ -771,6 +751,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/9019002/9019002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_9019000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/901900/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/901900/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/901900/card_servant_3.png"
+    },
     "cv": "Maaya Sakamoto",
     "jp": true,
     "aliases": [
@@ -782,17 +767,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "真名七十二 A",
+        "name": "True Name \"72\" A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00416.png"
       },
       {
         "num": 2,
-        "name": "契約天使 B+",
+        "name": "Angel of the Covenant B+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00609.png"
       },
       {
         "num": 3,
-        "name": "絶対の代行者 EX",
+        "name": "Agent of the Absolute EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
     ],
@@ -803,6 +788,10 @@
     "name": "King Ashoka",
     "className": "lancer",
     "rarity": 4,
+    "atk_base": 1608,
+    "atk_max": 9653,
+    "hp_base": 1881,
+    "hp_max": 11761,
     "gender": "male",
     "attribute": "human",
     "traits": [
@@ -837,6 +826,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/3058002/3058002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_3058000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/305800/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/305800/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/305800/card_servant_3.png"
+    },
     "cv": "Konishi Katsuyuki",
     "jp": true,
     "aliases": [
@@ -845,17 +839,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "地獄の軍略 A",
+        "name": "Hellish Tactics A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00315.png"
       },
       {
         "num": 2,
-        "name": "転輪仏塔 B+",
+        "name": "Dharmachakra Stupa B+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       },
       {
         "num": 3,
-        "name": "転輪聖王 EX",
+        "name": "Chakravartin EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
@@ -866,6 +860,10 @@
     "name": "Lilith",
     "className": "berserker",
     "rarity": 5,
+    "atk_base": 1974,
+    "atk_max": 12774,
+    "hp_base": 1790,
+    "hp_max": 12210,
     "gender": "female",
     "attribute": "earth",
     "traits": [
@@ -906,23 +904,28 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/7051002/7051002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_7051000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/705100/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/705100/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/705100/card_servant_3.png"
+    },
     "cv": "Morohoshi Sumire",
     "jp": true,
     "aliases": [],
     "skills": [
       {
         "num": 1,
-        "name": "輝く夜のように EX",
+        "name": "Like a Radiant Night EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00509.png"
       },
       {
         "num": 2,
-        "name": "踊る翼のように A",
+        "name": "Like the Wings That Dance A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00314.png"
       },
       {
         "num": 3,
-        "name": "醜い恋のように C+",
+        "name": "Like an Ugly Love C+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00312.png"
       }
     ],
@@ -933,6 +936,10 @@
     "name": "Typhon Ephemeros",
     "className": "pretender",
     "rarity": 5,
+    "atk_base": 1983,
+    "atk_max": 12835,
+    "hp_base": 1918,
+    "hp_max": 13081,
     "gender": "female",
     "attribute": "sky",
     "traits": [
@@ -974,6 +981,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/28011002/28011002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_28011000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/2801100/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/2801100/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/2801100/card_servant_3.png"
+    },
     "cv": "Yamane Aya",
     "jp": true,
     "aliases": [
@@ -984,17 +996,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "竜牢具現：灰燼灼鎧 C",
+        "name": "Blaze of Etna C",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00403.png"
       },
       {
         "num": 2,
-        "name": "黒翼 A",
+        "name": "Black Wings A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00313.png"
       },
       {
         "num": 3,
-        "name": "罪なるかな。咎なるかな。悪なるかな EX",
+        "name": "Is it a Sin. Is it an Offense. Is it Evil EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
@@ -1005,6 +1017,10 @@
     "name": "Indra",
     "className": "lancer",
     "rarity": 5,
+    "atk_base": 1901,
+    "atk_max": 12302,
+    "hp_base": 2019,
+    "hp_max": 13770,
     "gender": "unknown",
     "attribute": "sky",
     "traits": [
@@ -1043,23 +1059,28 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/3059002/3059002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_3059000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/305900/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/305900/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/305900/card_servant_3.png"
+    },
     "cv": "Inoue Kazuhiko & Takayama Minami & Toki Shun'ichi",
     "jp": true,
     "aliases": [],
     "skills": [
       {
         "num": 1,
-        "name": "神々の王 EX",
+        "name": "King of the Gods EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       },
       {
         "num": 2,
-        "name": "魔力放出（神雷） A",
+        "name": "Mana Burst (Divine Thunder) A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00317.png"
       },
       {
         "num": 3,
-        "name": "ヴリトラハン EX",
+        "name": "Vritrahan EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
     ],
@@ -1070,6 +1091,10 @@
     "name": "U-Olga Marie",
     "className": "unBeastOlgaMarie",
     "rarity": 5,
+    "atk_base": 1671,
+    "atk_max": 10815,
+    "hp_base": 2266,
+    "hp_max": 15450,
     "gender": "female",
     "attribute": "star",
     "traits": [
@@ -1097,6 +1122,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/40001002/40001002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_40001000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/4000100/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/4000100/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/4000100/card_servant_3.png"
+    },
     "cv": "Madoka Yonezawa",
     "jp": true,
     "aliases": [
@@ -1113,12 +1143,12 @@
       },
       {
         "num": 2,
-        "name": "アトミックプラント B",
+        "name": "Atomic Plant B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       },
       {
         "num": 3,
-        "name": "アルテミット・Ｕ EX",
+        "name": "Ultimate U EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00306.png"
       }
     ],
@@ -1129,6 +1159,10 @@
     "name": "Passionlip",
     "className": "saber",
     "rarity": 5,
+    "atk_base": 1820,
+    "atk_max": 11782,
+    "hp_base": 2110,
+    "hp_max": 14392,
     "gender": "female",
     "attribute": "earth",
     "traits": [
@@ -1167,6 +1201,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/1063002/1063002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_1063000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/106300/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/106300/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/106300/card_servant_3.png"
+    },
     "cv": "Yui Ogura",
     "jp": true,
     "aliases": [
@@ -1178,17 +1217,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "ブレスト・ポーチ A",
+        "name": "Breast Pouch A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00700.png"
       },
       {
         "num": 2,
-        "name": "トラッシュ＆クラッシュ B",
+        "name": "Trash & Crush B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00306.png"
       },
       {
         "num": 3,
-        "name": "プリンセス・オーダー EX",
+        "name": "Princess Order EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00821.png"
       }
     ],
@@ -1199,6 +1238,10 @@
     "name": "Kriemhild",
     "className": "rider",
     "rarity": 4,
+    "atk_base": 1527,
+    "atk_max": 9166,
+    "hp_base": 1824,
+    "hp_max": 11400,
     "gender": "female",
     "attribute": "earth",
     "traits": [
@@ -1232,6 +1275,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/4058002/4058002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_4058000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/405800/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/405800/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/405800/card_servant_3.png"
+    },
     "cv": "Aoi Koga",
     "jp": true,
     "aliases": [
@@ -1243,17 +1291,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "位高き乙女の矜持 EX",
+        "name": "Diginity of a Court Lady EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00315.png"
       },
       {
         "num": 2,
-        "name": "鮫のカリスマ A",
+        "name": "Charisma of Shark A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       },
       {
         "num": 3,
-        "name": "令嬢応酬 B",
+        "name": "Noblewoman's Reciprocation B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00512.png"
       }
     ],
@@ -1264,6 +1312,10 @@
     "name": "Huyan Zhuo",
     "className": "berserker",
     "rarity": 4,
+    "atk_base": 1699,
+    "atk_max": 10197,
+    "hp_base": 1603,
+    "hp_max": 10023,
     "gender": "female",
     "attribute": "human",
     "traits": [
@@ -1299,6 +1351,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/7052002/7052002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_7052000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/705200/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/705200/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/705200/card_servant_3.png"
+    },
     "cv": "Manaka Iwami",
     "jp": true,
     "aliases": [
@@ -1310,17 +1367,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "天威星（夏） A",
+        "name": "Prestige Star of Heaven (Summer) A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00334.png"
       },
       {
         "num": 2,
-        "name": "夏の承認欲求 B",
+        "name": "Self-Esteem Needs at Summer B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00304.png"
       },
       {
         "num": 3,
-        "name": "連環馬（憑依） A",
+        "name": "Chain-Linked Horse (Possession) A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
@@ -1331,6 +1388,10 @@
     "name": "Jade Rabbit",
     "className": "moonCancer",
     "rarity": 5,
+    "atk_base": 1605,
+    "atk_max": 10391,
+    "hp_base": 2263,
+    "hp_max": 15435,
     "gender": "female",
     "attribute": "human",
     "traits": [
@@ -1360,6 +1421,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/23011002/23011002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_23011000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/2301100/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/2301100/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/2301100/card_servant_3.png"
+    },
     "cv": "Maaya Sakamoto",
     "jp": true,
     "aliases": [
@@ -1374,12 +1440,12 @@
       },
       {
         "num": 2,
-        "name": "望月に踊る A",
+        "name": "Dancing Under the Full Moon A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       },
       {
         "num": 3,
-        "name": "月下逍遙／日輪午睡 A",
+        "name": "Strolling Under the Moonlight/Napping Under the Sun A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
     ],
@@ -1390,6 +1456,10 @@
     "name": "Miyu Edelfelt",
     "className": "lancer",
     "rarity": 4,
+    "atk_base": 1657,
+    "atk_max": 9944,
+    "hp_base": 1799,
+    "hp_max": 11245,
     "gender": "female",
     "attribute": "human",
     "traits": [
@@ -1421,6 +1491,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/3060002/3060002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_3060000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/306000/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/306000/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/306000/card_servant_3.png"
+    },
     "cv": "Kaori Nazuka & Yumi Kakazu",
     "jp": true,
     "aliases": [
@@ -1433,17 +1508,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "ひとり遊び B",
+        "name": "Playing Alone B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00314.png"
       },
       {
         "num": 2,
-        "name": "因習村の巫女 A+",
+        "name": "Shrine Maiden of In Shumura A+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       },
       {
         "num": 3,
-        "name": "イリヤズム EX",
+        "name": "Illyaism EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00403.png"
       }
     ],
@@ -1454,6 +1529,10 @@
     "name": "Larva/Tiamat",
     "className": "archer",
     "rarity": 5,
+    "atk_base": 1857,
+    "atk_max": 12016,
+    "hp_base": 2027,
+    "hp_max": 13825,
     "gender": "female",
     "attribute": "star",
     "traits": [
@@ -1491,6 +1570,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/2054002/2054002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_2054000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/205400/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/205400/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/205400/card_servant_3.png"
+    },
     "cv": "Aoi Yuki",
     "jp": true,
     "aliases": [
@@ -1503,17 +1587,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "青き夏の衣 B",
+        "name": "Azure Summerwear B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00314.png"
       },
       {
         "num": 2,
-        "name": "家事百般 B",
+        "name": "Housework of All Kinds B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       },
       {
         "num": 3,
-        "name": "サマー・ミラージュ B",
+        "name": "Summer Mirage B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00605.png"
       }
     ],
@@ -1524,6 +1608,10 @@
     "name": "Jeunesse Crane",
     "className": "alterEgo",
     "rarity": 4,
+    "atk_base": 1649,
+    "atk_max": 9896,
+    "hp_base": 1675,
+    "hp_max": 10473,
     "gender": "female",
     "attribute": "earth",
     "traits": [
@@ -1555,6 +1643,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/10019002/10019002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_10019000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/1001900/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/1001900/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/1001900/card_servant_3.png"
+    },
     "cv": "Kaori Mizuhashi",
     "jp": true,
     "aliases": [
@@ -1565,17 +1658,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "私の思春期ディスタンス C",
+        "name": "My Adolescent Distance C",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00305.png"
       },
       {
         "num": 2,
-        "name": "キミを想う、衣のうた B",
+        "name": "A Song of Raiment for You B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       },
       {
         "num": 3,
-        "name": "夏と自分に嘘はつけない B",
+        "name": "I Can't Lie to Summer and Myself B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00509.png"
       }
     ],
@@ -1586,6 +1679,10 @@
     "name": "Nemo/Noah",
     "className": "rider",
     "rarity": 5,
+    "atk_base": 1795,
+    "atk_max": 11619,
+    "hp_base": 1881,
+    "hp_max": 12830,
     "gender": "male",
     "attribute": "star",
     "traits": [
@@ -1620,6 +1717,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/4057002/4057002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_4057000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/405700/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/405700/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/405700/card_servant_3.png"
+    },
     "cv": "Yumiri Hanamori",
     "jp": true,
     "aliases": [
@@ -1628,17 +1730,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "救世の航海者 B",
+        "name": "Voyager of Salvation B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
       },
       {
         "num": 2,
-        "name": "信仰の加護 EX",
+        "name": "Protection of the Faith EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00401.png"
       },
       {
         "num": 3,
-        "name": "ゾーハルの輝石 EX",
+        "name": "Zohar's Shining Gem EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00305.png"
       }
     ],
@@ -1649,6 +1751,10 @@
     "name": "Kawakami Gensai",
     "className": "assassin",
     "rarity": 5,
+    "atk_base": 1790,
+    "atk_max": 11586,
+    "hp_base": 1862,
+    "hp_max": 12696,
     "gender": "female",
     "attribute": "human",
     "traits": [
@@ -1679,6 +1785,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/6051002/6051002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_6051000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/605100/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/605100/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/605100/card_servant_3.png"
+    },
     "cv": "白石晴香",
     "jp": true,
     "aliases": [
@@ -1688,17 +1799,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "人斬り彦斎 A",
+        "name": "Manslayer Gensai A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00315.png"
       },
       {
         "num": 2,
-        "name": "抜刀無二 A",
+        "name": "Peerless Quick-Draw Sword A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00311.png"
       },
       {
         "num": 3,
-        "name": "蝮蛇の眼 B",
+        "name": "Viper's Eye B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00512.png"
       }
     ],
@@ -1709,6 +1820,10 @@
     "name": "Tōdō Heisuke",
     "className": "avenger",
     "rarity": 4,
+    "atk_base": 1547,
+    "atk_max": 9284,
+    "hp_base": 1738,
+    "hp_max": 10862,
     "gender": "male",
     "attribute": "human",
     "traits": [
@@ -1739,6 +1854,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/11021002/11021002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_11021000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/1102100/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/1102100/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/1102100/card_servant_3.png"
+    },
     "cv": "田丸篤志",
     "jp": true,
     "aliases": [
@@ -1748,17 +1868,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "死番 B",
+        "name": "Death Duty B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00700.png"
       },
       {
         "num": 2,
-        "name": "魁先生 A",
+        "name": "Instructor of Charging Ahead A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00304.png"
       },
       {
         "num": 3,
-        "name": "砲術義肢 C",
+        "name": "Prosthetic Gunnery C",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
       }
     ],
@@ -1769,6 +1889,10 @@
     "name": "Harada Sanosuke",
     "className": "lancer",
     "rarity": 4,
+    "atk_base": 1382,
+    "atk_max": 8295,
+    "hp_base": 2142,
+    "hp_max": 13387,
     "gender": "male",
     "attribute": "human",
     "traits": [
@@ -1801,6 +1925,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/3061002/3061002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_3061000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/306100/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/306100/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/306100/card_servant_3.png"
+    },
     "cv": "斉藤壮馬",
     "jp": true,
     "aliases": [
@@ -1810,17 +1939,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "壬生の赤狼 C",
+        "name": "Red Wolf of Mibu C",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00316.png"
       },
       {
         "num": 2,
-        "name": "死損ね左之助 B+",
+        "name": "Sanosuke Who Failed to Die B+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00404.png"
       },
       {
         "num": 3,
-        "name": "無頼の槍 C",
+        "name": "Self-Reliant Spear C",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
     ],
@@ -1831,6 +1960,10 @@
     "name": "Kondo Isami",
     "className": "saber",
     "rarity": 5,
+    "atk_base": 1820,
+    "atk_max": 11782,
+    "hp_base": 2153,
+    "hp_max": 14680,
     "gender": "male",
     "attribute": "human",
     "traits": [
@@ -1866,6 +1999,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/1064002/1064002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_1064000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/106400/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/106400/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/106400/card_servant_3.png"
+    },
     "cv": "新垣樽助",
     "jp": true,
     "aliases": [
@@ -1876,17 +2014,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "虎徹・BLADE A",
+        "name": "Kotetsu BLADE A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00312.png"
       },
       {
         "num": 2,
-        "name": "天然理心流（極） A+",
+        "name": "Tennen Rishinryu (Zenith) A+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00315.png"
       },
       {
         "num": 3,
-        "name": "至誠 EX",
+        "name": "Utmost Sincerity EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
     ],
@@ -1897,6 +2035,10 @@
     "name": "Elisabeth Báthory",
     "className": "lancer",
     "rarity": 5,
+    "atk_base": 1878,
+    "atk_max": 12154,
+    "hp_base": 2070,
+    "hp_max": 14114,
     "gender": "female",
     "attribute": "star",
     "traits": [
@@ -1927,6 +2069,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/3062002/3062002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_3062000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/306200/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/306200/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/306200/card_servant_3.png"
+    },
     "cv": "Rumi Okubo",
     "jp": true,
     "aliases": [
@@ -1937,17 +2084,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "カ星を継ぐ者 EX",
+        "name": "Successor of Planet P. EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       },
       {
         "num": 2,
-        "name": "エリザベート・エヴォルツィオ EX",
+        "name": "Elizabeth Evoluzio EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00403.png"
       },
       {
         "num": 3,
-        "name": "エリザ粒子 A",
+        "name": "Eliza Particles A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
@@ -1958,6 +2105,10 @@
     "name": "Elisabeth of the End",
     "className": "avenger",
     "rarity": 4,
+    "atk_base": 1638,
+    "atk_max": 9828,
+    "hp_base": 1760,
+    "hp_max": 11000,
     "gender": "female",
     "attribute": "star",
     "traits": [
@@ -1990,6 +2141,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/11022002/11022002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_11022000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/1102200/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/1102200/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/1102200/card_servant_3.png"
+    },
     "cv": "Rumi Okubo",
     "jp": true,
     "aliases": [
@@ -2004,17 +2160,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "シュラインメイデン・マーズ A+",
+        "name": "Schleinmaiden Mars A+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       },
       {
         "num": 2,
-        "name": "パンプキンプラネット EX",
+        "name": "Pumpkin Planet EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       },
       {
         "num": 3,
-        "name": "星を統べるもの B",
+        "name": "The One Who Rules the Planet B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00306.png"
       }
     ],
@@ -2025,6 +2181,10 @@
     "name": "Solomon",
     "className": "pretender",
     "rarity": 5,
+    "atk_base": 1768,
+    "atk_max": 11444,
+    "hp_base": 2090,
+    "hp_max": 14250,
     "gender": "male",
     "attribute": "earth",
     "traits": [
@@ -2056,23 +2216,28 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/28012002/28012002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_28012000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/2801200/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/2801200/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/2801200/card_servant_3.png"
+    },
     "cv": "Tomokazu Sugita",
     "jp": true,
     "aliases": [],
     "skills": [
       {
         "num": 1,
-        "name": "虚数の鞄 A",
+        "name": "Bag of Imaginary Numbers A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       },
       {
         "num": 2,
-        "name": "ソロモンの指輪 E",
+        "name": "Seal of Solomon E",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00313.png"
       },
       {
         "num": 3,
-        "name": "人王の灰 EX",
+        "name": "Ashes of the King of Men EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00315.png"
       }
     ],
@@ -2083,6 +2248,10 @@
     "name": "Lord Logres",
     "className": "saber",
     "rarity": 5,
+    "atk_base": 1964,
+    "atk_max": 12709,
+    "hp_base": 1999,
+    "hp_max": 13635,
     "gender": "female",
     "attribute": "star",
     "traits": [
@@ -2119,6 +2288,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/1065002/1065002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_1065000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/106500/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/106500/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/106500/card_servant_3.png"
+    },
     "cv": "Ayako Kawasumi",
     "jp": true,
     "aliases": [
@@ -2128,17 +2302,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "フィニス・ドラコーン EX",
+        "name": "Finis Dracon EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00607.png"
       },
       {
         "num": 2,
-        "name": "レックス・ミロワール A",
+        "name": "Rex Miroir A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       },
       {
         "num": 3,
-        "name": "エニス・グイトリン -",
+        "name": "Ynys Wydryn -",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00419.png"
       }
     ],
@@ -2146,9 +2320,13 @@
   },
   {
     "id": 505900,
-    "name": "Hanasaka no Okina",
+    "name": "Hanasaka-no-Okina",
     "className": "caster",
     "rarity": 5,
+    "atk_base": 1719,
+    "atk_max": 11128,
+    "hp_base": 2027,
+    "hp_max": 13825,
     "gender": "male",
     "attribute": "earth",
     "traits": [
@@ -2182,6 +2360,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/5059002/5059002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_5059000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/505900/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/505900/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/505900/card_servant_3.png"
+    },
     "cv": "石田彰",
     "jp": true,
     "aliases": [
@@ -2192,17 +2375,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "白き稀犬 A",
+        "name": "Rare White Dog A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00314.png"
       },
       {
         "num": 2,
-        "name": "ここほれワンワン EX",
+        "name": "Dig Here, Woof Woof EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       },
       {
         "num": 3,
-        "name": "墓木の臼 A",
+        "name": "Mortar of the Grave Tree A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00515.png"
       }
     ],
@@ -2213,6 +2396,10 @@
     "name": "Hebi Nyōbō",
     "className": "assassin",
     "rarity": 4,
+    "atk_base": 1395,
+    "atk_max": 8372,
+    "hp_base": 1975,
+    "hp_max": 12344,
     "gender": "female",
     "attribute": "earth",
     "traits": [
@@ -2250,6 +2437,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/6052002/6052002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_6052000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/605200/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/605200/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/605200/card_servant_3.png"
+    },
     "cv": "内山夕実",
     "jp": true,
     "aliases": [
@@ -2259,17 +2451,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "萩の束 B",
+        "name": "Bundle of Bush Clover B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       },
       {
         "num": 2,
-        "name": "犀竜の湖 B",
+        "name": "Lake of Sairyū B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00315.png"
       },
       {
         "num": 3,
-        "name": "三井の晩鐘 EX",
+        "name": "Evening Bell of Mii EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
@@ -2280,6 +2472,10 @@
     "name": "Flora",
     "className": "alterEgo",
     "rarity": 4,
+    "atk_base": 1560,
+    "atk_max": 9363,
+    "hp_base": 1900,
+    "hp_max": 11875,
     "gender": "female",
     "attribute": "sky",
     "traits": [
@@ -2316,23 +2512,28 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/10020002/10020002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_10020000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/1002000/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/1002000/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/1002000/card_servant_3.png"
+    },
     "cv": "井上ほの花",
     "jp": true,
     "aliases": [],
     "skills": [
       {
         "num": 1,
-        "name": "孕りの花 A",
+        "name": "Life-Bearing Flower A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00404.png"
       },
       {
         "num": 2,
-        "name": "乙女を攫う西風 B",
+        "name": "West Wind That Sweeps Away Maidens B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00304.png"
       },
       {
         "num": 3,
-        "name": "プロセルピナの開花 EX",
+        "name": "Proserpina in Bloom EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00313.png"
       }
     ],
@@ -2343,6 +2544,10 @@
     "name": "Demeter",
     "className": "lancer",
     "rarity": 5,
+    "atk_base": 1905,
+    "atk_max": 12332,
+    "hp_base": 2059,
+    "hp_max": 14045,
     "gender": "female",
     "attribute": "sky",
     "traits": [
@@ -2377,6 +2582,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/3064002/3064002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_3064000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/306400/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/306400/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/306400/card_servant_3.png"
+    },
     "cv": "久川綾",
     "jp": true,
     "aliases": [
@@ -2385,17 +2595,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "母の権能（豊穣） C",
+        "name": "Maternal Authority (Abundance) C",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00314.png"
       },
       {
         "num": 2,
-        "name": "イミテーションイモータリティ B+",
+        "name": "Imitation Immortality B+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00404.png"
       },
       {
         "num": 3,
-        "name": "嘆きの母 A+",
+        "name": "Grieving Mother A+",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
     ],
@@ -2406,6 +2616,10 @@
     "name": "Jacques de Molay",
     "className": "saber",
     "rarity": 5,
+    "atk_base": 1820,
+    "atk_max": 11782,
+    "hp_base": 2089,
+    "hp_max": 14248,
     "gender": "male",
     "attribute": "human",
     "traits": [
@@ -2438,6 +2652,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/1066002/1066002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_1066000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/106600/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/106600/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/106600/card_servant_3.png"
+    },
     "cv": "中島ヨシキ",
     "jp": true,
     "aliases": [
@@ -2447,17 +2666,17 @@
     "skills": [
       {
         "num": 1,
-        "name": "騎士団の誓い A",
+        "name": "Vow of the Knightly Order A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00328.png"
       },
       {
         "num": 2,
-        "name": "喜捨の勧め A",
+        "name": "Recommended Almsgiving A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00513.png"
       },
       {
         "num": 3,
-        "name": "巡礼の守護者 B",
+        "name": "Guardian of the Pilgrimage B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00404.png"
       }
     ],
@@ -2465,9 +2684,13 @@
   },
   {
     "id": 505600,
-    "name": "François Prélat",
+    "name": "François Prélati",
     "className": "caster",
     "rarity": 5,
+    "atk_base": 1792,
+    "atk_max": 11601,
+    "hp_base": 1901,
+    "hp_max": 12965,
     "gender": "male",
     "attribute": "sky",
     "traits": [
@@ -2503,26 +2726,30 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/5056002/5056002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_5056000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/505600/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/505600/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/505600/card_servant_3.png"
+    },
     "cv": "内田真礼",
     "jp": true,
     "aliases": [
-      "francois",
-      "francoisprelati"
+      "francois"
     ],
     "skills": [
       {
         "num": 1,
-        "name": "幻術（奇想天外） A",
+        "name": "Illusion (Fantastical) A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00403.png"
       },
       {
         "num": 2,
-        "name": "精霊の弟子 B",
+        "name": "Disciple of the Spirits B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       },
       {
         "num": 3,
-        "name": "愚行の加護 B",
+        "name": "Blessing of Folly B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00301.png"
       }
     ],
@@ -2530,9 +2757,13 @@
   },
   {
     "id": 405600,
-    "name": "Hippolyte",
+    "name": "Hippolyta",
     "className": "rider",
     "rarity": 4,
+    "atk_base": 1462,
+    "atk_max": 8773,
+    "hp_base": 1920,
+    "hp_max": 12000,
     "gender": "female",
     "attribute": "earth",
     "traits": [
@@ -2569,27 +2800,31 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/4056002/4056002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_4056000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/405600/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/405600/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/405600/card_servant_3.png"
+    },
     "cv": "関根明良",
     "jp": true,
     "aliases": [
-      "hippolyta",
       "hippo",
       "redhairsaber"
     ],
     "skills": [
       {
         "num": 1,
-        "name": "テルメーの輝き B",
+        "name": "Themiscyra's Radiance B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       },
       {
         "num": 2,
-        "name": "戦神の軍帯 A",
+        "name": "Goddess of War A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00306.png"
       },
       {
         "num": 3,
-        "name": "月女神の巫女 A",
+        "name": "Priestess of the Moon Goddess A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
       }
     ],
@@ -2600,6 +2835,10 @@
     "name": "John Lackland",
     "className": "avenger",
     "rarity": 5,
+    "atk_base": 1646,
+    "atk_max": 10654,
+    "hp_base": 2172,
+    "hp_max": 14810,
     "gender": "male",
     "attribute": "human",
     "traits": [
@@ -2629,6 +2868,11 @@
       "3": "https://static.atlasacademy.io/JP/CharaFigure/11020002/11020002_merged.png"
     },
     "face": "https://static.atlasacademy.io/JP/Faces/f_11020000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/1102000/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/1102000/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/1102000/card_servant_3.png"
+    },
     "cv": "山崎岳彦＆小市眞琴",
     "jp": true,
     "aliases": [
@@ -2638,18 +2882,884 @@
     "skills": [
       {
         "num": 1,
-        "name": "暗君のカリスマ A",
+        "name": "Charisma of Foolish Ruler A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       },
       {
         "num": 2,
-        "name": "欠地王の矜恃 A",
+        "name": "Pride of the Landless King A",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00306.png"
       },
       {
         "num": 3,
-        "name": "偽神転生 B",
+        "name": "False God Reincarnation B",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
+      }
+    ],
+    "summon_line": null
+  },
+  {
+    "id": 205500,
+    "name": "Urðr",
+    "className": "archer",
+    "rarity": 5,
+    "atk_base": 1803,
+    "atk_max": 11668,
+    "hp_base": 2112,
+    "hp_max": 14406,
+    "gender": "female",
+    "attribute": "sky",
+    "traits": [
+      "genderFemale",
+      "classArcher",
+      "attributeSky",
+      "alignmentLawful",
+      "alignmentBalanced",
+      "fiveStarServant",
+      "servant",
+      "divine",
+      "humanoid",
+      "weakToEnumaElish",
+      "skyOrEarthServant",
+      "skyOrEarthExceptPseudoAndDemiServant",
+      "divineOrDemonOrUndead",
+      "divineSpirit",
+      "immuneToPigify",
+      "hasGoddessMetamorphosis",
+      "servantsWithSkyAttribute",
+      "standardClassServant",
+      "canBeInBattle",
+      "unknown"
+    ],
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/205500/205500a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/205500/205500a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/205500/205500b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/205500/205500b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/2055000/2055000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/2055001/2055001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/2055002/2055002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_2055000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/205500/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/205500/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/205500/card_servant_3.png"
+    },
+    "cv": "羊宮妃那",
+    "jp": true,
+    "aliases": [
+      "urd",
+      "urdr",
+      "urth"
+    ],
+    "skills": [
+      {
+        "num": 1,
+        "name": "Good Thread from Long-Ago A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00305.png"
+      },
+      {
+        "num": 2,
+        "name": "Divine Stamp of the Old Days EX",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00609.png"
+      },
+      {
+        "num": 3,
+        "name": "That Which is Woven B+",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00321.png"
+      }
+    ],
+    "summon_line": null
+  },
+  {
+    "id": 1002200,
+    "name": "Ascalaphus",
+    "className": "alterEgo",
+    "rarity": 5,
+    "atk_base": 1875,
+    "atk_max": 12134,
+    "hp_base": 1965,
+    "hp_max": 13402,
+    "gender": "male",
+    "attribute": "sky",
+    "traits": [
+      "genderMale",
+      "classAlterEgo",
+      "attributeSky",
+      "alignmentLawful",
+      "alignmentEvil",
+      "fiveStarServant",
+      "servant",
+      "divine",
+      "humanoid",
+      "weakToEnumaElish",
+      "skyOrEarthServant",
+      "skyOrEarthExceptPseudoAndDemiServant",
+      "divineOrDemonOrUndead",
+      "greekMythologyMales",
+      "divineSpirit",
+      "havingAnimalsCharacteristics",
+      "immuneToPigify",
+      "servantsWithSkyAttribute",
+      "canBeInBattle",
+      "unknown"
+    ],
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/1002200/1002200a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/1002200/1002200a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/1002200/1002200b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/1002200/1002200b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/10022000/10022000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/10022001/10022001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/10022002/10022002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_10022000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/1002200/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/1002200/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/1002200/card_servant_3.png"
+    },
+    "cv": "榊原優希",
+    "jp": true,
+    "aliases": [],
+    "skills": [
+      {
+        "num": 1,
+        "name": "Ominous Bird of Forewarning A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00402.png"
+      },
+      {
+        "num": 2,
+        "name": "Pruning the Dark Garden A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00305.png"
+      },
+      {
+        "num": 3,
+        "name": "Pomegranate of No Return A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00404.png"
+      }
+    ],
+    "summon_line": null
+  },
+  {
+    "id": 106700,
+    "name": "Gray Lily",
+    "className": "saber",
+    "rarity": 4,
+    "atk_base": 1658,
+    "atk_max": 9949,
+    "hp_base": 1781,
+    "hp_max": 11135,
+    "gender": "female",
+    "attribute": "human",
+    "traits": [
+      "genderFemale",
+      "classSaber",
+      "attributeHuman",
+      "alignmentLawful",
+      "alignmentGood",
+      "fourStarServant",
+      "servant",
+      "humanoid",
+      "saberface",
+      "weakToEnumaElish",
+      "riding",
+      "saberClassServant",
+      "hominidaeServant",
+      "livingHuman",
+      "childServant",
+      "knightsOfTheRound",
+      "standardClassServant",
+      "canBeInBattle",
+      "unknown",
+      "unknown"
+    ],
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/106700/106700a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/106700/106700a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/106700/106700b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/106700/106700b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/1067000/1067000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/1067001/1067001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/1067002/1067002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_1067000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/106700/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/106700/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/106700/card_servant_3.png"
+    },
+    "cv": "Reina Ueda & Daisuke Ono",
+    "jp": true,
+    "aliases": [],
+    "skills": [
+      {
+        "num": 1,
+        "name": "Mystic Code Seal Release (Sacred Sword) A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00316.png"
+      },
+      {
+        "num": 2,
+        "name": "Golden Destiny A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
+      },
+      {
+        "num": 3,
+        "name": "Chaldenia's Blessing (Front) A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
+      }
+    ],
+    "summon_line": null
+  },
+  {
+    "id": 306300,
+    "name": "Gray Lily",
+    "className": "lancer",
+    "rarity": 4,
+    "atk_base": 1455,
+    "atk_max": 8731,
+    "hp_base": 1999,
+    "hp_max": 12495,
+    "gender": "female",
+    "attribute": "human",
+    "traits": [
+      "genderFemale",
+      "classLancer",
+      "attributeHuman",
+      "alignmentLawful",
+      "alignmentGood",
+      "fourStarServant",
+      "servant",
+      "humanoid",
+      "saberface",
+      "weakToEnumaElish",
+      "hominidaeServant",
+      "livingHuman",
+      "childServant",
+      "knightsOfTheRound",
+      "standardClassServant",
+      "canBeInBattle",
+      "unknown",
+      "unknown"
+    ],
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/306300/306300a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/306300/306300a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/306300/306300b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/306300/306300b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/3063000/3063000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/3063001/3063001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/3063002/3063002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_3063000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/306300/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/306300/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/306300/card_servant_3.png"
+    },
+    "cv": "Reina Ueda & Daisuke Ono",
+    "jp": true,
+    "aliases": [],
+    "skills": [
+      {
+        "num": 1,
+        "name": "Mystic Code Seal Release (Sacred Lance) A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00316.png"
+      },
+      {
+        "num": 2,
+        "name": "Black Raven Gravekeeper B",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
+      },
+      {
+        "num": 3,
+        "name": "Chaldenia's Blessing (Back) A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
+      }
+    ],
+    "summon_line": null
+  },
+  {
+    "id": 605300,
+    "name": "Hassan-i Sabbah",
+    "className": "assassin",
+    "rarity": 5,
+    "atk_base": 1831,
+    "atk_max": 11848,
+    "hp_base": 1871,
+    "hp_max": 12760,
+    "gender": "male",
+    "attribute": "human",
+    "traits": [
+      "classAssassin",
+      "attributeHuman",
+      "alignmentLawful",
+      "alignmentEvil",
+      "fiveStarServant",
+      "servant",
+      "weakToEnumaElish",
+      "brynhildsBeloved",
+      "standardClassServant",
+      "canBeInBattle",
+      "unknown"
+    ],
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/605300/605300a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/605300/605300a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/605300/605300b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/605300/605300b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/6053000/6053000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/6053001/6053001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/6053002/6053002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_6053000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/605300/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/605300/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/605300/card_servant_3.png"
+    },
+    "cv": "金本涼輔",
+    "jp": true,
+    "aliases": [],
+    "skills": [
+      {
+        "num": 1,
+        "name": "Angel's Body A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
+      },
+      {
+        "num": 2,
+        "name": "Thirty Birds A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00609.png"
+      },
+      {
+        "num": 3,
+        "name": "Tree of Zaqqūm EX",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00822.png"
+      }
+    ],
+    "summon_line": null
+  },
+  {
+    "id": 705300,
+    "name": "Beni-Enma",
+    "className": "berserker",
+    "rarity": 5,
+    "atk_base": 1847,
+    "atk_max": 11955,
+    "hp_base": 1881,
+    "hp_max": 12825,
+    "gender": "female",
+    "attribute": "earth",
+    "traits": [
+      "genderFemale",
+      "classBerserker",
+      "attributeEarth",
+      "alignmentLawful",
+      "alignmentGood",
+      "fiveStarServant",
+      "servant",
+      "oni",
+      "humanoid",
+      "weakToEnumaElish",
+      "skyOrEarthServant",
+      "skyOrEarthExceptPseudoAndDemiServant",
+      "childServant",
+      "fairyTaleServant",
+      "havingAnimalsCharacteristics",
+      "summerModeServant",
+      "standardClassServant",
+      "hasSupereffectiveNPAgainstAlignmentEvil",
+      "canBeInBattle",
+      "unknown"
+    ],
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/705300/705300a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/705300/705300a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/705300/705300b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/705300/705300b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/7053000/7053000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/7053001/7053001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/7053002/7053002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_7053000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/705300/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/705300/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/705300/card_servant_3.png"
+    },
+    "cv": "Misaki Kuno",
+    "jp": true,
+    "aliases": [],
+    "skills": [
+      {
+        "num": 1,
+        "name": "Kurakura's Meals A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00603.png"
+      },
+      {
+        "num": 2,
+        "name": "Sparrow's Tub Bath EX",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00315.png"
+      },
+      {
+        "num": 3,
+        "name": "The Beheading Old Man's Needle-Mountain Sword EX",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
+      }
+    ],
+    "summon_line": null
+  },
+  {
+    "id": 2301200,
+    "name": "Kingprotea",
+    "className": "moonCancer",
+    "rarity": 5,
+    "atk_base": 1719,
+    "atk_max": 11128,
+    "hp_base": 2249,
+    "hp_max": 15336,
+    "gender": "female",
+    "attribute": "earth",
+    "traits": [
+      "genderFemale",
+      "classMoonCancer",
+      "attributeEarth",
+      "alignmentLawful",
+      "alignmentGood",
+      "fiveStarServant",
+      "servant",
+      "divine",
+      "humanoid",
+      "weakToEnumaElish",
+      "skyOrEarthServant",
+      "skyOrEarthExceptPseudoAndDemiServant",
+      "superGiant",
+      "giant",
+      "mechanical",
+      "havingAnimalsCharacteristics",
+      "immuneToPigify",
+      "summerModeServant",
+      "sakuraSeries",
+      "canBeInBattle",
+      "unknown"
+    ],
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/2301200/2301200a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/2301200/2301200a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/2301200/2301200b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/2301200/2301200b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/23012000/23012000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/23012001/23012001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/23012002/23012002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_23012000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/2301200/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/2301200/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/2301200/card_servant_3.png"
+    },
+    "cv": "Megumi Han",
+    "jp": true,
+    "aliases": [],
+    "skills": [
+      {
+        "num": 1,
+        "name": "Grow-Up Menu! B",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00412.png"
+      },
+      {
+        "num": 2,
+        "name": "Insect Search A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00310.png"
+      },
+      {
+        "num": 3,
+        "name": "Kaijū Baby EX",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00411.png"
+      }
+    ],
+    "summon_line": null
+  },
+  {
+    "id": 506000,
+    "name": "Biscione",
+    "className": "caster",
+    "rarity": 4,
+    "atk_base": 1517,
+    "atk_max": 9105,
+    "hp_base": 1862,
+    "hp_max": 11637,
+    "gender": "female",
+    "attribute": "earth",
+    "traits": [
+      "genderFemale",
+      "classCaster",
+      "attributeEarth",
+      "alignmentChaotic",
+      "alignmentBalanced",
+      "fourStarServant",
+      "servant",
+      "lamia",
+      "humanoid",
+      "dragon",
+      "weakToEnumaElish",
+      "skyOrEarthServant",
+      "demonic",
+      "skyOrEarthExceptPseudoAndDemiServant",
+      "demonicBeastServant",
+      "havingAnimalsCharacteristics",
+      "summerModeServant",
+      "standardClassServant",
+      "canBeInBattle",
+      "unknown"
+    ],
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/506000/506000a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/506000/506000a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/506000/506000b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/506000/506000b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/5060000/5060000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/5060001/5060001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/5060002/5060002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_5060000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/506000/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/506000/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/506000/card_servant_3.png"
+    },
+    "cv": "Ichinose Kana",
+    "jp": true,
+    "aliases": [],
+    "skills": [
+      {
+        "num": 1,
+        "name": "Summer Business Traveler A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
+      },
+      {
+        "num": 2,
+        "name": "Tooth Fishing A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00305.png"
+      },
+      {
+        "num": 3,
+        "name": "At the Spring of Thebes EX",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00510.png"
+      }
+    ],
+    "summon_line": null
+  },
+  {
+    "id": 405900,
+    "name": "Lilith",
+    "className": "rider",
+    "rarity": 5,
+    "atk_base": 1850,
+    "atk_max": 11971,
+    "hp_base": 1900,
+    "hp_max": 12960,
+    "gender": "female",
+    "attribute": "earth",
+    "traits": [
+      "genderFemale",
+      "classRider",
+      "attributeEarth",
+      "alignmentChaotic",
+      "alignmentSummer",
+      "fiveStarServant",
+      "servant",
+      "demon",
+      "divine",
+      "humanoid",
+      "weakToEnumaElish",
+      "riding",
+      "skyOrEarthServant",
+      "undeadOrDemon",
+      "demonic",
+      "skyOrEarthExceptPseudoAndDemiServant",
+      "divineOrDemonOrUndead",
+      "demonicBeastServant",
+      "divineSpirit",
+      "havingAnimalsCharacteristics",
+      "immuneToPigify",
+      "summerModeServant",
+      "hasGoddessMetamorphosis",
+      "standardClassServant",
+      "canBeInBattle",
+      "unknown"
+    ],
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/405900/405900a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/405900/405900a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/405900/405900b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/405900/405900b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/4059000/4059000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/4059001/4059001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/4059002/4059002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_4059000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/405900/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/405900/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/405900/card_servant_3.png"
+    },
+    "cv": "Morohoshi Sumire",
+    "jp": true,
+    "aliases": [],
+    "skills": [
+      {
+        "num": 1,
+        "name": "Dreaming of a Raging Tempest C",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00402.png"
+      },
+      {
+        "num": 2,
+        "name": "Smiling at the Somber Night B",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00314.png"
+      },
+      {
+        "num": 3,
+        "name": "Dissolved into an Ephemeral Love EX",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00509.png"
+      }
+    ],
+    "summon_line": null
+  },
+  {
+    "id": 1102300,
+    "name": "Kingprotea Alter",
+    "className": "avenger",
+    "rarity": 5,
+    "atk_base": 2002,
+    "atk_max": 12959,
+    "hp_base": 1812,
+    "hp_max": 12355,
+    "gender": "female",
+    "attribute": "earth",
+    "traits": [
+      "genderFemale",
+      "classAvenger",
+      "attributeEarth",
+      "alignmentChaotic",
+      "alignmentEvil",
+      "fiveStarServant",
+      "servant",
+      "threatToHumanity",
+      "humanoid",
+      "weakToEnumaElish",
+      "skyOrEarthServant",
+      "demonic",
+      "skyOrEarthExceptPseudoAndDemiServant",
+      "superGiant",
+      "giant",
+      "mechanical",
+      "havingAnimalsCharacteristics",
+      "immuneToPigify",
+      "summerModeServant",
+      "obstacleMaker",
+      "defender",
+      "sakuraSeries",
+      "canBeInBattle",
+      "unknown"
+    ],
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/1102300/1102300a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/1102300/1102300a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/1102300/1102300b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/1102300/1102300b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/11023000/11023000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/11023001/11023001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/11023002/11023002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_11023000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/1102300/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/1102300/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/1102300/card_servant_3.png"
+    },
+    "cv": "Megumi Han",
+    "jp": true,
+    "aliases": [],
+    "skills": [
+      {
+        "num": 1,
+        "name": "Mounting Menu! A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
+      },
+      {
+        "num": 2,
+        "name": "Insect Steal A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00306.png"
+      },
+      {
+        "num": 3,
+        "name": "Tyrant Baby A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00411.png"
+      }
+    ],
+    "summon_line": null
+  },
+  {
+    "id": 205600,
+    "name": "Ono-no-Komachi",
+    "className": "archer",
+    "rarity": 4,
+    "atk_base": 1691,
+    "atk_max": 10148,
+    "hp_base": 1746,
+    "hp_max": 10914,
+    "gender": "female",
+    "attribute": "sky",
+    "traits": [
+      "genderFemale",
+      "classArcher",
+      "attributeSky",
+      "alignmentNeutral",
+      "alignmentBalanced",
+      "fourStarServant",
+      "servant",
+      "humanoid",
+      "weakToEnumaElish",
+      "skyOrEarthServant",
+      "skyOrEarthExceptPseudoAndDemiServant",
+      "hominidaeServant",
+      "summerModeServant",
+      "servantsWithSkyAttribute",
+      "standardClassServant",
+      "groupServant",
+      "canBeInBattle",
+      "unknown"
+    ],
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/205600/205600a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/205600/205600a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/205600/205600b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/205600/205600b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/2056000/2056000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/2056001/2056001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/2056002/2056002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_2056000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/205600/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/205600/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/205600/card_servant_3.png"
+    },
+    "cv": "Kimura Juri & Yamanoi Jin",
+    "jp": true,
+    "aliases": [],
+    "skills": [
+      {
+        "num": 1,
+        "name": "Midsummer Shōjo Manga Fair A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00314.png"
+      },
+      {
+        "num": 2,
+        "name": "Summertime Lovers (Support) B",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
+      },
+      {
+        "num": 3,
+        "name": "One Must Exercise Restraint (Summer) EX",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00403.png"
+      }
+    ],
+    "summon_line": null
+  },
+  {
+    "id": 2801300,
+    "name": "Habetrot",
+    "className": "pretender",
+    "rarity": 4,
+    "atk_base": 1510,
+    "atk_max": 9065,
+    "hp_base": 1890,
+    "hp_max": 11815,
+    "gender": "female",
+    "attribute": "earth",
+    "traits": [
+      "genderFemale",
+      "classPretender",
+      "attributeEarth",
+      "alignmentNeutral",
+      "alignmentGood",
+      "fourStarServant",
+      "servant",
+      "fae",
+      "humanoid",
+      "weakToEnumaElish",
+      "riding",
+      "skyOrEarthServant",
+      "brynhildsBeloved",
+      "skyOrEarthExceptPseudoAndDemiServant",
+      "hasCostume",
+      "fairyTaleServant",
+      "havingAnimalsCharacteristics",
+      "summerModeServant",
+      "canBeInBattle",
+      "unknown"
+    ],
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/2801300/2801300a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/2801300/2801300a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/2801300/2801300b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/2801300/2801300b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/28013000/28013000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/28013001/28013001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/28013002/28013002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_28013000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/2801300/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/2801300/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/2801300/card_servant_3.png"
+    },
+    "cv": "Ayasa Ito",
+    "jp": true,
+    "aliases": [],
+    "skills": [
+      {
+        "num": 1,
+        "name": "Sacred Guardian Beast A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00700.png"
+      },
+      {
+        "num": 2,
+        "name": "Yanamun Reversal A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00301.png"
+      },
+      {
+        "num": 3,
+        "name": "Great Decisive Battle at the Southern Sea EX",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00316.png"
       }
     ],
     "summon_line": null
