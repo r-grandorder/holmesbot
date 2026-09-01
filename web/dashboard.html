@@ -560,12 +560,16 @@ function renderServants(list){
   if (!list.length){ el.innerHTML = `<div class="empty">No custom servants yet.</div>`; return; }
   el.innerHTML = list.map(r => {
     const d = r.def || {}, fromFile = r.source === "file";
-    return `<div class="card"><div class="body">
+    // .card is a flex row and site.css already sizes a direct <img> child to 60x60, so the
+    // portrait needs no extra styling. face is optional, so omit the slot when there isn't one.
+    return `<div class="card">
+      ${d.face ? `<img loading="lazy" src="${esc(d.face)}" alt="">` : ``}
+      <div class="body">
       <div class="name">${esc(d.name||"(unnamed)")}
         <span class="dim">${esc(classLabel(d.className||""))} &middot; ${d.rarity||"?"}★ &middot; #${r.id}</span>
-        ${r.enabled?'<span class="badge">Live</span>':'<span class="dim">draft</span>'}
+        ${r.enabled?'<span class="badge">Enabled</span>':'<span class="dim">Disabled</span>'}
         ${fromFile?'<span class="dim" title="Authored in data/custom_servants.json. Editing it here takes over from the file.">from file</span>':''}</div>
-      <div class="meta">${r.enabled ? esc(pctText(r.pct)) : "disabled -- not summonable"}</div>
+      <div class="meta">${r.enabled ? esc(pctText(r.pct)) : "not in the summon pool"}</div>
       <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="editbtn" data-sv-edit="${r.id}">Edit</button>
         <button class="editbtn" data-sv-kit="${r.id}">Kit</button>
