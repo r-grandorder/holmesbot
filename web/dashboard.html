@@ -547,7 +547,9 @@ async function loadServants(){
       return;
     }
     const d = await fetch(API_BASE+"/api/servants/custom", {headers:authHeaders()}).then(r=>r.json());
-    tab.innerHTML = `<div class="h2">Custom servants <span class="n">mods</span></div>
+    // The whole tab is mod-gated, so a "mods" marker (as on the Raids tab, which mixes mod and
+    // public sections) would mark nothing here. Use the same .n slot for a count instead.
+    tab.innerHTML = `<div class="h2">Custom servants <span class="n">${(d.servants||[]).length}</span></div>
       <div id="sv-list"></div>
       <button id="sv-new" class="btn">+ New servant</button>`;
     renderServants(d.servants||[]);
