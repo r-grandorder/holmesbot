@@ -1,16 +1,17 @@
 name: Refresh assets
 
 # Re-sync the servant index from Atlas (NA + JP-only), re-extract silhouettes to S3,
-# and commit the updated shadows.json. That commit triggers Build, which re-bakes the
-# manifest into the image, so new servants flow into /guessshadow and /guessshadowjp
-# with no manual work. Asset hosting stays on S3 (intentional). Manual-trigger for now;
-# add a `schedule:` block here to run it weekly.
+# and commit the updated shadows.json, then dispatch Build so the manifest is re-baked
+# into the image and new servants flow into /guessshadow and /guessshadowjp with no
+# manual work. Asset hosting stays on S3 (intentional). Manual-trigger for now; add a
+# `schedule:` block here to run it weekly.
 on:
   workflow_dispatch:
 
 permissions:
   id-token: write # OIDC to AWS
   contents: write # commit the refreshed manifest
+  actions: write # dispatch Build (see the trigger step below)
 
 concurrency: refresh-assets
 
@@ -35,13 +36,25 @@ jobs:
           python scripts/sync_atlas.py --jp
           python scripts/precompute_silhouettes.py
       - name: Commit refreshed manifest if changed
+        id: commit
         run: |
           git config user.name "holmesbot-refresh[bot]"
           git config user.email "noreply@holmesbot.com"
           git add data/shadows.json
           if git diff --cached --quiet; then
             echo "No manifest changes."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             git commit -m "chore: refresh shadow manifest (scheduled)"
             git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Trigger the image build
+        # A push made with GITHUB_TOKEN does NOT start another workflow run, so Build
+        # would never see this commit if we relied on its `on: push` trigger.
+        # workflow_dispatch is one of the two documented exceptions to that rule, so
+        # dispatch Build explicitly instead.
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run build.yml --ref main
