@@ -37,15 +37,21 @@ class CustomServantService:
         )
         return (json.loads(row["def_json"]), bool(row["enabled"])) if row else None
 
-    async def upsert(self, servant_id: int, defn: dict, editor_id: int) -> None:
-        """Create or update a definition. Leaves `enabled` alone on update so saving an edit
-        to a live unit doesn't silently pull it out of the summon pool."""
+    async def upsert(
+        self, servant_id: int, defn: dict, editor_id: int, *, enable_on_create: bool = False
+    ) -> None:
+        """Create or update a definition. `enabled` is only ever set on INSERT -- an update
+        leaves it alone, so saving an edit to a live unit can't silently pull it out of the
+        summon pool.
+
+        enable_on_create is for ADOPTING a file-authored custom: that unit is already live in
+        the index, so writing its first DB row as a draft would quietly un-summon it."""
         await self.pool.execute(
-            "INSERT INTO custom_servants (id, def_json, updated_by, updated_at) "
-            "VALUES ($1, $2, $3, CURRENT_TIMESTAMP) "
+            "INSERT INTO custom_servants (id, def_json, enabled, updated_by, updated_at) "
+            "VALUES ($1, $2, $4, $3, CURRENT_TIMESTAMP) "
             "ON CONFLICT (id) DO UPDATE SET def_json = $2, updated_by = $3, "
             "updated_at = CURRENT_TIMESTAMP",
-            servant_id, json.dumps(defn), editor_id,
+            servant_id, json.dumps(defn), editor_id, 1 if enable_on_create else 0,
         )
 
     async def set_enabled(self, servant_id: int, enabled: bool, editor_id: int) -> None:

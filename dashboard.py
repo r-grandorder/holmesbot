@@ -32,7 +32,7 @@ import datetime as dt
 from data import contract_game
 from data.autobattle import battle_stats, CLASS_NAMES
 from data.kits import validate_kit, EFFECT_TYPES, TARGETS, TRIGGERS
-from data.custom_servants import validate_custom_servant
+from data.custom_servants import validate_custom_servant, servant_to_def
 from data.contract_game import summon_rates
 from data.raids import validate_raid_def, active_phase, boss_class
 
@@ -492,16 +492,37 @@ async def _custom_odds(bot) -> "dict[int, float]":
     return {s.id: by_name[s.name] for s in bot.servants.all() if s.name in by_name}
 
 
+def _file_customs(bot, exclude: "set[int]") -> "list[tuple[int, dict]]":
+    """Custom units that come from the baked data/custom_servants.json and have no DB row yet.
+    They're live in the index but invisible to the table, so the editor has to read them off the
+    index or a mod would see an empty list next to 31 working servants."""
+    if bot.servants is None:
+        return []
+    return [
+        (s.id, servant_to_def(s))
+        for s in bot.servants.all()
+        if s.custom and s.id not in exclude
+    ]
+
+
 async def custom_servants_list(request: web.Request) -> web.Response:
-    """Mod-only: every custom unit the editor can manage, live odds included."""
+    """Mod-only: every custom unit the editor can manage -- DB-backed and file-authored alike --
+    with live odds. `source` tells the UI which it is; editing a file one adopts it into the DB."""
     bot = request.app["bot"]
     _require_mod(request)
     odds = await _custom_odds(bot)
     rows = await bot.custom_servants.all()
-    return _json({"servants": [
-        {"id": sid, "def": defn, "enabled": enabled, "pct": odds.get(sid)}
+    out = [
+        {"id": sid, "def": defn, "enabled": enabled, "source": "db", "pct": odds.get(sid)}
         for sid, defn, enabled in rows
-    ]})
+    ]
+    # A file custom is in the index unconditionally, so it is always live.
+    out += [
+        {"id": sid, "def": defn, "enabled": True, "source": "file", "pct": odds.get(sid)}
+        for sid, defn in _file_customs(bot, {r["id"] for r in out})
+    ]
+    out.sort(key=lambda r: r["id"], reverse=True)
+    return _json({"servants": out})
 
 
 async def custom_servant_get(request: web.Request) -> web.Response:
@@ -510,10 +531,22 @@ async def custom_servant_get(request: web.Request) -> web.Response:
     _require_mod(request)
     sid = _custom_id_arg(request)
     got = await bot.custom_servants.get(sid)
+    source = "db" if got else "none"
+    if got:
+        defn, enabled = got
+    else:
+        # No row: this may still be a file-authored custom that is live in the index. Render it
+        # from there so it can be opened and edited (saving adopts it into the DB).
+        live = bot.servants.get(sid) if bot.servants else None
+        if live is not None and live.custom:
+            defn, enabled, source = servant_to_def(live), True, "file"
+        else:
+            defn, enabled = None, False
     return _json({
         "id": sid,
-        "def": got[0] if got else None,
-        "enabled": got[1] if got else False,
+        "def": defn,
+        "enabled": enabled,
+        "source": source,
         "pct": (await _custom_odds(bot)).get(sid),
         "vocab": {"classes": list(CLASS_NAMES)},
     })
@@ -545,7 +578,11 @@ async def custom_servant_put(request: web.Request) -> web.Response:
     errors = validate_custom_servant(defn, index=bot.servants)
     if errors:
         return _json({"ok": False, "errors": errors}, status=400)
-    await bot.custom_servants.upsert(sid, defn, uid)
+    # Adopting a file-authored custom: it is already live, so its first DB row must be enabled
+    # or saving an edit would silently pull it out of the summon pool.
+    live = bot.servants.get(sid) if bot.servants else None
+    adopting = await bot.custom_servants.get(sid) is None and live is not None and live.custom
+    await bot.custom_servants.upsert(sid, defn, uid, enable_on_create=adopting)
     await bot.reload_servants()
     await bot.custom_servants.audit(uid, "custom_servant_edit",
                                     {"id": sid, "name": defn.get("name")})
@@ -557,13 +594,18 @@ async def custom_servant_enable(request: web.Request) -> web.Response:
     bot = request.app["bot"]
     uid = _require_mod(request)
     sid = _custom_id_arg(request)
-    if await bot.custom_servants.get(sid) is None:
-        raise web.HTTPNotFound(text="no such custom servant")
     try:
         body = await request.json()
     except Exception:
         body = {}
     on = bool(body.get("enabled", True)) if isinstance(body, dict) else True
+    if await bot.custom_servants.get(sid) is None:
+        # No row yet. If it is a file-authored custom, adopt it so it can be toggled at all --
+        # otherwise there is nothing to enable.
+        live = bot.servants.get(sid) if bot.servants else None
+        if live is None or not live.custom:
+            raise web.HTTPNotFound(text="no such custom servant")
+        await bot.custom_servants.upsert(sid, servant_to_def(live), uid, enable_on_create=True)
     await bot.custom_servants.set_enabled(sid, on, uid)
     await bot.reload_servants()
     await bot.custom_servants.audit(uid, "custom_servant_enable", {"id": sid, "enabled": on})
@@ -577,8 +619,14 @@ async def custom_servant_delete(request: web.Request) -> web.Response:
     sid = _custom_id_arg(request)
     await bot.custom_servants.delete(sid)
     await bot.reload_servants()
-    await bot.custom_servants.audit(uid, "custom_servant_delete", {"id": sid})
-    return _json({"ok": True})
+    # If this row was SHADOWING a file-authored custom, the unit comes straight back from
+    # data/custom_servants.json on reload. That's a revert, not a delete -- say which happened
+    # so the mod isn't left wondering why it reappeared.
+    still = bot.servants.get(sid) if bot.servants else None
+    reverted = still is not None and still.custom
+    await bot.custom_servants.audit(uid, "custom_servant_delete",
+                                    {"id": sid, "reverted_to_file": reverted})
+    return _json({"ok": True, "reverted": reverted})
 
 
 # --- uploaded images (shared blob store; raid sprites and custom servant art) ----------------

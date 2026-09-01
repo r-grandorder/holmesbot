@@ -130,11 +130,18 @@ def validate_custom_servant(defn: dict, index=None) -> "list[str]":
 
 
 def _collision_errors(defn: dict, index) -> "list[str]":
-    """Name/alias collisions against every OTHER servant in the pool, compared the way the
-    guess games compare them (accent-stripped, punctuation-free, lowercase)."""
+    """NAME collisions against every other servant in the pool, compared the way the guess games
+    compare them (accent-stripped, punctuation-free, lowercase).
+
+    Aliases are deliberately NOT checked. A custom unit's aliases are inert: Servant.aliases is
+    read in exactly one place outside this index (cogs/guess_base.py, for the round's answer),
+    and ServantIndex.pick never selects a custom unit as a guess target, so they can't make a
+    real guess ambiguous. Checking them would also reject the established convention that a
+    variant aliases its base servant -- "Frankenstein (Christmas)" carries alias "frankenstein"
+    -- which 23 of the existing custom units rely on.
+    """
     from data import matching
 
-    out: list[str] = []
     own_id = defn.get("id")
     taken: dict[str, str] = {}
     for s in index.all():
@@ -142,17 +149,48 @@ def _collision_errors(defn: dict, index) -> "list[str]":
             continue  # editing an existing custom unit: it may keep its own name
         taken.setdefault(matching.normalize(s.name), s.name)
 
-    norm_name = matching.normalize(defn["name"])
-    if norm_name in taken:
-        out.append(
-            f"name collides with the existing servant {taken[norm_name]!r} -- "
-            "a duplicate name makes real guesses ambiguous"
-        )
-    for alias in defn.get("aliases") or []:
-        clash = taken.get(matching.normalize(alias))
-        if clash:
-            out.append(f"alias {alias!r} collides with the existing servant {clash!r}")
-    return out
+    clash = taken.get(matching.normalize(defn["name"]))
+    if clash:
+        return [f"name collides with the existing servant {clash!r} -- "
+                "a duplicate name makes real guesses ambiguous"]
+    return []
+
+
+def servant_to_def(servant) -> dict:
+    """A live Servant back into an editable definition.
+
+    Custom units authored in data/custom_servants.json have no row in the custom_servants
+    table, so the editor would otherwise not see them at all. Rendering them from the index
+    lets a mod open one, and saving it writes a DB row that shadows the file entry from then
+    on (ServantIndex layers DB customs over the baked ones) -- the git file stays as archive.
+    """
+    defn: dict = {
+        "id": servant.id,
+        "name": servant.name,
+        "className": servant.class_name,
+        "rarity": servant.rarity,
+        "art": dict(servant.art),
+        "summon_weight": servant.summon_weight,
+        "wishable": servant.wishable,
+        "aliases": list(servant.aliases),
+    }
+    if servant.face:
+        defn["face"] = servant.face
+    if servant.gender:
+        defn["gender"] = servant.gender
+    if servant.attribute:
+        defn["attribute"] = servant.attribute
+    if servant.traits:
+        defn["traits"] = sorted(servant.traits)
+    if servant.summon_line:
+        defn["summon_line"] = servant.summon_line
+    # Only carry stats when they're actually set, so an adopted unit keeps whatever the file
+    # gave it instead of being silently pinned to zeros.
+    for key in ("atk_base", "atk_max", "hp_base", "hp_max"):
+        value = getattr(servant, key, 0)
+        if value:
+            defn[key] = value
+    return defn
 
 
 def to_index_item(defn: dict) -> dict:

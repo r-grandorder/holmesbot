@@ -240,6 +240,12 @@ $("editor").addEventListener("click", e=>{
 $("ed-save").onclick = saveKit;
 $("ed-revert").onclick = revertKit;
 $("ed-cancel").onclick = closeEditor;
+
+// ---- modal dismissal: click the backdrop or press Escape ----
+// mousedown, not click: a click also fires when a drag that STARTED inside the card is released
+// on the backdrop, which would close the editor mid text-selection.
+$("editor").addEventListener("mousedown", e => { if (e.target === $("editor")) closeEditor(); });
+addEventListener("keydown", e => { if (e.key === "Escape" && !$("editor").hidden) closeEditor(); });
 </script>
 </body>
 </html>
