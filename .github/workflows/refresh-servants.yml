@@ -1,8 +1,14 @@
 name: Refresh servant data
 
 # Weekly (and on demand): re-sync the servant index from Atlas Academy -- NA first,
-# then the JP-only remainder -- and open a PR if anything changed. Merging the PR
-# triggers Build, which re-bakes the data into the image (watchtower then deploys).
+# then the JP-only remainder -- and commit any change straight to main, which is then
+# baked into the image and deployed by watchtower.
+#
+# This used to open a PR for review, but the r-grandorder org forbids GitHub Actions
+# from creating pull requests, so that step failed on every run that actually had data
+# (the sync itself always worked). Rather than carry a PAT purely to satisfy a review
+# gate that was never exercised, the data commits directly -- it is one JSON file and a
+# single revert if a sync ever looks wrong.
 #
 # Self-correcting: servants that have reached NA graduate into servants.json (and
 # out of the *jp pool); new JP-only servants land in servants_jp.json. No manual id
@@ -13,8 +19,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: write # commit the refreshed data
+  actions: write # dispatch Build (see the trigger step below)
 
 concurrency: refresh-servant-data
 
@@ -28,30 +34,28 @@ jobs:
           python-version: "3.12"
       - name: Re-sync servant data (NA, then JP-only)
         run: make sync-data
-      - name: Open a PR if the data changed
-        uses: peter-evans/create-pull-request@v6
-        with:
-          # The r-grandorder org forbids GitHub Actions from creating pull requests, so
-          # GITHUB_TOKEN gets a 403 on the create call (the sync and the branch push both
-          # succeed -- only the PR step fails). A PAT sidesteps it because the PR is then
-          # opened as a user rather than as Actions. Falls back to GITHUB_TOKEN when the
-          # secret is unset, which just restores the old failing-on-changes behaviour
-          # rather than breaking the whole job.
-          token: ${{ secrets.REFRESH_PAT || github.token }}
-          branch: chore/refresh-servant-data
-          base: main
-          # servants.json is gitignored (rebuilt fresh in the image); only the
-          # reviewed JP file is committed, so that is all the PR should carry.
-          add-paths: data/servants_jp.json
-          author: "holmesbot-refresh[bot] <noreply@holmesbot.com>"
-          committer: "holmesbot-refresh[bot] <noreply@holmesbot.com>"
-          commit-message: "chore: refresh servant data (scheduled)"
-          title: "Refresh servant data (NA + JP)"
-          body: |
-            Scheduled re-sync from Atlas Academy.
-
-            - NA servants that have released graduate into `servants.json` (and out of the `*jp` pool).
-            - New JP-only servants are added to `servants_jp.json` (untranslated names are skipped).
-
-            Review the diff for new or odd-looking servants, then merge to build + deploy.
-          delete-branch: true
+      - name: Commit refreshed data if it changed
+        id: commit
+        run: |
+          git config user.name "holmesbot-refresh[bot]"
+          git config user.email "noreply@holmesbot.com"
+          # servants.json is gitignored (rebuilt fresh in the image); only the JP file
+          # is committed, so that is all this should ever carry.
+          git add data/servants_jp.json
+          if git diff --cached --quiet; then
+            echo "No servant data changes."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "chore: refresh servant data (scheduled)"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Trigger the image build
+        # A push made with GITHUB_TOKEN does NOT start another workflow run, so Build
+        # would never see this commit if we relied on its `on: push` trigger.
+        # workflow_dispatch is one of the two documented exceptions to that rule, so
+        # dispatch Build explicitly instead.
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run build.yml --ref main
