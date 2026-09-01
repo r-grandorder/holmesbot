@@ -158,6 +158,13 @@ class ServantIndex:
                 servants.append(s)
         return cls(s for s in servants if s.art or s.figure)
 
+    @classmethod
+    def item_to_servant(cls, item: dict) -> Servant:
+        """Build a Servant from a raw JSON item -- the same shape the data/*.json files use.
+        Public entry point for DB-stored custom units so they take the identical path as the
+        baked file entries (flags come from the item's own npc/jp/custom keys)."""
+        return cls._from_item(item)
+
     @staticmethod
     def _from_item(
         item: dict, *, npc: bool = False, jp: bool = False, custom: bool = False
@@ -202,6 +209,39 @@ class ServantIndex:
 
     def get(self, servant_id: int) -> Servant | None:
         return self._by_id.get(servant_id)
+
+    def all(self) -> "tuple[Servant, ...]":
+        """Every servant in the index. A snapshot, so callers can iterate while an edit
+        (upsert/remove) mutates the index underneath them."""
+        return tuple(self._by_id.values())
+
+    def _invalidate(self) -> None:
+        """Drop the lazy derived caches. Every mutation must call this: the name sets feed
+        resembles_servant and spaced_names (the token-subset uniqueness rule in
+        matching.is_correct_guess), so a stale cache means a servant that summons fine but is
+        unguessable -- or a removed one that still blocks guesses."""
+        self._name_sets.clear()
+        self._spaced_name_sets.clear()
+        self._jp_ids = None
+
+    def upsert(self, servant: Servant) -> None:
+        """Add or replace a servant IN PLACE. In place matters: bot.servants is captured by
+        every cog at startup, so rebinding the index would leave them all on a stale copy."""
+        self._by_id[servant.id] = servant
+        self._invalidate()
+
+    def remove(self, servant_id: int) -> bool:
+        """Drop a servant; returns whether it was present."""
+        existed = self._by_id.pop(servant_id, None) is not None
+        if existed:
+            self._invalidate()
+        return existed
+
+    def reset(self, servants: Iterable[Servant]) -> None:
+        """Replace the whole contents in place (mirrors KitIndex.reset), for re-applying DB
+        overrides over a fresh baked load."""
+        self._by_id = {s.id: s for s in servants}
+        self._invalidate()
 
     def jp_ids(self) -> frozenset[int]:
         """Ids of JP-only servants, for excluding their aliases on EN rounds."""

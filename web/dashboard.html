@@ -17,7 +17,18 @@
   <section id="tab-boards"></section>
   <section id="tab-wars"></section>
   <section id="tab-raids"></section>
+  <section id="tab-servants"></section>
 </main>
+
+<div id="servant-editor" class="modal" hidden>
+  <div class="modal-card">
+    <div id="sv-ed-body"></div>
+    <div class="ed-actions">
+      <button id="sv-ed-save" class="btn">Save</button>
+      <button id="sv-ed-cancel" class="btn ghost">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <div id="raid-editor" class="modal" hidden>
   <div class="modal-card">
@@ -284,8 +295,8 @@ const CLASS_LABELS = {mooncancer:"Moon Cancer", alterego:"Alter Ego", unbeastolg
 const classLabel = c => CLASS_LABELS[c] || prettyClass(c);
 // Options for a class picker. Blank first entry = inherit. An unrecognised saved value is kept
 // as an option so editing an old def can't silently drop it -- save-time validation flags it.
-function classOptions(cur, blankLabel){
-  const list = (RAID_VOCAB.classes||[]).slice();
+function classOptions(cur, blankLabel, classes){
+  const list = (classes || (RAID_VOCAB && RAID_VOCAB.classes) || []).slice();
   const c = String(cur||"").trim().toLowerCase();
   if (c && !list.includes(c)) list.push(c);
   return `<option value="">${esc(blankLabel)}</option>` + list.map(v =>
@@ -517,11 +528,179 @@ $("raid-editor").addEventListener("change", async e => {
   } catch(err){ alert("Sprite upload failed: " + err.message); }
 });
 
+// ---- custom servants (mod-only) ----
+// Units live in the DB and are layered onto the bot's servant index on every save, so an edit is
+// live within seconds -- no image rebuild. Art/face are uploaded as blobs and referenced by the
+// URL the upload returns, so they sit alongside the older S3-hosted customs with no special case.
+let SV_CLASSES = [];
+const GENDERS = ["", "female", "male", "unknown"];
+const ATTRIBUTES = ["", "human", "sky", "earth", "star", "beast"];
+const pctText = p => (p == null ? "not in the pool yet" : Number(p).toFixed(3) + "% per summon");
+
+async function loadServants(){
+  const tab = $("tab-servants");
+  tab.innerHTML = SPINNER;
+  try {
+    const me = await api("/api/me");
+    if (!me.is_mod){
+      tab.innerHTML = `<div class="empty">Custom servants are mod-only.</div>`;
+      return;
+    }
+    const d = await fetch(API_BASE+"/api/servants/custom", {headers:authHeaders()}).then(r=>r.json());
+    tab.innerHTML = `<div class="h2">Custom servants <span class="n">mods</span></div>
+      <div id="sv-list"></div>
+      <button id="sv-new" class="btn">+ New servant</button>`;
+    renderServants(d.servants||[]);
+    $("sv-new").onclick = () => newServant();
+  } catch(e){ tab.innerHTML = errBox(e); }
+}
+
+function renderServants(list){
+  const el = $("sv-list");
+  if (!list.length){ el.innerHTML = `<div class="empty">No custom servants yet.</div>`; return; }
+  el.innerHTML = list.map(r => {
+    const d = r.def || {};
+    return `<div class="card"><div class="body">
+      <div class="name">${esc(d.name||"(unnamed)")}
+        <span class="dim">${esc(classLabel(d.className||""))} &middot; ${d.rarity||"?"}★ &middot; #${r.id}</span>
+        ${r.enabled?'<span class="badge">Live</span>':'<span class="dim">draft</span>'}</div>
+      <div class="meta">${r.enabled ? esc(pctText(r.pct)) : "disabled -- not summonable"}</div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="editbtn" data-sv-edit="${r.id}">Edit</button>
+        <button class="editbtn" data-sv-kit="${r.id}">Kit</button>
+        <button class="editbtn" data-sv-toggle="${r.id}" data-on="${r.enabled?1:0}">${r.enabled?"Disable":"Enable"}</button>
+        <button class="editbtn" data-sv-del="${r.id}">Delete</button>
+      </div></div></div>`;
+  }).join("");
+  el.querySelectorAll("[data-sv-edit]").forEach(b=>b.onclick=()=>openServantEditor(b.dataset.svEdit));
+  // The kit editor is already keyed by servant id, so a custom unit needs nothing new there.
+  el.querySelectorAll("[data-sv-kit]").forEach(b=>b.onclick=()=>location.href="/#kit-"+b.dataset.svKit);
+  el.querySelectorAll("[data-sv-toggle]").forEach(b=>b.onclick=()=>toggleServant(b.dataset.svToggle, b.dataset.on!=="1"));
+  el.querySelectorAll("[data-sv-del]").forEach(b=>b.onclick=()=>deleteServant(b.dataset.svDel));
+}
+
+async function newServant(){
+  try {
+    const r = await fetch(API_BASE+"/api/servants/custom", {method:"POST", headers:authHeaders()});
+    const d = await r.json();
+    if (!r.ok || !d.ok) throw new Error("could not allocate an id");
+    SV_CLASSES = d.vocab.classes || [];
+    openServantEditor(d.id, {fresh:true});
+  } catch(e){ alert("Error: " + e.message); }
+}
+
+function imageSlot(key, url, label){
+  return `<div class="fld">${esc(label)}
+    <input type="hidden" class="img-url" data-key="${key}" value="${esc(url||"")}">
+    <input type="file" accept="image/*" class="img-file" data-key="${key}">
+    <img class="img-prev" data-key="${key}" src="${esc(url||"")}" height="72" ${url?"":"hidden"}></div>`;
+}
+const optTag = (v, cur, blank) => `<option value="${esc(v)}" ${v===cur?"selected":""}>${esc(v||blank)}</option>`;
+
+async function openServantEditor(id, {fresh=false}={}){
+  const box = $("servant-editor"), body = $("sv-ed-body");
+  box.hidden = false; body.innerHTML = SPINNER; $("sv-ed-save").disabled = true;
+  try {
+    let defn = {}, pct = null;
+    if (!fresh){
+      const d = await fetch(API_BASE+"/api/servants/custom/"+encodeURIComponent(id), {headers:authHeaders()}).then(r=>r.json());
+      defn = d.def || {}; pct = d.pct; SV_CLASSES = (d.vocab && d.vocab.classes) || SV_CLASSES;
+    }
+    const art = (defn.art || {})["0"] || "";
+    body.innerHTML = `
+      <div class="ed-title">${fresh ? "New custom servant" : "Edit: " + esc(defn.name||id)}</div>
+      <input type="hidden" id="sv-id" value="${esc(id)}">
+      <label class="fld">Name<input id="sv-name" value="${esc(defn.name||"")}"></label>
+      <label class="fld">Class<select id="sv-class">${classOptions(defn.className, "Select a class...", SV_CLASSES)}</select></label>
+      <label class="fld">Rarity<select id="sv-rarity">${[1,2,3,4,5].map(n=>`<option value="${n}" ${n===(defn.rarity||5)?"selected":""}>${n} star</option>`).join("")}</select></label>
+      ${imageSlot("art", art, "Full art (required -- the big /summon image)")}
+      ${imageSlot("face", defn.face, "Face portrait (square; thumbnails and banners)")}
+      <label class="fld">Aliases (comma separated)<input id="sv-aliases" value="${esc((defn.aliases||[]).join(", "))}"></label>
+      <label class="fld">Summon line (shown on /summon)<input id="sv-line" value="${esc(defn.summon_line||"")}"></label>
+      <label class="fld">Gender<select id="sv-gender">${GENDERS.map(g=>optTag(g, defn.gender||"", "unset")).join("")}</select></label>
+      <label class="fld">Attribute<select id="sv-attr">${ATTRIBUTES.map(a=>optTag(a, defn.attribute||"", "unset")).join("")}</select></label>
+      <label class="fld">Summon weight<input id="sv-weight" type="number" step="0.001" min="0.001" value="${defn.summon_weight ?? 0.05}"></label>
+      <div class="ed-note">Each custom unit is its own gacha bucket, so this weight competes directly with the rarity tiers. Currently: <b>${esc(pctText(pct))}</b>. The real odds update on save.</div>
+      <label class="fld"><input type="checkbox" id="sv-wishable" ${defn.wishable?"checked":""}> Can be targeted with /wish (pity spark)</label>
+      <div class="ed-note">New units save as a draft. Use Enable on the list to put one into the summon pool.</div>
+      <div id="sv-err" class="ed-err"></div>`;
+    $("sv-ed-save").disabled = false;
+    $("sv-ed-save").onclick = () => saveServant();
+  } catch(e){ body.innerHTML = `<div class="errbox">Couldn't load servant. ${esc(e.message)}</div>`; }
+}
+
+function gatherServantDef(){
+  const url = k => { const el = document.querySelector(`#servant-editor .img-url[data-key="${k}"]`); return (el && el.value.trim()) || ""; };
+  const def = {
+    id: parseInt($("sv-id").value, 10),
+    name: $("sv-name").value.trim(),
+    className: $("sv-class").value,
+    rarity: parseInt($("sv-rarity").value, 10),
+    art: {"0": url("art")},
+    summon_weight: parseFloat($("sv-weight").value),
+    wishable: $("sv-wishable").checked,
+    aliases: $("sv-aliases").value.split(",").map(x=>x.trim()).filter(Boolean),
+  };
+  const face = url("face"); if (face) def.face = face;
+  const line = $("sv-line").value.trim(); if (line) def.summon_line = line;
+  const g = $("sv-gender").value; if (g) def.gender = g;
+  const a = $("sv-attr").value; if (a) def.attribute = a;
+  return def;
+}
+
+async function saveServant(){
+  const err = $("sv-err"); err.textContent = "";
+  const def = gatherServantDef();
+  if (!def.art["0"]){ err.textContent = "Full art is required -- upload an image."; return; }
+  try {
+    const r = await fetch(API_BASE+"/api/servants/custom/"+encodeURIComponent(def.id), {
+      method:"PUT", headers:{...authHeaders(), "Content-Type":"application/json"}, body: JSON.stringify({def})});
+    const d = await r.json().catch(()=>({}));
+    if (!r.ok || !d.ok){ err.textContent = "Rejected: " + ((d.errors||[]).join("; ") || ("HTTP "+r.status)); return; }
+    $("servant-editor").hidden = true; loadServants();
+  } catch(e){ err.textContent = "Error: " + e.message; }
+}
+
+async function toggleServant(id, on){
+  try {
+    const r = await fetch(API_BASE+"/api/servants/custom/"+encodeURIComponent(id)+"/enable", {
+      method:"POST", headers:{...authHeaders(),"Content-Type":"application/json"}, body:JSON.stringify({enabled:on})});
+    const d = await r.json().catch(()=>({}));
+    if (!r.ok || !d.ok){ alert("Failed: "+((d.errors||[]).join("; ")||("HTTP "+r.status))); return; }
+    loadServants();
+  } catch(e){ alert("Error: "+e.message); }
+}
+
+async function deleteServant(id){
+  if (!confirm("Delete this custom servant? Players who already contracted it keep it, but it can no longer be summoned.")) return;
+  try {
+    const r = await fetch(API_BASE+"/api/servants/custom/"+encodeURIComponent(id), {method:"DELETE", headers:authHeaders()});
+    if (!r.ok){ alert("Failed: HTTP "+r.status); return; }
+    loadServants();
+  } catch(e){ alert("Error: "+e.message); }
+}
+
+$("sv-ed-cancel").onclick = () => { $("servant-editor").hidden = true; };
+$("servant-editor").addEventListener("change", async e => {
+  if (!e.target.classList.contains("img-file")) return;
+  const slot = e.target.closest(".fld"), f = e.target.files[0];
+  if (!f || !slot) return;
+  try {
+    const fd = new FormData(); fd.append("file", f);
+    const r = await fetch(API_BASE+"/api/images", {method:"POST", headers:authHeaders(), body:fd});
+    const d = await r.json();
+    if (!r.ok || !d.ok) throw new Error(d.error || "upload failed");
+    slot.querySelector(".img-url").value = d.url;   // store the URL: art/face are URL fields
+    const prev = slot.querySelector(".img-prev");
+    prev.src = d.url; prev.hidden = false;
+  } catch(err){ alert("Image upload failed: " + err.message); }
+});
+
 // ---- hash-routed tabs (nav lives in the shared top nav) ----
-const loaders = { me:loadMe, boards:loadBoards, wars:loadWars, raids:loadRaids };
-const titles = { me:"My stuff", boards:"Leaderboards", wars:"Wars", raids:"Raids" };
+const loaders = { me:loadMe, boards:loadBoards, wars:loadWars, raids:loadRaids, servants:loadServants };
+const titles = { me:"My stuff", boards:"Leaderboards", wars:"Wars", raids:"Raids", servants:"Custom servants" };
 const loaded = {};
-function currentTab(){ const h = location.hash.replace(/^#/,""); return ["me","boards","wars","raids"].includes(h) ? h : "me"; }
+function currentTab(){ const h = location.hash.replace(/^#/,""); return ["me","boards","wars","raids","servants"].includes(h) ? h : "me"; }
 function show(tab){
   document.querySelectorAll("main > section").forEach(s => s.classList.toggle("on", s.id === "tab-"+tab));
   document.querySelectorAll(".mainnav a").forEach(a => a.classList.toggle("active", a.dataset.nav === tab));

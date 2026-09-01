@@ -13,6 +13,7 @@ from config import Config
 from data import host
 from data.ce import CeIndex
 from data.kits import KitIndex, Skill
+from data.custom_servants import to_index_item
 from data.servants import ServantIndex
 from data.shadows import ShadowCatalog
 from db import Database
@@ -21,6 +22,7 @@ from services.backup import BackupService
 from services.kits import KitService
 from services.raids import RaidService
 from services.contracts import ContractService
+from services.custom_servants import CustomServantService
 from services.games import GameService
 from services.guild_config import GuildConfigService
 from services.restrictions import RestrictionService
@@ -74,6 +76,7 @@ class HolmesBot(commands.Bot):
         self.guild_config: GuildConfigService | None = None
         self.games: GameService | None = None
         self.contracts: ContractService | None = None
+        self.custom_servants: CustomServantService | None = None
         self.backups: BackupService | None = None
         self.kit_service: KitService | None = None
         self.raids: RaidService | None = None
@@ -86,10 +89,14 @@ class HolmesBot(commands.Bot):
         self.servants = ServantIndex.load()
         self.ces = CeIndex.load()
         self.shadows = ShadowCatalog.load()
+        # Layer live, mod-edited custom units over the baked index (data/custom_servants.json
+        # stays the seed). Done BEFORE resolve_portraits so a custom host portrait resolves too.
+        self.custom_servants = CustomServantService(self.db.pool)
+        customs = await self._apply_custom_servants()
         host.resolve_portraits(self.servants)
         log.info(
-            "loaded %d servants, %d craft essences, %d shadow assets",
-            len(self.servants), len(self.ces), len(self.shadows),
+            "loaded %d servants (%d live custom), %d craft essences, %d shadow assets",
+            len(self.servants), customs, len(self.ces), len(self.shadows),
         )
 
         self.scoring = ScoringService(self.db.pool)
@@ -197,6 +204,33 @@ class HolmesBot(commands.Bot):
         await web.TCPSite(runner, "0.0.0.0", self.config.health_port).start()
         self._health_runner = runner
         log.info("health server listening on :%d", self.config.health_port)
+
+    async def _apply_custom_servants(self) -> int:
+        """Layer every ENABLED custom-servant row onto the in-memory index. Returns how many
+        applied. A bad row is skipped rather than fatal -- one broken definition must not stop
+        the bot booting."""
+        if self.servants is None or self.custom_servants is None:
+            return 0
+        applied = 0
+        for defn in await self.custom_servants.enabled_defs():
+            try:
+                self.servants.upsert(
+                    ServantIndex.item_to_servant(to_index_item(defn))
+                )
+                applied += 1
+            except Exception:
+                log.warning("skipping bad custom servant %s", defn.get("id"))
+        return applied
+
+    async def reload_servants(self) -> None:
+        """Re-apply DB custom-servant rows over a fresh baked load, IN PLACE, so an edit shows
+        up without a restart. In place matters: every cog captured self.servants at startup,
+        so rebinding the index would leave them all reading a stale copy."""
+        if self.servants is None or self.custom_servants is None:
+            return
+        self.servants.reset(ServantIndex.load().all())
+        await self._apply_custom_servants()
+        host.resolve_portraits(self.servants)
 
     async def reload_kits(self) -> None:
         """Re-apply DB kit overrides over a fresh baked load, in place, so live battles pick up an

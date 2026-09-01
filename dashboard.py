@@ -32,6 +32,8 @@ import datetime as dt
 from data import contract_game
 from data.autobattle import battle_stats, CLASS_NAMES
 from data.kits import validate_kit, EFFECT_TYPES, TARGETS, TRIGGERS
+from data.custom_servants import validate_custom_servant
+from data.contract_game import summon_rates
 from data.raids import validate_raid_def, active_phase, boss_class
 
 log = logging.getLogger("holmesbot.dashboard")
@@ -457,6 +459,169 @@ async def kit_overrides_all(request: web.Request) -> web.Response:
     return _json({"overrides": overrides})
 
 
+# --- custom servants: mod-only editor (name / art / class / summon weight) -------------------
+
+
+def _custom_id_arg(request: web.Request) -> int:
+    try:
+        sid = int(request.match_info["id"])
+    except (KeyError, ValueError):
+        raise web.HTTPBadRequest(text="bad servant id")
+    if sid >= 0:
+        raise web.HTTPBadRequest(text="custom servant ids are negative")
+    return sid
+
+
+async def _custom_odds(bot) -> "dict[int, float]":
+    """Per-unit pull chance for every custom unit currently in the pool, keyed by servant id.
+
+    Goes through the same summon_rates() + restriction gate that /summonodds uses
+    (cogs/contracts.py), so the editor's preview and the real pull odds can't drift: without
+    `allow`, content-restricted servants would still be counted in the denominator here but
+    not in an actual roll."""
+    if bot.servants is None:
+        return {}
+    try:
+        allow = await bot.restrictions.build_allow() if bot.restrictions else None
+        rows, _total = summon_rates(bot.servants, allow=allow)
+    except Exception:
+        log.exception("could not compute custom summon odds")
+        return {}
+    # Each custom unit is its own single-member bucket, so its bucket pct IS its pull chance.
+    by_name = {label: pct for kind, label, _w, pct, _c, _e in rows if kind == "custom"}
+    return {s.id: by_name[s.name] for s in bot.servants.all() if s.name in by_name}
+
+
+async def custom_servants_list(request: web.Request) -> web.Response:
+    """Mod-only: every custom unit the editor can manage, live odds included."""
+    bot = request.app["bot"]
+    _require_mod(request)
+    odds = await _custom_odds(bot)
+    rows = await bot.custom_servants.all()
+    return _json({"servants": [
+        {"id": sid, "def": defn, "enabled": enabled, "pct": odds.get(sid)}
+        for sid, defn, enabled in rows
+    ]})
+
+
+async def custom_servant_get(request: web.Request) -> web.Response:
+    """Mod-only: one definition plus the vocab and live odds the editor needs."""
+    bot = request.app["bot"]
+    _require_mod(request)
+    sid = _custom_id_arg(request)
+    got = await bot.custom_servants.get(sid)
+    return _json({
+        "id": sid,
+        "def": got[0] if got else None,
+        "enabled": got[1] if got else False,
+        "pct": (await _custom_odds(bot)).get(sid),
+        "vocab": {"classes": list(CLASS_NAMES)},
+    })
+
+
+async def custom_servant_create(request: web.Request) -> web.Response:
+    """Mod-only: allocate a fresh negative id. The floor comes off the LIVE index, not just this
+    table, so a new unit can't be handed an id already used by a JSON-authored custom."""
+    bot = request.app["bot"]
+    _require_mod(request)
+    floor = min((s.id for s in bot.servants.all()), default=0) if bot.servants else 0
+    sid = await bot.custom_servants.next_id(floor)
+    return _json({"ok": True, "id": sid, "vocab": {"classes": list(CLASS_NAMES)}})
+
+
+async def custom_servant_put(request: web.Request) -> web.Response:
+    """Mod-only: validate + save a custom servant, then re-apply the index live."""
+    bot = request.app["bot"]
+    uid = _require_mod(request)
+    sid = _custom_id_arg(request)
+    try:
+        body = await request.json()
+    except Exception:
+        raise web.HTTPBadRequest(text="invalid JSON body")
+    defn = body.get("def") if isinstance(body, dict) else None
+    if not isinstance(defn, dict):
+        raise web.HTTPBadRequest(text="body.def (object) required")
+    defn["id"] = sid  # the path is authoritative for the id
+    errors = validate_custom_servant(defn, index=bot.servants)
+    if errors:
+        return _json({"ok": False, "errors": errors}, status=400)
+    await bot.custom_servants.upsert(sid, defn, uid)
+    await bot.reload_servants()
+    await bot.custom_servants.audit(uid, "custom_servant_edit",
+                                    {"id": sid, "name": defn.get("name")})
+    return _json({"ok": True, "id": sid, "pct": (await _custom_odds(bot)).get(sid)})
+
+
+async def custom_servant_enable(request: web.Request) -> web.Response:
+    """Mod-only: switch a unit into or out of the live summon pool."""
+    bot = request.app["bot"]
+    uid = _require_mod(request)
+    sid = _custom_id_arg(request)
+    if await bot.custom_servants.get(sid) is None:
+        raise web.HTTPNotFound(text="no such custom servant")
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    on = bool(body.get("enabled", True)) if isinstance(body, dict) else True
+    await bot.custom_servants.set_enabled(sid, on, uid)
+    await bot.reload_servants()
+    await bot.custom_servants.audit(uid, "custom_servant_enable", {"id": sid, "enabled": on})
+    return _json({"ok": True, "enabled": on, "pct": (await _custom_odds(bot)).get(sid)})
+
+
+async def custom_servant_delete(request: web.Request) -> web.Response:
+    """Mod-only: drop a custom unit entirely, then re-apply the index live."""
+    bot = request.app["bot"]
+    uid = _require_mod(request)
+    sid = _custom_id_arg(request)
+    await bot.custom_servants.delete(sid)
+    await bot.reload_servants()
+    await bot.custom_servants.audit(uid, "custom_servant_delete", {"id": sid})
+    return _json({"ok": True})
+
+
+# --- uploaded images (shared blob store; raid sprites and custom servant art) ----------------
+
+
+async def image_upload(request: web.Request) -> web.Response:
+    """Mod-only: upload an image (multipart) -> stored as a BLOB -> returns its id and the URL
+    to reference it by. Backed by the same table raid sprites use."""
+    bot = request.app["bot"]
+    uid = _require_mod(request)
+    reader = await request.multipart()
+    field = await reader.next()
+    if field is None:
+        raise web.HTTPBadRequest(text="no file uploaded")
+    data = await field.read(decode=False)
+    if not data:
+        raise web.HTTPBadRequest(text="empty file")
+    if len(data) > 2_000_000:
+        raise web.HTTPBadRequest(text="file too large (max 2MB)")
+    if _img_content_type(data) == "application/octet-stream":
+        raise web.HTTPBadRequest(text="not a recognised image (png, jpeg, gif or webp)")
+    image_id = await bot.raids.store_sprite(data, uid)
+    await bot.raids.audit(uid, "image_upload", {"id": image_id, "bytes": len(data)})
+    base = bot.config.dashboard_api_base_url
+    return _json({"ok": True, "id": image_id, "url": f"{base}/api/images/{image_id}"})
+
+
+async def image_get(request: web.Request) -> web.Response:
+    """Public: serve an uploaded image BLOB. Public because Discord fetches these URLs
+    unauthenticated to render embeds."""
+    bot = request.app["bot"]
+    try:
+        image_id = int(request.match_info["id"])
+    except ValueError:
+        raise web.HTTPBadRequest(text="bad image id")
+    data = await bot.raids.get_sprite(image_id)
+    if not data:
+        raise web.HTTPNotFound()
+    data = bytes(data)
+    return web.Response(body=data, content_type=_img_content_type(data),
+                        headers={"Cache-Control": "public, max-age=86400"})
+
+
 # --- raids: staff config (mod-only) + public status/history ----------------------------------
 async def raids_list(request: web.Request) -> web.Response:
     """Public: all raid definitions for the config list + client menus. `enabled` is the persistent
@@ -689,6 +854,15 @@ def setup_dashboard(app: web.Application, bot) -> None:
     r.add_put("/api/kits/{sid}", kit_put)
     r.add_delete("/api/kits/{sid}", kit_delete)
     # Raids: static/collection paths BEFORE the {name} catch-all so they aren't read as a name.
+    r.add_get("/api/images/{id}", image_get)
+    r.add_post("/api/images", image_upload)
+    # "custom" is a fixed segment so it can't be read as an {id}
+    r.add_get("/api/servants/custom", custom_servants_list)
+    r.add_post("/api/servants/custom", custom_servant_create)
+    r.add_get("/api/servants/custom/{id}", custom_servant_get)
+    r.add_put("/api/servants/custom/{id}", custom_servant_put)
+    r.add_post("/api/servants/custom/{id}/enable", custom_servant_enable)
+    r.add_delete("/api/servants/custom/{id}", custom_servant_delete)
     r.add_get("/api/raids", raids_list)
     r.add_get("/api/raids/active", raids_active)
     r.add_get("/api/raids/history", raids_history)

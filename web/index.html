@@ -120,15 +120,31 @@ fetch("./kits.json").then(r=>r.json()).then(data=>{
 function checkMod(){
   if (!token()) return;
   fetch(API_BASE+"/api/me", {headers:authHeaders()}).then(r=>r.ok?r.json():null)
-    .then(me=>{ if (me && me.can_edit_kits){ IS_MOD = true; render(); } }).catch(()=>{});
+    .then(me=>{ if (me && me.can_edit_kits){ IS_MOD = true; render(); openKitFromHash(); } }).catch(()=>{});
 }
+// Deep link: /#kit-<servant_id> opens that kit editor directly. Lets the dashboard's custom-servant
+// list jump straight to a kit, including for a unit that has no card yet (negative ids included --
+// note the -? in the pattern).
+function openKitFromHash(){
+  const m = location.hash.match(/^#kit-(-?\d+)$/);
+  if (m && IS_MOD) openEditor(parseInt(m[1], 10));
+}
+addEventListener("hashchange", openKitFromHash);
 // Overlay live DB overrides onto the baked kits.json so the cards show the true current kits.
 function applyOverrides(){
   fetch(API_BASE+"/api/kits/overrides").then(r=>r.ok?r.json():null).then(d=>{
     if (!d || !d.overrides) return;
     let n = 0;
     for (const [sid, kit] of Object.entries(d.overrides)){
-      const row = DATA.find(x=>x.id===parseInt(sid,10));
+      const id = parseInt(sid,10);
+      let row = DATA.find(x=>x.id===id);
+      if (!row){
+        // No baked row: this is a unit that only exists live, i.e. a custom servant created in
+        // the dashboard. Synthesize a card so it is browsable and editable like any other.
+        row = {id, name: kit.servant_name || ("#"+sid), className: kit.class_name || "",
+               rarity: 0, face: "", skill: "", trigger: "", effects: []};
+        DATA.push(row);
+      }
       if (row){
         row.skill = kit.name; row.trigger = kit.trigger;
         row.effects = (kit.effects||[]).map(e=>({type:e.effect_type, value:e.value, duration:e.duration, target:e.target}));
