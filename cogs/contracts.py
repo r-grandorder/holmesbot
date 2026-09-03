@@ -718,11 +718,13 @@ class ContractsCog(commands.Cog):
         return out
 
     @app_commands.command(
-        name="ember", description="Feed XP to one of your servants (Ember or Hellfire of Wisdom)."
+        name="ember",
+        description="Feed XP to a servant (yours or another player's) with Embers or Hellfire.",
     )
     @app_commands.guild_only()
     @app_commands.describe(
-        servant="A servant you own (search by name)",
+        member="Whose servant to feed (defaults to yours)",
+        servant="Which servant to feed (defaults to their active one)",
         item="Which XP item to use (default Ember of Wisdom)",
         quantity="How many to use (default 1)",
     )
@@ -735,50 +737,85 @@ class ContractsCog(commands.Cog):
     async def ember(
         self,
         interaction: discord.Interaction,
-        servant: int,
+        member: discord.Member | None = None,
+        servant: int | None = None,
         item: str = "embers",
-        quantity: int = 1,
+        quantity: app_commands.Range[int, 1, 1000] = 1,
     ) -> None:
         if not self._allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
         gid, uid = interaction.guild_id, interaction.user.id
+        target = member or interaction.user
+        is_self = target.id == uid
         kind = item if item in ("embers", "hellfire") else "embers"
         label = _xp_label(self.bot.config, kind)
-        s = self.bot.servants.get(servant)
-        embers, hellfire = await self.bot.contracts.xp_items(gid, uid)
-        held = embers if kind == "embers" else hellfire
-        if held <= 0:
+        # Default to the target's ACTIVE servant, matching /grail.
+        servant_id = servant
+        if servant_id is None:
+            row = await self.bot.contracts.active(gid, target.id)
+            if row is None:
+                msg = ("You have no active contract. Use /summon first." if is_self
+                       else f"{target.display_name} has no active contract.")
+                return await interaction.response.send_message(msg, ephemeral=True)
+            servant_id = row["servant_id"]
+
+        status, applied, old, new, cap = await self.bot.contracts.feed_xp(
+            gid, uid, target.id, servant_id, kind, quantity
+        )
+        s = self.bot.servants.get(servant_id)
+        nm = s.name if s else "That servant"
+        if status == "not_owned":
+            msg = ("You have not contracted that servant -- check /servants for your roster."
+                   if is_self else f"{target.display_name} has not contracted that servant.")
+            return await interaction.response.send_message(msg, ephemeral=True)
+        if status == "no_items":
             return await interaction.response.send_message(
                 f"You have no {label}. Get them from chat drops, /shop, or war rewards.",
                 ephemeral=True,
             )
-        qty = max(1, min(quantity, held))
-        xp_each = contract_game.EMBER_XP if kind == "embers" else contract_game.HELLFIRE_XP
-        res = await self.bot.contracts.add_xp_to(gid, uid, servant, xp_each * qty)
-        if res is None:
+        if status == "at_cap":  # nothing applied -- the item is deliberately not spent
+            who = f"**{nm}**" if is_self else f"{target.display_name}'s **{nm}**"
             return await interaction.response.send_message(
-                "You haven't contracted that servant.", ephemeral=True
-            )
-        old, new, cap = res
-        nm = s.name if s else "That servant"
-        if old >= cap:  # already at cap -- nothing was applied; don't spend the item
-            return await interaction.response.send_message(
-                f"{nm} is already at its level cap ({cap}). Raise the cap with a grail first (/grail).",
+                f"{who} is already at its level cap ({cap}). "
+                "Raise the cap with a grail first (/grail).",
                 ephemeral=True,
             )
-        await self.bot.contracts.grant_xp_item(gid, uid, kind, -qty)
         capnote = " (cap reached)" if new >= cap else ""
+        short = f"You only had **{applied}** {label}, so that is all that was used. " \
+            if applied < quantity else ""
+        if is_self:
+            return await interaction.response.send_message(
+                f"{short}Fed {applied} {label} to **{nm}**: Lv {old} -> **{new}**{capnote}.",
+                ephemeral=True,
+            )
+        # Feeding another player's servant: a public, celebratory embed, mirroring /grail.
+        allow = await self.bot.restrictions.build_allow()
+        embed = discord.Embed(
+            title="Wisdom Shared",
+            description=(
+                f"{interaction.user.mention} fed **{applied}** {label} to "
+                f"{target.mention}'s **{nm}** -- Lv {old} to **{new}**{capnote}!"
+            ),
+            color=(_RARITY_COLOR.get(s.rarity, discord.Color.blurple())
+                   if s else discord.Color.blurple()),
+        )
+        if s:
+            art = contract_game.display_art(s, allow)
+            if art and s.face:  # gate the portrait on safe art (fully restricted -> none)
+                embed.set_thumbnail(url=s.face)
         await interaction.response.send_message(
-            f"Fed {qty} {label} to **{nm}**: Lv {old} -> **{new}**{capnote}. "
-            f"{held - qty} {label} left.",
-            ephemeral=True,
+            embed=embed, allowed_mentions=discord.AllowedMentions(users=[target])
         )
 
     @ember.autocomplete("servant")
     async def _ember_autocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[int]]:
-        rows = await self.bot.contracts.owned(interaction.guild_id, interaction.user.id)
+        # Roster of whoever is being fed (the member option if set, else the invoker), so a gift
+        # targets one of THEIR servants rather than one of yours. Mirrors /grail.
+        m = getattr(interaction.namespace, "member", None)
+        target_id = (m.id if hasattr(m, "id") else m) or interaction.user.id
+        rows = await self.bot.contracts.owned(interaction.guild_id, target_id)
         q = current.strip().lower()
         out: list[app_commands.Choice[int]] = []
         for r in rows:
