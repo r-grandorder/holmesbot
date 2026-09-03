@@ -79,6 +79,9 @@ class Garden(commands.Cog):
             embed.title = "You water the detective"
         if grew:
             embed.add_field(name="Growth", value=f"+{garden.format_height(res['growth_mm'])}")
+        elif res["next_growth_at"]:
+            # Refused for being too recently watered: say exactly when they're ready again.
+            embed.add_field(name="Ready again", value=_rel(res["next_growth_at"]))
         embed.add_field(name="Height", value=garden.format_height(res["height_mm"]))
         if res["multiplier"] > 1.0 and res["mulch_expires"]:
             embed.add_field(
@@ -137,10 +140,13 @@ class Garden(commands.Cog):
     ) -> None:
         target = user or interaction.user
         gid = interaction.guild_id
-        height_mm, times = await self.bot.garden.height(gid, target.id)
+        info = await self.bot.garden.height(gid, target.id)
+        times = info["times_watered"]
         mulch = await self.bot.garden.active_mulch(gid, target.id)
-        line = (f"**{target.display_name}** stands **{garden.format_height(height_mm)}** tall "
-                f"after {times} watering{'' if times == 1 else 's'}.")
+        line = (f"**{target.display_name}** stands **{garden.format_height(info['height_mm'])}** "
+                f"tall after {times} watering{'' if times == 1 else 's'}.")
+        line += (f"\nCan be watered again {_rel(info['next_growth_at'])}."
+                 if info["next_growth_at"] else "\nReady to be watered now.")
         if mulch:
             line += (f"\n{garden.MULCH_NAME} active: **{mulch['multiplier']:g}x** growth, "
                      f"ends {_rel(mulch['expires_at'])}.")

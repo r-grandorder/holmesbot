@@ -19,17 +19,24 @@ class GardenService:
     def __init__(self, pool) -> None:
         self.pool = pool
 
-    async def height(self, guild_id: int, user_id: int) -> "tuple[float, int]":
-        """(height_mm, times_watered) for a user; the starting sprout if they have no row."""
+    async def height(self, guild_id: int, user_id: int) -> dict:
+        """height_mm / times_watered / next_growth_at for a user; the starting sprout if they
+        have no row. next_growth_at is None when they can be watered for growth right now."""
         row = await self.pool.fetchrow(
-            "SELECT height_mm, times_watered FROM plant_heights "
+            "SELECT height_mm, times_watered, last_growth_at FROM plant_heights "
             "WHERE guild_id = $1 AND user_id = $2",
             guild_id,
             user_id,
         )
         if row is None:
-            return garden.STARTING_HEIGHT_MM, 0
-        return float(row["height_mm"]), int(row["times_watered"])
+            return {"height_mm": garden.STARTING_HEIGHT_MM, "times_watered": 0,
+                    "next_growth_at": None}
+        ready = _next_growth(row["last_growth_at"])
+        return {
+            "height_mm": float(row["height_mm"]),
+            "times_watered": int(row["times_watered"]),
+            "next_growth_at": ready if ready and ready > _utcnow() else None,
+        }
 
     async def tallest(self, guild_id: int, limit: int = 10) -> "list":
         return await self.pool.fetch(
@@ -142,6 +149,13 @@ class GardenService:
                     "multiplier": multiplier,
                     "mulch_expires": mulch["expires_at"] if mulch else None,
                     "reward_due": reward_due,
+                    # When this plant can next grow. On a successful water that's a full
+                    # cooldown from now; on a refused one it's a cooldown from the growth that
+                    # blocked it, so the embed can show exactly how long is left.
+                    "next_growth_at": (
+                        now + dt.timedelta(hours=garden.GROWTH_COOLDOWN_HOURS)
+                        if grew else _next_growth(last_growth)
+                    ),
                 }
 
     async def reset_cooldowns(self, guild_id: int, user_id: int) -> "dict[str, bool]":
@@ -211,6 +225,21 @@ class GardenService:
                 )
                 return {"multiplier": multiplier, "expires_at": expires,
                         "remaining": int(spent["fertilizer"])}
+
+
+def _next_growth(last_growth_at) -> "dt.datetime | None":
+    """When a plant last grown at `last_growth_at` becomes waterable again."""
+    prev = _parse(last_growth_at)
+    return prev + dt.timedelta(hours=garden.GROWTH_COOLDOWN_HOURS) if prev else None
+
+
+def _parse(value) -> "dt.datetime | None":
+    """A stored timestamp back into an aware UTC datetime. The inverse of _stamp."""
+    if not value:
+        return None
+    if isinstance(value, dt.datetime):
+        return value if value.tzinfo else value.replace(tzinfo=dt.timezone.utc)
+    return dt.datetime.strptime(str(value), "%Y-%m-%d %H:%M:%S").replace(tzinfo=dt.timezone.utc)
 
 
 def _stamp(when: dt.datetime) -> str:
