@@ -209,6 +209,26 @@ class ContractService:
         )
         return n
 
+    async def reset_daily_caps(self, guild_id: int, user_id: int) -> int:
+        """Clear a user's per-day REWARD counters (/duel plus autobattle PvE and PvP). Separate
+        from cooldowns on purpose: this lets them earn past today's cap, so an admin has to ask
+        for it explicitly rather than getting it as a side effect of clearing timers."""
+        cleared = 0
+        for table in ("duel_daily", "autobattle_daily"):
+            n = await self.pool.fetchval(
+                f"SELECT COUNT(*) FROM {table} WHERE guild_id = $1 AND user_id = $2",
+                guild_id,
+                user_id,
+            )
+            if n:
+                await self.pool.execute(
+                    f"DELETE FROM {table} WHERE guild_id = $1 AND user_id = $2",
+                    guild_id,
+                    user_id,
+                )
+                cleared += int(n)
+        return cleared
+
     async def feed_xp(
         self, guild_id: int, giver_id: int, target_id: int, servant_id: int, kind: str,
         quantity: int = 1,

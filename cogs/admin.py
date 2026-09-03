@@ -27,6 +27,35 @@ _GAME_CHOICES = [
 ]
 
 
+# Per-user cooldowns that live in cog memory, grouped so an admin can clear one area or all of
+# them. Each entry is (label, cog name, attribute names). Garden and daily caps are handled
+# separately because they live in the database, not in a cog attribute.
+_COOLDOWN_GROUPS = {
+    "duels": ("Duels", "Contracts", ("_duel_cd", "_duel_pair_cd")),
+    "contracts": ("Chat XP and servant switching", "Contracts", ("_xp_cd", "_switch_cd")),
+    "autobattle": (
+        "Autobattle fights and duels", "Autobattle",
+        ("_cooldowns", "_pvp_cd", "_pvp_pair_cd"),
+    ),
+    "raids": ("Raid fights", "Raids", ("_cd",)),
+}
+
+
+def _purge_cooldowns(store: dict, guild_id: int, user_id: int) -> int:
+    """Drop every entry for this (guild, user) from an in-memory cooldown map, returning how
+    many went. Handles both key shapes in use: a plain (guild, user) and the PAIR keys duels
+    use, which are (guild, frozenset{a, b}) -- a naive equality check would miss those and
+    leave a player unable to re-duel the same opponent."""
+    doomed = [
+        key for key in store
+        if isinstance(key, tuple) and len(key) == 2 and key[0] == guild_id
+        and (key[1] == user_id or (isinstance(key[1], frozenset) and user_id in key[1]))
+    ]
+    for key in doomed:
+        del store[key]
+    return len(doomed)
+
+
 class Admin(commands.Cog):
     """Staff-only configuration. Every command is gated on moderator permissions
     OR being the bot owner (the application owner always passes)."""
@@ -350,6 +379,69 @@ class Admin(commands.Cog):
         await self.bot.scoring.reset_guild(interaction.guild_id)
         await interaction.response.send_message(
             "Wiped all QP and scores for this server.", ephemeral=True
+        )
+
+    @app_commands.command(
+        name="resetcooldowns", description="(Mods) Clear a member's command cooldowns."
+    )
+    @app_commands.guild_only()
+    @app_commands.describe(
+        member="Whose cooldowns to clear",
+        scope="Which cooldowns (default: every cooldown, but not daily reward caps)",
+    )
+    @app_commands.choices(scope=[
+        app_commands.Choice(name="All cooldowns", value="all"),
+        app_commands.Choice(name="Garden (watering)", value="garden"),
+        app_commands.Choice(name="Duels", value="duels"),
+        app_commands.Choice(name="Chat XP and servant switching", value="contracts"),
+        app_commands.Choice(name="Autobattle", value="autobattle"),
+        app_commands.Choice(name="Raids", value="raids"),
+        app_commands.Choice(name="Daily reward caps", value="daily"),
+    ])
+    async def resetcooldowns(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member,
+        scope: app_commands.Choice[str] | None = None,
+    ) -> None:
+        """Clear a member's cooldowns. 'All' covers every timer but deliberately NOT the daily
+        reward caps: clearing those lets someone earn past the day's limit, so it has to be
+        asked for by name rather than arriving as a side effect."""
+        gid, uid = interaction.guild_id, member.id
+        which = scope.value if scope else "all"
+        cleared: list[str] = []
+
+        if which in ("all", "garden") and self.bot.garden is not None:
+            res = await self.bot.garden.reset_cooldowns(gid, uid)
+            if res["growth"]:
+                cleared.append("Garden growth timer")
+            if res["payout"]:
+                cleared.append("Watering QP payout timer")
+
+        for key, (label, cog_name, attrs) in _COOLDOWN_GROUPS.items():
+            if which not in ("all", key):
+                continue
+            cog = self.bot.get_cog(cog_name)  # these cogs are all optional; skip if not loaded
+            if cog is None:
+                continue
+            n = sum(_purge_cooldowns(getattr(cog, a, {}) or {}, gid, uid) for a in attrs)
+            if n:
+                cleared.append(f"{label} ({n})")
+
+        if which == "daily" and self.bot.contracts is not None:
+            n = await self.bot.contracts.reset_daily_caps(gid, uid)
+            if n:
+                cleared.append(f"Daily reward caps ({n})")
+
+        if not cleared:
+            return await interaction.response.send_message(
+                f"{member.display_name} had no active cooldowns in that scope.", ephemeral=True
+            )
+        body = "\n".join(f"- {line}" for line in cleared)
+        await interaction.response.send_message(
+            f"Cleared for {member.mention}:\n{body}",
+            ephemeral=True,
+            allowed_mentions=discord.AllowedMentions.none(),
         )
 
     @app_commands.command(

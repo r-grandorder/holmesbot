@@ -73,9 +73,10 @@ class Garden(commands.Cog):
             description=desc,
             color=discord.Color.green() if grew else discord.Color.greyple(),
         )
+        # The person being watered, whoever that is -- which covers the bot case too.
+        embed.set_thumbnail(url=user.display_avatar.url)
         if is_bot_target:
             embed.title = "You water the detective"
-            embed.set_thumbnail(url=me.display_avatar.url)
         if grew:
             embed.add_field(name="Growth", value=f"+{garden.format_height(res['growth_mm'])}")
         embed.add_field(name="Height", value=garden.format_height(res["height_mm"]))
@@ -86,7 +87,7 @@ class Garden(commands.Cog):
                 inline=False,
             )
         if reward:
-            embed.add_field(name="Reward", value=f"+{qp(reward)} for tending the garden", inline=False)
+            embed.add_field(name="Reward", value=f"+{qp(reward)}", inline=False)
         n = res["times_watered"]
         embed.set_footer(text=f"Watered {n} time{'' if n == 1 else 's'}")
         # Public so everyone sees it, but the watered player is never pinged.
@@ -123,6 +124,7 @@ class Garden(commands.Cog):
             ),
             color=discord.Color.dark_gold(),
         )
+        embed.set_thumbnail(url=user.display_avatar.url)
         embed.set_footer(text=f"{eff['remaining']} {garden.MULCH_NAME} left")
         await interaction.response.send_message(embed=embed, allowed_mentions=_NO_PINGS)
 

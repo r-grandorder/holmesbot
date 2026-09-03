@@ -55,7 +55,7 @@ class Economy(commands.Cog):
             f"({r['times_watered']} waterings)"
             for i, r in enumerate(rows, start=1)
         ]
-        embed = discord.Embed(title="Tallest in the Garden", description="\n".join(lines))
+        embed = discord.Embed(title="Tallest Users", description="\n".join(lines))
         await interaction.response.send_message(embed=embed, allowed_mentions=_NO_PINGS)
 
     @app_commands.command(name="qp", description="Check a QP balance.")

@@ -144,6 +144,23 @@ class GardenService:
                     "reward_due": reward_due,
                 }
 
+    async def reset_cooldowns(self, guild_id: int, user_id: int) -> "dict[str, bool]":
+        """Clear this user's garden timers: the growth cooldown on their own plant, and their
+        watering payout cooldown. Height and watering count are deliberately untouched -- this
+        resets timing, not progress, so a reset can't be used to farm the leaderboard."""
+        grown = await self.pool.fetchrow(
+            "UPDATE plant_heights SET last_growth_at = NULL "
+            "WHERE guild_id = $1 AND user_id = $2 AND last_growth_at IS NOT NULL RETURNING 1",
+            guild_id,
+            user_id,
+        )
+        paid = await self.pool.fetchrow(
+            "DELETE FROM water_rewards WHERE guild_id = $1 AND user_id = $2 RETURNING 1",
+            guild_id,
+            user_id,
+        )
+        return {"growth": grown is not None, "payout": paid is not None}
+
     # --- Quality Fertilizer ---------------------------------------------------------------
     async def fertilizer(self, guild_id: int, user_id: int) -> int:
         val = await self.pool.fetchval(
