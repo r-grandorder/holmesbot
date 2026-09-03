@@ -47,6 +47,15 @@ class Config:
     levelup_announce: str
     # Autobattle is experimental; its cog (commands + team config) only loads when this is on.
     autobattle_enabled: bool
+    # The garden (/water, /mulch, /height). Ships dark: the cog only loads when this is on.
+    # water_qp_reward is paid to the WATERER, at most once per water_qp_cooldown_hours, so a
+    # player's income is a fixed rate no matter how many people they water. Note this is by far
+    # the largest QP faucet at the default 5000/12h -- roughly a shop grail per day per active
+    # player -- so tune it here rather than reworking sink prices.
+    water_enabled: bool
+    water_qp_reward: int
+    water_qp_cooldown_hours: float
+    shop_fertilizer_cost: int
     # Automated SQLite -> S3 backups. Ships dark: the backup task only runs when a bucket is set.
     # Must be a PRIVATE bucket (never the public assets bucket). AWS creds come from the standard
     # boto3 env chain (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_DEFAULT_REGION).
@@ -120,6 +129,11 @@ class Config:
             levelup_announce=levelup_announce,
             autobattle_enabled=(os.environ.get("AUTOBATTLE_ENABLED") or "").strip().lower()
             in ("1", "true", "yes", "on", "enabled"),
+            water_enabled=(os.environ.get("WATER_ENABLED") or "").strip().lower()
+            in ("1", "true", "yes", "on", "enabled"),
+            water_qp_reward=int(os.environ.get("WATER_QP_REWARD") or "5000"),
+            water_qp_cooldown_hours=float(os.environ.get("WATER_QP_COOLDOWN_HOURS") or "12"),
+            shop_fertilizer_cost=int(os.environ.get("SHOP_FERTILIZER_COST") or "2500"),
             backup_s3_bucket=(os.environ.get("BACKUP_S3_BUCKET") or "").strip(),
             backup_s3_prefix=(os.environ.get("BACKUP_S3_PREFIX") or "db-backups/").strip(),
             backup_interval_hours=int(os.environ.get("BACKUP_INTERVAL_HOURS") or "6"),

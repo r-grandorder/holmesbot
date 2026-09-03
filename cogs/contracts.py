@@ -13,6 +13,7 @@ from discord.ext import commands, tasks
 
 from branding import qp
 from data import contract_game
+from data import garden
 from data import images
 from data.grail_hosts import EMBER_HOSTS, GRAIL_HOSTS
 from data.servants import class_display
@@ -1835,6 +1836,14 @@ class ShopView(discord.ui.View):
         )
         ember_btn.callback = self._buy_ember
         self.add_item(ember_btn)
+        # Quality Fertilizer is a garden item, so only stock it when the garden is switched on.
+        if cfg.water_enabled:
+            fert_btn = discord.ui.Button(
+                label=f"{qtxt}{garden.MULCH_NAME} ({cfg.shop_fertilizer_cost * q:,} QP)",
+                style=discord.ButtonStyle.secondary,
+            )
+            fert_btn.callback = self._buy_fertilizer
+            self.add_item(fert_btn)
 
     async def render(self, guild_id: int) -> discord.Embed:
         cfg = self.cog.bot.config
@@ -1853,6 +1862,10 @@ class ShopView(discord.ui.View):
                 f"**Holy Grail** ({qp(cfg.shop_grail_cost)}) -- goes to your stash; spend it with /grail to raise a cap by 5.\n"
                 f"**Summon Ticket** ({qp(cfg.shop_ticket_cost)}) -- redeem with /redeem for a boosted pull.\n"
                 f"**Ember of Wisdom** ({qp(contract_game.EMBER_SHOP_COST)}) -- feed XP to any servant with /ember."
+                # Listed last to match the button order; only stocked when the garden is on.
+                + (f"\n**{garden.MULCH_NAME}** ({qp(cfg.shop_fertilizer_cost)}) -- apply it to "
+                   f"another player with /mulch to boost what they gain from being watered."
+                   if cfg.water_enabled else "")
             ),
             color=discord.Color.blurple(),
         )
@@ -1867,6 +1880,9 @@ class ShopView(discord.ui.View):
         embed.add_field(
             name="Your Embers of Wisdom", value=f"{embers:,} {ee}".strip() if ee else f"{embers:,}"
         )
+        if cfg.water_enabled and self.cog.bot.garden is not None:
+            fert = await self.cog.bot.garden.fertilizer(guild_id, self.user_id)
+            embed.add_field(name=f"Your {garden.MULCH_NAME}", value=f"{fert:,}")
         return embed
 
     async def _buy(self, interaction: discord.Interaction, cost: int, grant, label: str) -> None:
@@ -1894,6 +1910,13 @@ class ShopView(discord.ui.View):
         await self._buy(
             interaction, self.cog.bot.config.shop_ticket_cost,
             self.cog.bot.contracts.grant_tickets, "Summon Ticket",
+        )
+
+    async def _buy_fertilizer(self, interaction: discord.Interaction) -> None:
+        await self._buy(
+            interaction, self.cog.bot.config.shop_fertilizer_cost,
+            lambda gid, uid, n: self.cog.bot.garden.grant_fertilizer(gid, uid, n),
+            garden.MULCH_NAME,
         )
 
     async def _buy_ember(self, interaction: discord.Interaction) -> None:

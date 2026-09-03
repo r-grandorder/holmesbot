@@ -5,6 +5,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from branding import MAX_QP, parse_qp, qp
+from data import garden
 
 _NO_PINGS = discord.AllowedMentions.none()
 
@@ -13,9 +14,19 @@ class Economy(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="leaderboard", description="Top QP earners in this server.")
+    @app_commands.command(name="leaderboard", description="Top QP earners (or tallest players) in this server.")
     @app_commands.guild_only()
-    async def leaderboard(self, interaction: discord.Interaction) -> None:
+    @app_commands.describe(board="Which board to show (default QP earned)")
+    @app_commands.choices(board=[
+        app_commands.Choice(name="QP earned", value="qp"),
+        app_commands.Choice(name="Tallest", value="tallest"),
+    ])
+    async def leaderboard(
+        self, interaction: discord.Interaction,
+        board: app_commands.Choice[str] | None = None,
+    ) -> None:
+        if board is not None and board.value == "tallest":
+            return await self._tallest(interaction)
         rows = await self.bot.scoring.leaderboard(interaction.guild_id, 10)
         if not rows:
             await interaction.response.send_message("No QP earned yet. Play a round.", ephemeral=True)
@@ -25,6 +36,26 @@ class Economy(commands.Cog):
             for i, r in enumerate(rows, start=1)
         ]
         embed = discord.Embed(title="QP Leaderboard", description="\n".join(lines))
+        await interaction.response.send_message(embed=embed, allowed_mentions=_NO_PINGS)
+
+    async def _tallest(self, interaction: discord.Interaction) -> None:
+        """The garden board. Guarded on the service because the garden ships dark -- with
+        WATER_ENABLED off there is no /water to populate it."""
+        if self.bot.garden is None or not self.bot.config.water_enabled:
+            return await interaction.response.send_message(
+                "The garden is not open here.", ephemeral=True
+            )
+        rows = await self.bot.garden.tallest(interaction.guild_id, 10)
+        if not rows:
+            return await interaction.response.send_message(
+                "Nobody has grown yet. Use /water on someone.", ephemeral=True
+            )
+        lines = [
+            f"**{i}.** <@{r['user_id']}> — {garden.format_height(r['height_mm'])} "
+            f"({r['times_watered']} waterings)"
+            for i, r in enumerate(rows, start=1)
+        ]
+        embed = discord.Embed(title="Tallest in the Garden", description="\n".join(lines))
         await interaction.response.send_message(embed=embed, allowed_mentions=_NO_PINGS)
 
     @app_commands.command(name="qp", description="Check a QP balance.")

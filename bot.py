@@ -24,6 +24,7 @@ from services.raids import RaidService
 from services.contracts import ContractService
 from services.custom_servants import CustomServantService
 from services.games import GameService
+from services.garden import GardenService
 from services.guild_config import GuildConfigService
 from services.restrictions import RestrictionService
 from services.wars import WarService
@@ -77,6 +78,7 @@ class HolmesBot(commands.Bot):
         self.games: GameService | None = None
         self.contracts: ContractService | None = None
         self.custom_servants: CustomServantService | None = None
+        self.garden: GardenService | None = None
         self.backups: BackupService | None = None
         self.kit_service: KitService | None = None
         self.raids: RaidService | None = None
@@ -107,6 +109,7 @@ class HolmesBot(commands.Bot):
         self.contracts = ContractService(self.db.pool)
         self.wars = WarService(self.db.pool)
         self.raids = RaidService(self.db.pool)
+        self.garden = GardenService(self.db.pool)
         await self.aliases.reload()
         await self.games.sweep_expired()
 
@@ -123,6 +126,13 @@ class HolmesBot(commands.Bot):
                 "whole server"
                 if self.config.contract_open
                 else f"{len(self.config.contract_whitelist)} user(s)",
+            )
+        # The garden ships dark: /water, /mulch and /height only register when WATER_ENABLED is set.
+        if self.config.water_enabled:
+            await self.load_extension("cogs.garden")
+            log.info(
+                "garden enabled (%s QP per water, one payout per %gh)",
+                f"{self.config.water_qp_reward:,}", self.config.water_qp_cooldown_hours,
             )
         # Autobattle is experimental; its cog only loads when AUTOBATTLE_ENABLED is set.
         if self.config.autobattle_enabled:
