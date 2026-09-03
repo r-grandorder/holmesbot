@@ -91,6 +91,12 @@ def _xp_label(config, kind: str, *, plural: bool = False) -> str:
     return f"{e} {name}".strip() if e else name
 
 
+def _emoted(emote: str, text: str) -> str:
+    """Prefix `text` with a custom emote when one is configured. For embed DESCRIPTIONS and
+    field values, where custom emotes actually render -- never for titles."""
+    return f"{emote} {text}".strip() if emote else text
+
+
 def _apply_ember_emoji(view: "discord.ui.View", config) -> None:
     """Swap a claim/open view's button(s) to the configured custom ember emote (no-op if unset,
     leaving the built-in flame). Called from a view's __init__ after super().__init__()."""
@@ -1632,7 +1638,8 @@ class ContractsCog(commands.Cog):
             title=self._ember_title("Embers of Wisdom"),
             description=(
                 f"**{host['name']}:** *\"{random.choice(host['appear'])}\"*\n\n"
-                "Up for grabs -- first to claim takes them!"
+                + _emoted(self.bot.config.ember_emote,
+                          "Up for grabs -- first to claim takes them!")
             ),
             color=discord.Color.orange(),
         )
@@ -1668,13 +1675,15 @@ class ContractsCog(commands.Cog):
         except (discord.HTTPException, OSError):
             pass
 
+    # Discord does NOT render custom emotes (<:name:id>) in embed TITLES -- only in message
+    # content, embed descriptions and field values. Putting one in a title prints the raw
+    # reference, so titles carry a unicode mark (which does render) and the configured emote is
+    # prefixed to the DESCRIPTION instead, via _emoted().
     def _grail_title(self, text: str) -> str:
-        ge = self.bot.config.grail_emote
-        return f"{ge} {text}".strip() if ge else text
+        return text
 
     def _ember_title(self, text: str) -> str:
-        # Falls back to a plain flame when the custom emote is unset, so the title always has a mark.
-        return f"{self.bot.config.ember_emote or chr(0x1F525)} {text}".strip()
+        return f"{chr(0x1F525)} {text}"
 
     async def _spawn_single(self, channel: discord.abc.Messageable) -> None:
         host = random.choice(list(GRAIL_HOSTS.values()))
@@ -1682,7 +1691,8 @@ class ContractsCog(commands.Cog):
             title=self._grail_title("A Holy Grail Appears!"),
             description=(
                 f"**{host['name']}:** *\"{random.choice(host['single_appear'])}\"*\n\n"
-                "A Holy Grail has manifested!\nBe the first to claim it!"
+                + _emoted(self.bot.config.grail_emote,
+                          "A Holy Grail has manifested!") + "\nBe the first to claim it!"
             ),
             color=discord.Color.gold(),
         )
@@ -2055,7 +2065,9 @@ class SingleGrailView(discord.ui.View):
             title=self.cog._grail_title("Holy Grail Claimed!"),
             description=(
                 f"**{self.host['name']}:** *\"{line}\"*\n\n"
-                f"{interaction.user.mention} now has **{total}** Holy Grail{'s' if total != 1 else ''}!"
+                + _emoted(self.cog.bot.config.grail_emote,
+                          f"{interaction.user.mention} now has **{total}** "
+                          f"Holy Grail{'s' if total != 1 else ''}!")
             ),
             color=discord.Color.gold(),
         )
@@ -2105,7 +2117,8 @@ class EmberDropView(discord.ui.View):
             title=self.cog._ember_title("Ember of Wisdom Claimed!"),
             description=(
                 f"**{self.host['name']}:** *\"{line}\"*\n\n"
-                f"{interaction.user.mention} claimed **{n}** Ember{'s' if n != 1 else ''} of Wisdom "
+                f"{interaction.user.mention} claimed **{n}** "
+                f"{_xp_label(self.cog.bot.config, 'embers', plural=n != 1)} "
                 f"(now **{total}**) -- feed a servant with /ember."
             ),
             color=discord.Color.orange(),
@@ -2141,7 +2154,8 @@ class EmberBoxView(discord.ui.View):
         else:
             body = (
                 f"**{self.host['name']}:** *\"{self.appear}\"*\n\n"
-                "A box of embers turned up. Each opening gives a handful.\n\n"
+                + _emoted(self.cog.bot.config.ember_emote,
+                          "A box of embers turned up. Each opening gives a handful.") + "\n\n"
                 f"**{self.remaining}** of **{self.uses}** openings left."
             )
         embed = discord.Embed(
@@ -2217,7 +2231,8 @@ class BoxGrailView(discord.ui.View):
         else:
             body = (
                 f"**{self.host['name']}:** *\"{self.appear}\"*\n\n"
-                "A treasure box has manifested! Each opening reveals a Holy Grail.\n\n"
+                + _emoted(self.cog.bot.config.grail_emote,
+                          "A treasure box has manifested! Each opening reveals a Holy Grail.") + "\n\n"
                 f"**{self.remaining}** of **{self.uses}** grails left."
             )
         embed = discord.Embed(
