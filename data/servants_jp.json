@@ -95,6 +95,7 @@
       "divineOrDemonOrUndead",
       "king",
       "hominidaeServant",
+      "hasCostume",
       "defender",
       "standardClassServant",
       "canBeInBattle",
@@ -3760,6 +3761,76 @@
         "num": 3,
         "name": "Great Decisive Battle at the Southern Sea EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00316.png"
+      }
+    ],
+    "summon_line": null
+  },
+  {
+    "id": 705400,
+    "name": "Daedalus",
+    "className": "berserker",
+    "rarity": 5,
+    "atk_base": 1887,
+    "atk_max": 12213,
+    "hp_base": 1817,
+    "hp_max": 12393,
+    "gender": "male",
+    "attribute": "human",
+    "traits": [
+      "genderMale",
+      "genderFemale",
+      "classBerserker",
+      "attributeHuman",
+      "alignmentNeutral",
+      "alignmentEvil",
+      "fiveStarServant",
+      "servant",
+      "humanoid",
+      "weakToEnumaElish",
+      "greekMythologyMales",
+      "hominidaeServant",
+      "mechanical",
+      "standardClassServant",
+      "groupServant",
+      "canFlyInSpace",
+      "canBeInBattle",
+      "unknown"
+    ],
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/705400/705400a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/705400/705400a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/705400/705400b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/705400/705400b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/7054000/7054000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/7054001/7054001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/7054002/7054002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_7054000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/705400/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/705400/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/705400/card_servant_3.png"
+    },
+    "cv": "大橋歩夕",
+    "jp": true,
+    "aliases": [],
+    "skills": [
+      {
+        "num": 1,
+        "name": "高速設計 A",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00609.png"
+      },
+      {
+        "num": 2,
+        "name": "文化英雄 B",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00313.png"
+      },
+      {
+        "num": 3,
+        "name": "鍛冶神のるつぼ C",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
     "summon_line": null
