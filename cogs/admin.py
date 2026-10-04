@@ -447,8 +447,13 @@ class Admin(commands.Cog):
     @app_commands.command(
         name="forfeit", description="End the current round in this channel and reveal the answer."
     )
+    @app_commands.describe(
+        next_round="Start the next round after the reveal, as usual. Choose False to end quietly."
+    )
     @app_commands.guild_only()
-    async def forfeit(self, interaction: discord.Interaction) -> None:
+    async def forfeit(
+        self, interaction: discord.Interaction, next_round: bool = True
+    ) -> None:
         round_ = self.bot.active_rounds.get(interaction.channel_id)
         if round_ is None or round_.claimed:
             await interaction.response.send_message(
@@ -456,9 +461,12 @@ class Admin(commands.Cog):
             )
             return
         await interaction.response.send_message(
-            "Round forfeited; revealing the answer.", ephemeral=True
+            "Round forfeited; revealing the answer."
+            if next_round
+            else "Round ended; revealing the answer. No next round will start.",
+            ephemeral=True,
         )
-        await round_.forfeit(interaction.channel)
+        await round_.forfeit(interaction.channel, next_round=next_round)
 
     # --- game config ---
     @gameconfig.command(name="toggle", description="Enable or disable a game.")

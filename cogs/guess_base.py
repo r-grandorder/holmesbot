@@ -253,7 +253,9 @@ class PromptVoteView(discord.ui.View):
 class BeatView(discord.ui.View):
     """The short beat on a reveal before the next round auto-starts. The winner is already
     decided (by votes cast DURING the round), so Start now only skips the beat -- it can't
-    change the outcome, which is exactly why a single press is fine and not a snipe."""
+    change the outcome, which is exactly why a single press is fine and not a snipe.
+    Cancel (mod/owner only) calls the next round off, so staff can bring a channel to rest
+    without waiting for a round to start just to /forfeit it."""
 
     def __init__(self, *, bot, channel, winner, difficulty, include_jp, seconds) -> None:
         super().__init__(timeout=None)
@@ -269,6 +271,9 @@ class BeatView(discord.ui.View):
         start = discord.ui.Button(label="Start now", style=discord.ButtonStyle.primary)
         start.callback = self._on_start_now
         self.add_item(start)
+        cancel = discord.ui.Button(label="Cancel", style=discord.ButtonStyle.secondary)
+        cancel.callback = self._on_cancel
+        self.add_item(cancel)
 
     def attach(self, message: discord.Message) -> None:
         self.message = message
@@ -287,6 +292,56 @@ class BeatView(discord.ui.View):
         except discord.HTTPException:
             pass
         await self._go()
+
+    async def _on_cancel(self, interaction: discord.Interaction) -> None:
+        # Mod/owner only. Anyone may Start now (it can't change the outcome), but letting
+        # any player call the next round off would be a griefing lever.
+        if not (is_mod(interaction.user) or await self.bot.is_owner(interaction.user)):
+            try:
+                await interaction.response.send_message(
+                    "Only a moderator can cancel the next round.", ephemeral=True
+                )
+            except discord.HTTPException:
+                pass
+            return
+        if self._done:
+            try:
+                await interaction.response.send_message(
+                    "Too late: the next round is already starting.", ephemeral=True
+                )
+            except discord.HTTPException:
+                pass
+            return
+        self._done = True
+        # Never the current task here (this runs in the button's task), so unlike _go
+        # there's no self-cancel hazard: the sleeping timer just exits.
+        if self._task is not None:
+            self._task.cancel()
+        for child in self.children:
+            child.disabled = True  # type: ignore[attr-defined]
+        self.stop()
+        try:
+            await interaction.response.defer()
+        except discord.HTTPException:
+            pass
+        if self.message is None:
+            return
+        # Retire both buttons and rewrite the "Next up" countdown, which would otherwise
+        # keep reading "in 30 seconds" / "a minute ago" for a round that never comes.
+        kwargs: dict = {"view": self}
+        embed = self.message.embeds[0] if self.message.embeds else None
+        if embed is not None:
+            for i, field in enumerate(embed.fields):
+                if field.name == "Next up":
+                    embed.set_field_at(
+                        i, name="Next up", value="Cancelled by a moderator.", inline=False
+                    )
+                    kwargs["embed"] = embed
+                    break
+        try:
+            await self.message.edit(**kwargs)
+        except discord.HTTPException:
+            pass
 
     async def _go(self) -> None:
         if self._done:
@@ -604,15 +659,18 @@ class ChatRound:
         *,
         ping: str | None = None,
         engaged: bool = False,
+        next_round: bool = True,
     ) -> None:
         """Send a reveal at the bottom of the channel. With the next-round vote enabled,
         an engaged round (won/forfeited, or one that drew votes on its prompt) notes the
         winning next game on the reveal and starts it after a short beat -- Start now skips
         the beat, and can't change the (already-decided) winner. A quiet timeout with no
-        votes just rests. With the vote off, the plain Play Again button is used instead."""
+        votes just rests. With the vote off, the plain Play Again button is used instead.
+        next_round=False (a mod ending the round for good) posts the reveal plain: no beat
+        and no Play Again, whatever was voted, so nothing starts or offers to start."""
         beat = None
         vote_on = self.bot.config.next_vote_seconds > 0 and self.replay is not None
-        if vote_on and (engaged or self.next_votes):
+        if next_round and vote_on and (engaged or self.next_votes):
             winner = self._next_winner()
             label = dict(NEXT_VOTE_TYPES).get(winner, winner)
             starts_at = int(time.time()) + self.bot.config.next_vote_seconds
@@ -630,7 +688,9 @@ class ChatRound:
                 seconds=self.bot.config.next_vote_seconds,
             )
         view = beat or (
-            PlayAgainView(self.replay) if (self.replay is not None and not vote_on) else None
+            PlayAgainView(self.replay)
+            if (next_round and self.replay is not None and not vote_on)
+            else None
         )
         base: dict = {}
         if view is not None:
@@ -805,8 +865,12 @@ class ChatRound:
         except Exception:
             log.exception("failed to reattach message for game %s", self.game_id)
 
-    async def forfeit(self, channel: discord.abc.Messageable) -> None:
-        """End the round early (mod/owner) and reveal the answer at the bottom."""
+    async def forfeit(
+        self, channel: discord.abc.Messageable, *, next_round: bool = True
+    ) -> None:
+        """End the round early (a mod's /forfeit, or the give-up vote) and reveal the answer
+        at the bottom. next_round=False ends it for good: no next-round beat and no Play
+        Again on the reveal, so the channel rests until someone runs a /guess command."""
         if self.claimed:
             return
         self.claimed = True
@@ -815,7 +879,7 @@ class ChatRound:
         await self.bot.games.resolve(self.game_id, "forfeited", None, 0)
         headline = f'*{host.line(self.host_id, "reveal", answer=self.servant.name)}*'
         embed, file = await self._build_reveal_embed(headline)
-        await self._post_reveal(channel, embed, file, engaged=True)
+        await self._post_reveal(channel, embed, file, engaged=True, next_round=next_round)
         await self._slim_prompt("Round ended.")
 
     async def _run_timeout(self) -> None:
