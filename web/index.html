@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=3">
+<link rel="stylesheet" href="site.css?v=4">
 </head>
 <body data-page="kits">
 <div id="topnav"></div>
@@ -22,6 +22,7 @@
     <select id="fTrigger"><option value="">All triggers</option></select>
     <select id="fEffect"><option value="">All effects</option></select>
     <span id="count"></span>
+    <button id="addkit" class="editbtn" hidden title="Write a kit for a servant that has none yet">+ Add kit</button>
   </div>
   <div id="grid" class="grid"></div>
   <div id="empty" class="empty" hidden>No kits match those filters.</div>
@@ -35,6 +36,19 @@
       <button id="ed-revert" class="btn ghost" hidden>Revert to default</button>
       <button id="ed-cancel" class="btn ghost">Cancel</button>
     </div>
+  </div>
+</div>
+
+<!-- Mod-only: pick a servant from the bot's live index that has no card on this page (no kit file,
+     no override) and open the kit editor on it. This is the way in for servants the weekly Atlas
+     refresh added after the last kit batch; kits.json only ever lists servants that have a kit. -->
+<div id="picker" class="modal" hidden>
+  <div class="modal-card">
+    <div class="ed-title">Add a kit</div>
+    <div class="ed-note">Servants in the bot's live index with no autobattle kit yet. Pick one to write its kit. It saves as a live override and takes effect within seconds.</div>
+    <input id="pk-q" class="pk-q" type="search" placeholder="Search by name or Atlas id...">
+    <div id="pk-list" class="pk-list"></div>
+    <div class="ed-actions"><button id="pk-cancel" class="btn ghost">Cancel</button></div>
   </div>
 </div>
 
@@ -76,6 +90,35 @@ const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"
 let IS_MOD = false;
 const authHeaders = () => token() ? {Authorization:"Bearer "+token()} : {};
 
+// ---- the bot's live servant index (public, like the overrides) ----
+// Two jobs: fill in face/rarity/name on cards synthesized before it arrived, and feed the mod-only
+// Add kit picker with every servant that has no card here -- which is how a servant the weekly
+// Atlas refresh added after the last kit batch gets a kit at all (kits.json only knows kitted ones).
+let SERVANTS = [];
+const servantById = id => SERVANTS.find(s=>s.id===id);
+function cardFor(id, fallback){
+  const s = servantById(id) || {}, f = fallback || {};
+  return {id, name: s.name || f.name || ("#"+id), className: s.className || f.className || "",
+          rarity: s.rarity || 0, face: s.face || "", skill: "", trigger: "", effects: []};
+}
+function sortData(){ DATA.sort((a,b)=>a.name.toLowerCase().localeCompare(b.name.toLowerCase())); }
+function loadServants(){
+  fetch(API_BASE+"/api/servants").then(r=>r.ok?r.json():null).then(d=>{
+    if (!d || !d.servants) return;
+    SERVANTS = d.servants;
+    let n = 0;
+    for (const row of DATA){
+      const s = servantById(row.id);
+      if (!s) continue;
+      if (!row.face && s.face){ row.face = s.face; n++; }
+      if (!row.rarity && s.rarity){ row.rarity = s.rarity; n++; }
+      if ((!row.name || row.name.startsWith("#")) && s.name){ row.name = s.name; n++; }
+      if (!row.className && s.className){ row.className = s.className; n++; }
+    }
+    if (n){ sortData(); render(); }
+  }).catch(()=>{});
+}
+
 function fillSelect(sel, values, labeler){
   for (const v of [...new Set(values)].sort())
     sel.insertAdjacentHTML("beforeend", `<option value="${v}">${labeler(v)}</option>`);
@@ -114,13 +157,14 @@ fetch("./kits.json").then(r=>r.json()).then(data=>{
   render();
   checkMod();
   applyOverrides();
+  loadServants();
 }).catch(()=>{ $("empty").hidden=false; $("empty").textContent="Could not load kits.json (run scripts/build_site_data.py)."; });
 
 // ---- mod-only kit editor (only appears for users in DASHBOARD_MOD_IDS) ----
 function checkMod(){
   if (!token()) return;
   fetch(API_BASE+"/api/me", {headers:authHeaders()}).then(r=>r.ok?r.json():null)
-    .then(me=>{ if (me && me.can_edit_kits){ IS_MOD = true; render(); openKitFromHash(); } }).catch(()=>{});
+    .then(me=>{ if (me && me.can_edit_kits){ IS_MOD = true; $("addkit").hidden = false; render(); openKitFromHash(); } }).catch(()=>{});
 }
 // Deep link: /#kit-<servant_id> opens that kit editor directly. Lets the dashboard's custom-servant
 // list jump straight to a kit, including for a unit that has no card yet (negative ids included --
@@ -134,23 +178,22 @@ addEventListener("hashchange", openKitFromHash);
 function applyOverrides(){
   fetch(API_BASE+"/api/kits/overrides").then(r=>r.ok?r.json():null).then(d=>{
     if (!d || !d.overrides) return;
-    let n = 0;
+    let n = 0, added = false;
     for (const [sid, kit] of Object.entries(d.overrides)){
       const id = parseInt(sid,10);
       let row = DATA.find(x=>x.id===id);
       if (!row){
-        // No baked row: this is a unit that only exists live, i.e. a custom servant created in
-        // the dashboard. Synthesize a card so it is browsable and editable like any other.
-        row = {id, name: kit.servant_name || ("#"+sid), className: kit.class_name || "",
-               rarity: 0, face: "", skill: "", trigger: "", effects: []};
-        DATA.push(row);
+        // No baked row: a unit that only exists live -- a custom servant created in the dashboard,
+        // or a servant kitted through the editor after the site was last built. Synthesize a card
+        // so it is browsable and editable like any other; face/rarity fill in from the live index.
+        row = cardFor(id, {name: kit.servant_name, className: kit.class_name});
+        DATA.push(row); added = true;
       }
-      if (row){
-        row.skill = kit.name; row.trigger = kit.trigger;
-        row.effects = (kit.effects||[]).map(e=>({type:e.effect_type, value:e.value, duration:e.duration, target:e.target}));
-        n++;
-      }
+      row.skill = kit.name; row.trigger = kit.trigger;
+      row.effects = (kit.effects||[]).map(e=>({type:e.effect_type, value:e.value, duration:e.duration, target:e.target}));
+      n++;
     }
+    if (added) sortData();
     if (n) render();
   }).catch(()=>{});
 }
@@ -178,6 +221,7 @@ async function openEditor(sid){
     const k = d.kit || {name:"", trigger:VOCAB.triggers[0], description:"", effects:[]};
     body.innerHTML = `
       <div class="ed-title">${esc(d.servant_name)} <span class="dim">#${sid}</span></div>
+      ${d.kit ? "" : `<div class="ed-note">No kit yet. Saving creates a live override, so this servant fights with it from the next battle.</div>`}
       <label class="fld">Skill name<input id="ed-name" value="${esc(k.name||"")}"></label>
       <label class="fld">Trigger<select id="ed-trigger">${VOCAB.triggers.map(t=>opttag(t,k.trigger)).join("")}</select></label>
       <label class="fld">Description<input id="ed-desc" value="${esc(k.description||"")}"></label>
@@ -203,10 +247,19 @@ function gatherKit(){
     description: $("ed-desc").value.trim(), effects };
 }
 function patchLocal(kit){
-  const row = DATA.find(x=>x.id===EDIT_ID);
-  if (!row) return;
+  let row = DATA.find(x=>x.id===EDIT_ID);
+  if (!row){
+    // First kit for a servant with no card (opened from the Add kit picker or a #kit- deep link).
+    row = cardFor(EDIT_ID); DATA.push(row); sortData();
+  }
   row.skill = kit.name; row.trigger = kit.trigger;
   row.effects = (kit.effects||[]).map(e=>({type:e.effect_type, value:e.value, duration:e.duration, target:e.target}));
+  const s = servantById(EDIT_ID); if (s) s.has_kit = true;
+}
+// Reverting a servant that has no baked kit underneath leaves it kit-less, so its card goes too.
+function dropLocal(){
+  DATA = DATA.filter(x=>x.id!==EDIT_ID);
+  const s = servantById(EDIT_ID); if (s) s.has_kit = false;
 }
 async function saveKit(){
   const kit = gatherKit(), err = $("ed-err"); err.textContent = "";
@@ -225,6 +278,7 @@ async function revertKit(){
     if (!r.ok) throw new Error("HTTP "+r.status);
     const d = await (await fetch(API_BASE+"/api/kits/"+EDIT_ID, {headers:authHeaders()})).json();
     if (d.kit) patchLocal({name:d.kit.name, trigger:d.kit.trigger, effects:d.kit.effects});
+    else dropLocal();
     closeEditor(); render();
   }catch(e){ err.textContent = "Error: " + e.message; }
 }
@@ -241,11 +295,52 @@ $("ed-save").onclick = saveKit;
 $("ed-revert").onclick = revertKit;
 $("ed-cancel").onclick = closeEditor;
 
+// ---- Add kit picker (mod-only) ----
+// Lists everything in the live index that has no card on this page. `has_kit` is the bot's own
+// view: it can be true for a servant whose kit file landed after the site was last built, so that
+// is flagged rather than hidden (the editor loads the baked kit fine).
+function kitlessServants(){
+  const carded = new Set(DATA.map(r=>r.id));
+  return SERVANTS.filter(s=>!carded.has(s.id));
+}
+function renderPicker(){
+  const q = $("pk-q").value.trim().toLowerCase();
+  const all = kitlessServants();
+  const rows = q ? all.filter(s=>s.name.toLowerCase().includes(q) || String(s.id).includes(q)) : all;
+  const shown = rows.slice(0, 60);
+  const tag = s => s.custom ? "Custom" : s.npc ? "NPC" : s.jp ? "JP only" : "";
+  if (!shown.length){
+    $("pk-list").innerHTML = `<div class="empty">${SERVANTS.length ? "No servant without a kit matches." : "The live servant list could not be loaded."}</div>`;
+    return;
+  }
+  $("pk-list").innerHTML = shown.map(s=>`
+    <button class="pk-row" data-id="${s.id}">
+      ${s.face ? `<img loading="lazy" src="${esc(s.face)}" alt="">` : `<span class="pk-noface"></span>`}
+      <span class="pk-body">
+        <span class="pk-name">${esc(s.name)} ${s.rarity ? `<span class="stars">${"★".repeat(s.rarity)}</span>` : ``}</span>
+        <span class="pk-meta">${esc(prettyClass(s.className))} &middot; #${s.id}${tag(s) ? " &middot; "+tag(s) : ""}${s.has_kit ? " &middot; has a baked kit" : ""}</span>
+      </span>
+    </button>`).join("") + (rows.length > shown.length ? `<div class="dim pk-more">${rows.length - shown.length} more. Keep typing to narrow it down.</div>` : "");
+}
+function openPicker(){ $("picker").hidden = false; $("pk-q").value = ""; renderPicker(); $("pk-q").focus(); }
+function closePicker(){ $("picker").hidden = true; }
+$("addkit").onclick = openPicker;
+$("pk-q").addEventListener("input", renderPicker);
+$("pk-cancel").onclick = closePicker;
+$("pk-list").addEventListener("click", e=>{
+  const b = e.target.closest(".pk-row"); if (!b) return;
+  closePicker(); openEditor(parseInt(b.dataset.id,10));
+});
+$("picker").addEventListener("mousedown", e => { if (e.target === $("picker")) closePicker(); });
+
 // ---- modal dismissal: click the backdrop or press Escape ----
 // mousedown, not click: a click also fires when a drag that STARTED inside the card is released
 // on the backdrop, which would close the editor mid text-selection.
 $("editor").addEventListener("mousedown", e => { if (e.target === $("editor")) closeEditor(); });
-addEventListener("keydown", e => { if (e.key === "Escape" && !$("editor").hidden) closeEditor(); });
+addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if (!$("editor").hidden) closeEditor(); else if (!$("picker").hidden) closePicker();
+});
 </script>
 </body>
 </html>

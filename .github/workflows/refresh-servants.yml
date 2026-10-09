@@ -50,12 +50,16 @@ jobs:
             git push
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
-      - name: Trigger the image build
-        # A push made with GITHUB_TOKEN does NOT start another workflow run, so Build
-        # would never see this commit if we relied on its `on: push` trigger.
+      - name: Trigger the image build and the site deploy
+        # A push made with GITHUB_TOKEN does NOT start another workflow run, so neither
+        # Build nor the site deploy would see this commit via their `on: push` triggers.
         # workflow_dispatch is one of the two documented exceptions to that rule, so
-        # dispatch Build explicitly instead.
+        # dispatch both explicitly. The site build reads servants_jp.json for the faces
+        # of JP-only servants that have kits; new kit-less servants need no site deploy
+        # at all (the page reads them from the rebuilt bot's live index).
         if: steps.commit.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run build.yml --ref main
+        run: |
+          gh workflow run build.yml --ref main
+          gh workflow run deploy-site.yml --ref main

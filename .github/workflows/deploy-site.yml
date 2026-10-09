@@ -1,8 +1,11 @@
 name: Deploy kit browser
 
-# Builds web/kits.json from the committed kit sources (Atlas faces pulled over stdlib urllib -- no
-# pip installs) and deploys web/ to Cloudflare Pages. Token-only auth: no GitHub App / OAuth link
-# between this repo and the Cloudflare account -- just the two encrypted secrets below.
+# Builds web/kits.json from the committed kit sources (NA faces pulled over stdlib urllib -- no
+# pip installs; JP-only faces from the committed data/servants_jp.json) and deploys web/ to
+# Cloudflare Pages. The scheduled servant refresh pushes with GITHUB_TOKEN, which never fires
+# `on: push`, so refresh-servants.yml dispatches this workflow explicitly when that file changes.
+# Token-only auth: no GitHub App / OAuth link between this repo and the Cloudflare account -- just
+# the two encrypted secrets below.
 on:
   push:
     branches: [main]
@@ -10,6 +13,7 @@ on:
       - "data/kits/**"
       - "web/**"
       - "scripts/build_site_data.py"
+      - "data/servants_jp.json" # faces/rarity for JP-only servants that have kits
       - ".github/workflows/deploy-site.yml"
   workflow_dispatch:
 

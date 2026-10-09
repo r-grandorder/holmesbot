@@ -1,9 +1,14 @@
 """Generate web/kits.json for the static kit-browser site (Cloudflare Pages).
 
 Reads the per-file kit sources (data/kits/*.json, committed) and, when available, enriches each
-record with the servant's rarity + face portrait from the generated servant data. Pure static
-reference data -- no DB, no auth; the site filters it entirely client-side. Run on each Pages
-deploy (see web/README.md). Works from the kit files alone if servant data isn't present.
+record with the servant's rarity + face portrait from the servant data (the generated NA index or
+the Atlas export, plus the committed JP-only index). Pure static reference data -- no DB, no auth;
+the site filters it entirely client-side. Run on each Pages deploy (see web/README.md). Works from
+the kit files alone if servant data isn't present.
+
+Only kitted servants are in here. The page learns about the rest (servants the weekly Atlas refresh
+added that have no kit yet) from the bot's live /api/servants endpoint, which is what feeds the
+mod-only Add kit picker.
 """
 from __future__ import annotations
 
@@ -21,7 +26,8 @@ def _servants() -> dict:
     """id -> servant record (for name/class/rarity/face). Custom + NPC units come from the committed
     hand-curated files; NA servants come from the generated servants.json when present, else the
     Atlas basic-servant export fetched over stdlib urllib (so a Cloudflare Pages build needs only
-    Python -- no sync, no deps). Falls back to kit data alone if Atlas is unreachable."""
+    Python -- no sync, no deps); JP-only servants come from the committed servants_jp.json. Falls
+    back to kit data alone if Atlas is unreachable."""
     idx: dict[int, dict] = {}
     for fn in ("custom_servants.json", "npc_servants.json"):
         p = ROOT / "data" / fn
@@ -40,6 +46,13 @@ def _servants() -> dict:
             print("enriched NA faces/rarity from the Atlas basic export")
         except Exception as e:  # site still builds from kit data alone
             print(f"Atlas fetch failed ({e}); building without NA face art")
+    # JP-only servants are committed (the weekly refresh rewrites the file), so they are always on
+    # hand. NA wins a dup: a servant that graduated to NA since the last JP refresh keeps its NA
+    # record, mirroring data.servants.ServantIndex.load.
+    jp = ROOT / "data" / "servants_jp.json"
+    if jp.exists():
+        for s in json.loads(jp.read_text(encoding="utf-8")):
+            idx.setdefault(int(s["id"]), s)
     return idx
 
 

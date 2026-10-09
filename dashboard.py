@@ -459,6 +459,39 @@ async def kit_overrides_all(request: web.Request) -> web.Response:
     return _json({"overrides": overrides})
 
 
+# --- servant index (public, read-only) -------------------------------------------------------
+async def servants_list(request: web.Request) -> web.Response:
+    """Public: every unit in the live servant index -- NA, JP-only, NPC bosses and custom units --
+    trimmed to what the kit browser needs, plus whether each has a kit right now (baked file or
+    live override). Read-only game data, like /api/kits/overrides.
+
+    This is how the site learns about servants the weekly Atlas refresh added: the baked
+    web/kits.json only knows servants that already have a kit file, so without this a new servant
+    had no card and no way into the kit editor short of guessing its Atlas id for a #kit- deep
+    link. The index is rebuilt at every image build, so a new servant shows up here on the same
+    deploy that puts it in the bot."""
+    bot = request.app["bot"]
+    if bot.servants is None:
+        return _json({"servants": []})
+    kits = bot.kits
+    out = [
+        {
+            "id": s.id,
+            "name": s.name,
+            "className": s.class_name,
+            "rarity": s.rarity,
+            "face": s.face,
+            "jp": s.jp,
+            "npc": s.npc,
+            "custom": s.custom,
+            "has_kit": kits is not None and kits.get(s.id) is not None,
+        }
+        for s in bot.servants.all()
+    ]
+    out.sort(key=lambda r: (r["name"].lower(), r["id"]))
+    return _json({"servants": out})
+
+
 # --- custom servants: mod-only editor (name / art / class / summon weight) -------------------
 
 
@@ -904,6 +937,7 @@ def setup_dashboard(app: web.Application, bot) -> None:
     # Raids: static/collection paths BEFORE the {name} catch-all so they aren't read as a name.
     r.add_get("/api/images/{id}", image_get)
     r.add_post("/api/images", image_upload)
+    r.add_get("/api/servants", servants_list)  # the live index; feeds the kit browser's Add kit picker
     # "custom" is a fixed segment so it can't be read as an {id}
     r.add_get("/api/servants/custom", custom_servants_list)
     r.add_post("/api/servants/custom", custom_servant_create)

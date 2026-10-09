@@ -9,7 +9,9 @@ for quick single lookups.
 - `index.html` -- the whole app (vanilla JS; loads `kits.json` and filters client-side).
 - `kits.json` -- generated data (gitignored). Produced by `scripts/build_site_data.py` from the
   committed kit sources in `data/kits/*.json`, enriched with each servant's rarity + face portrait
-  when `data/servants.json` is present.
+  from `data/servants.json` when present (else the Atlas basic export) and from the committed
+  `data/servants_jp.json`. Only kitted servants are in it: the page lists the rest (new Atlas
+  arrivals with no kit yet) for mods from the bot's live `/api/servants`, via the Add kit picker.
 
 ## Local preview
 ```sh
