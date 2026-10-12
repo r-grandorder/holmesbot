@@ -165,14 +165,23 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
             "SELECT balance FROM scores WHERE guild_id = 1 AND user_id = $1", uid,
         ) or 0
 
-    async def test_trick_or_treat_has_one_winner_even_with_simultaneous_clicks(self):
+    async def test_trick_or_treat_allows_each_player_once_without_a_participant_cap(self):
         event = await self.service.create_event(1, 2, "trick_or_treat", grails=1)
+        users = list(range(100, 120))
         results = await asyncio.gather(*(
-            self.service.claim(event["id"], 1, 2, uid, action="treat") for uid in (100, 200, 300)
+            self.service.claim(event["id"], 1, 2, uid, action="treat") for uid in users + users
         ))
-        self.assertEqual(sorted(r.status for r in results), ["ok", "taken", "taken"])
-        self.assertEqual(await self.db.pool.fetchval("SELECT SUM(candy) FROM grail_balance"), 1)
-        self.assertEqual(await self.db.pool.fetchval("SELECT SUM(balance) FROM grail_balance"), 1)
+        self.assertEqual(sum(r.status == "ok" for r in results), len(users))
+        self.assertEqual(sum(r.status == "duplicate" for r in results), len(users))
+        self.assertTrue(all(not r.complete and not r.bonus for r in results))
+        self.assertEqual(await self.db.pool.fetchval("SELECT SUM(candy) FROM grail_balance"), len(users))
+        self.assertEqual(await self.db.pool.fetchval("SELECT SUM(balance) FROM grail_balance"), len(users))
+        for uid in users:
+            self.assertEqual(await self.service.balance(1, uid), 1)
+        with patch("services.halloween.time.time", return_value=event["expires_at"]):
+            late = await self.service.claim(event["id"], 1, 2, 999, action="treat")
+        self.assertEqual(late.status, "expired")
+        self.assertEqual(await self.service.balance(1, 999), 0)
 
     async def test_spill_duplicate_player_or_slot_cannot_claim_again(self):
         event = await self.service.create_event(1, 2, "candy_spill")
@@ -195,7 +204,7 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                 expected_candy = 0 if outcome.qp_loss_percent else {H.HOST_ID: 2, 601700: 4}[outcome.servant_id]
                 self.assertEqual(result.candy, expected_candy)
                 self.assertEqual(result.grails, 1)
-                self.assertTrue(result.complete)
+                self.assertFalse(result.complete)
                 self.assertEqual(result.servant_id, outcome.servant_id)
                 expected_loss = {0: 0, 1: 50, 2: 100}[outcome.qp_loss_percent]
                 self.assertEqual(result.qp_lost, expected_loss)
@@ -238,9 +247,10 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
             results = await asyncio.gather(*(
                 self.service.claim(event["id"], 1, 2, uid, action="trick") for uid in (100, 100, 200)
             ))
-        self.assertEqual(sum(r.status == "ok" for r in results), 1)
-        self.assertEqual(sum(r.qp_lost for r in results), 50)
-        self.assertEqual(await self.qp_balance(100) + await self.qp_balance(200), 9950)
+        self.assertEqual(sorted(r.status for r in results), ["duplicate", "ok", "ok"])
+        self.assertEqual(sum(r.qp_lost for r in results), 100)
+        self.assertEqual(await self.qp_balance(100), 4950)
+        self.assertEqual(await self.qp_balance(200), 4950)
 
     async def test_concurrent_events_calculate_penalties_from_current_balance(self):
         await self.seed_qp(amount=600)
@@ -623,7 +633,9 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                         self.assertTrue(view.render().description.startswith(opening))
                         await view._cleanup_task
                     else:
-                        self.assertTrue(view.complete)
+                        self.assertFalse(view.complete)
+                        self.assertFalse(view.is_finished())
+                        self.assertTrue(all(not button.disabled for button in view.children))
                         self.assertTrue(view.render().description.startswith(view.outcome_flavor))
                     choose.assert_called_once_with(lines)
 
@@ -801,7 +813,7 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                 self.assertIn(outcome.flavor, reply.description)
                 self.assertFalse(reply.thumbnail.url)
                 self.assertFalse(view.render().thumbnail.url)
-                self.assertTrue(view.complete)
+                self.assertFalse(view.complete)
                 expected_loss = {0: 0, 1: 50, 2: 100}[outcome.qp_loss_percent]
                 self.assertEqual(await self.qp_balance(), 5000 - expected_loss)
                 await view.claim(i, "trick", 0)
@@ -958,8 +970,7 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                 for view in views
             ))
             self.assertEqual(await self.service.balance(1, 100), 3)
-        spills = {view for view in views if view.event["kind"] == "candy_spill"}
-        self.assertEqual(self.cog._channels[2], spills)
+        self.assertEqual(self.cog._channels[2], set(views))
         self.bot.guild_config.is_event_channel_allowed.return_value = True
         self.assertFalse(await self.cog.spawn_event(channel, "candy_spill"))
 
@@ -1019,6 +1030,58 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                 ), 0)
                 view.stop()
 
+    async def test_trick_or_treat_buttons_stay_open_for_independent_choices_until_timeout(self):
+        self.bot.config = config(HALLOWEEN_WHITELIST="all", HALLOWEEN_RANDOM_EVENTS="false")
+        message = SimpleNamespace(edit=AsyncMock(), delete=AsyncMock())
+        channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), send=AsyncMock(return_value=message))
+        self.assertTrue(await self.cog.spawn_event(channel, "trick_or_treat", manual=True))
+        view = next(iter(self.cog._views))
+        deadline = view.event["expires_at"]
+        expiry_task = view._expiry_task
+        store = ViewStore(SimpleNamespace())
+        store.add_view(view, message_id=123)
+        self.assertEqual(view.render().footer.text, "0 played | 1 per player")
+        for uid, outcome in enumerate(H.TRICKS, start=100):
+            await self.seed_qp(uid=uid)
+            i = interaction(uid)
+            with patch("services.halloween.random.choice", return_value=outcome):
+                await view.children[1].callback(i)
+            self.assertEqual(await self.service.balance(1, uid), outcome.candy)
+            self.assertIn(outcome.flavor, i.followup.send.call_args.kwargs["embed"].description)
+            store.update_from_message(123, view.to_components())
+            self.assertTrue(all(not button.disabled for button in view.children))
+        # Treat remains available after other players have rolled every Trick outcome.
+        for uid in range(200, 210):
+            await view.children[0].callback(interaction(uid))
+            self.assertEqual(await self.service.balance(1, uid), 1)
+        retry = interaction(100)
+        await view.children[0].callback(retry)
+        retry.followup.send.assert_awaited_once_with("You already chose Trick or Treat!", ephemeral=True)
+        self.assertEqual(await self.service.balance(1, 100), H.TRICKS[0].candy)
+        self.assertEqual(len(view.claimed_slots), 14)
+        self.assertEqual(view.render().footer.text, "14 played | 1 per player")
+        self.assertEqual(len(view.claim_log), 5)
+        self.assertEqual(view.render().fields[0].name, "Recent results")
+        self.assertFalse(view.complete)
+        self.assertFalse(view.is_finished())
+        self.assertTrue(all(not button.disabled for button in view.children))
+        self.assertEqual(view.event["expires_at"], deadline)
+        self.assertIs(view._expiry_task, expiry_task)
+        self.assertIsNone(view._cleanup_task)
+        message.delete.assert_not_awaited()
+        self.assertEqual(self.cog._channels[2], {view})
+
+        await view.on_timeout()
+        await asyncio.wait_for(view._cleanup_task, timeout=1)
+        self.assertTrue(view.is_finished())
+        self.assertTrue(all(button.disabled for button in view.children))
+        self.assertFalse(self.cog._channels)
+        message.delete.assert_awaited_once()
+        late = interaction(999)
+        await view.children[0].callback(late)
+        late.followup.send.assert_awaited_once_with("Event ended.", ephemeral=True)
+        self.assertEqual(await self.service.balance(1, 999), 0)
+
     async def test_slow_message_post_does_not_use_up_the_event_window(self):
         message = SimpleNamespace(edit=AsyncMock(), delete=AsyncMock())
 
@@ -1075,15 +1138,17 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(view.event["expires_at"], self.bot.config.halloween_end_at.timestamp())
 
     async def test_event_expires_at_absolute_deadline_without_a_click(self):
-        event = await self.service.create_event(1, 2, "candy_spill", expires_at=time.time() + 0.02)
-        view = CandyEventView(self.cog, event, None)
-        self.cog._views.add(view)
-        self.cog._channels[2] = {view}
-        view.start_timer()
-        await asyncio.wait_for(view._expiry_task, timeout=1)
-        self.assertTrue(view.expired)
-        self.assertTrue(view.is_finished())
-        self.assertFalse(self.cog._channels)
+        for kind in ("candy_spill", "trick_or_treat"):
+            with self.subTest(kind=kind):
+                event = await self.service.create_event(1, 2, kind, expires_at=time.time() + 0.02)
+                view = CandyEventView(self.cog, event, None)
+                self.cog._views.add(view)
+                self.cog._channels[2] = {view}
+                view.start_timer()
+                await asyncio.wait_for(view._expiry_task, timeout=1)
+                self.assertTrue(view.expired)
+                self.assertTrue(view.is_finished())
+                self.assertFalse(self.cog._channels)
 
 
 if __name__ == "__main__":

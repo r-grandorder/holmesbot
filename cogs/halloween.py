@@ -347,12 +347,11 @@ class CandyEventView(discord.ui.View):
         if self.portrait.url:
             embed.set_thumbnail(url=self.portrait.url)
         if self.claim_log:
-            embed.add_field(name="Collected" if spill else "Result",
+            embed.add_field(name="Collected" if spill else "Recent results",
                             value="\n".join(self.claim_log)[-1024:], inline=False)
-        footer = f"{len(self.claimed_slots)}/{self.event['slots']} claimed"
-        if spill:
-            footer += " | 1 per player"
-        embed.set_footer(text=footer)
+        count = len(self.claimed_slots)
+        footer = f"{count}/{self.event['slots']} claimed" if spill else f"{count} played"
+        embed.set_footer(text=f"{footer} | 1 per player")
         return embed
 
     def _finish(self) -> None:
@@ -394,7 +393,7 @@ class CandyEventView(discord.ui.View):
     async def on_timeout(self) -> None:
         async with self._lock:
             self.expired = True
-            if not self.complete:
+            if not self.complete and (self.event["kind"] == "candy_spill" or not self.claimed_slots):
                 emotion = "upset" if self.event["kind"] == "candy_spill" else "pout"
                 self.portrait = _portrait(H.HOST_ID, self._host_face, emotion)
             self._finish()
@@ -414,7 +413,7 @@ class CandyEventView(discord.ui.View):
             if result.status != "ok":
                 text = {"expired": "Event ended.",
                         "duplicate": ("You already took a candy!" if self.event["kind"] == "candy_spill" else
-                                      "You already claimed this event."),
+                                      "You already chose Trick or Treat!"),
                         "taken": "Already claimed.",
                         "invalid": "That candy is unavailable."}[result.status]
                 return await interaction.followup.send(text, ephemeral=True)
@@ -426,6 +425,8 @@ class CandyEventView(discord.ui.View):
             reward = f"{result.candy} candy" + (" + 1 Holy Grail" if result.grails else "")
             loss = f" Lost **{result.qp_lost:,} QP**." if result.qp_lost else ""
             self.claim_log.append(f"**{name}** received {reward}.{loss}")
+            if self.event["kind"] == "trick_or_treat":
+                self.claim_log = self.claim_log[-5:]
             if self.complete:
                 self._finish()
             face = await self.cog._face(self.cog.bot.servants.get(result.servant_id))

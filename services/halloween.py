@@ -43,6 +43,8 @@ class HalloweenService:
         if kind not in ("trick_or_treat", "candy_spill"):
             raise ValueError("Unknown Halloween event")
         if kind == "trick_or_treat":
+            # Only Candy Spill uses a capacity. Keep the existing schema's placeholder
+            # for Trick or Treat, whose participation is limited by its deadline.
             slots = 1
         if not 1 <= slots <= 8 or grails not in (0, 1):
             raise ValueError("Invalid Halloween reward configuration")
@@ -77,7 +79,8 @@ class HalloweenService:
                 if (event is None or event["guild_id"] != guild_id
                         or event["channel_id"] != channel_id or time.time() >= event["expires_at"]):
                     return CandyClaim("expired")
-                if event["kind"] == "trick_or_treat":
+                spill = event["kind"] == "candy_spill"
+                if not spill:
                     if action not in ("trick", "treat") or slot != 0:
                         return CandyClaim("invalid")
                 elif action != "collect" or not 0 <= slot < event["slots"]:
@@ -87,7 +90,11 @@ class HalloweenService:
                 )
                 if any(c["user_id"] == user_id for c in claims):
                     return CandyClaim("duplicate")
-                if any(c["slot"] == slot for c in claims):
+                if not spill:
+                    # Each player gets their own ledger slot. The transaction serializes
+                    # allocation; (event_id, user_id) still prevents repeat rewards.
+                    slot = len(claims)
+                elif any(c["slot"] == slot for c in claims):
                     return CandyClaim("taken")
                 servant_id, qp_percent, qp_cap = H.HOST_ID, 0, 0
                 emotion = None
@@ -133,8 +140,8 @@ class HalloweenService:
                     guild_id, user_id, candy, grails,
                 )
                 claimed_slots = tuple(sorted([c["slot"] for c in claims] + [slot]))
-                complete = len(claimed_slots) == event["slots"]
-                bonus = H.SPILL_BONUS if complete and event["kind"] == "candy_spill" else 0
+                complete = spill and len(claimed_slots) == event["slots"]
+                bonus = H.SPILL_BONUS if complete else 0
                 if bonus:
                     await conn.execute(
                         "UPDATE grail_balance SET candy = candy + $3 WHERE guild_id = $1 "

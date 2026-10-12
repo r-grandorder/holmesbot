@@ -39,22 +39,24 @@ Whitelists and event dates still apply. The setting defaults to `true` when unse
 Use `/summonconfig eventchannel` to choose the automatic drop channels. During the active
 window, Halloween fully replaces ordinary ember/grail events when `HALLOWEEN_RANDOM_EVENTS=true`.
 Eligible players' single drops become
-**Trick or Treat** (first claimant chooses Treat for 1 guaranteed
+**Trick or Treat** (each player chooses once during the two-minute window: Treat for 1 guaranteed
 candy, or Trick for a 50% chance of 2 or 4 candy and a 50% chance of no candy plus a QP penalty)
 or **Candy Spill** (1 candy per player, plus 1 extra each if
 everyone collects their piece). Drop chances and cooldowns are unchanged; grail replacements
-still award the original grails.
+still award one grail per participant.
 Trick's four outcomes are equally likely: Liz charges 1% of your current QP for admission
 (up to 5,000), Mecha Eli-chan charges 2% for repairs (up to 10,000), Liz gives 2 candy,
-or Carmilla gives 4 candy. The public prompt keeps to Liz's invitation; the private result
-reports the actual candy received and QP lost. Percentage losses round down to whole QP,
+or Carmilla gives 4 candy. Trick or Treat stays open until its deadline with no participant
+cap; each player's outcome is independent. Its public embed shows the latest outcome,
+the five most recent results, and a running participation count. The private result reports
+the actual candy received and QP lost. Percentage losses round down to whole QP,
 with no minimum charge. Penalties use only available spendable QP, never create debt, and leave lifetime scores
-and existing candy/grails unchanged. Claims and QP penalties commit together, once per event.
+and existing candy/grails unchanged. Claims and QP penalties commit together, once per player per event.
 Liz uses the emotion portraits bundled in `assets/halloween/liz/`: worried/upset for
 spilled candy, embarrassed for the Carmilla line and candy pickups, happy for treats,
 encores and a completed spill, and pout for admission fees. Opening lines keep their
 matching expression throughout the event. Carmilla and Mecha Eli-chan use their own
-permitted Atlas faces; the completed Trick or Treat message updates its thumbnail and
+permitted Atlas faces; the latest Trick or Treat result updates the public thumbnail and
 removes Liz's attachment. Missing local images fall back to Liz's permitted Atlas face.
 QP encounters continue normally. With random Halloween events enabled, unlisted players cannot
 trigger ordinary ember/grail events during the window. Only whitelisted players can trigger
@@ -87,7 +89,7 @@ Optional `HALLOWEEN_START_AT` and `HALLOWEEN_END_AT` accept ISO timestamps with 
 At the end, ordinary drops resume automatically. Leave the whitelist enabled so collected
 candy remains usable; clearing it disables the commands too, without deleting balances.
 New events last two minutes from when their message is posted, and end sooner if the
-seasonal end time arrives. Expired messages are deleted immediately; completed events
+seasonal end time arrives. Expired messages are deleted immediately; completed Candy Spills
 show their result for 15 seconds before deletion. Cleanup retries transient failures.
 In-progress event buttons expire on bot restart, as ordinary drop buttons do; awarded candy
 is persistent. The container's normal Atlas sync bakes in the dialogue. For local development,
