@@ -424,7 +424,8 @@ class CandyEventView(discord.ui.View):
             name = discord.utils.escape_markdown(interaction.user.display_name)
             reward = f"{result.candy} candy" + (" + 1 Holy Grail" if result.grails else "")
             loss = f" Lost **{result.qp_lost:,} QP**." if result.qp_lost else ""
-            self.claim_log.append(f"**{name}** received {reward}.{loss}")
+            prefix = f"{action.title()}: " if self.event["kind"] == "trick_or_treat" else ""
+            self.claim_log.append(f"{prefix}**{name}** received {reward}.{loss}")
             if self.event["kind"] == "trick_or_treat":
                 self.claim_log = self.claim_log[-5:]
             if self.complete:
