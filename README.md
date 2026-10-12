@@ -33,14 +33,15 @@ HALLOWEEN_END_AT=
 Use `/summonconfig eventchannel` to choose the automatic drop channels. During the active window, Halloween
 fully replaces ordinary ember/grail events. Eligible players' single drops become
 **Trick or Treat** (first claimant chooses Treat for 1 guaranteed
-candy, or Trick for a 50% chance of 2 candy and a 50% chance of no candy plus a QP penalty)
+candy, or Trick for a 50% chance of 2 or 4 candy and a 50% chance of no candy plus a QP penalty)
 or **Candy Spill** (1 candy per player, plus 1 extra each if
 everyone collects their piece). Drop chances and cooldowns are unchanged; grail replacements
 still award the original grails.
-Trick's four outcomes are equally likely: Liz charges 500 QP for admission, Mecha Eli-chan
-charges 1,000 QP for repairs, or Liz/Carmilla gives 2 candy. The public prompt keeps to Liz's
-invitation; the private result reports the actual candy received and QP lost.
-Penalties use only available spendable QP, never create debt, and leave lifetime scores
+Trick's four outcomes are equally likely: Liz charges 1% of your current QP for admission
+(up to 5,000), Mecha Eli-chan charges 2% for repairs (up to 10,000), Liz gives 2 candy,
+or Carmilla gives 4 candy. The public prompt keeps to Liz's invitation; the private result
+reports the actual candy received and QP lost. Percentage losses round down to whole QP,
+with no minimum charge. Penalties use only available spendable QP, never create debt, and leave lifetime scores
 and existing candy/grails unchanged. Claims and QP penalties commit together, once per event.
 Result embeds use the speaking character's permitted Atlas face, including Carmilla and
 Mecha Eli-chan; the completed Trick or Treat message also updates its thumbnail.

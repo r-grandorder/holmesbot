@@ -20,7 +20,7 @@ class CandyClaim:
     bonus: int = 0
     flavor: str = ""
     servant_id: int = H.HOST_ID
-    qp_penalty: int = 0
+    qp_penalty: bool = False
     qp_lost: int = 0
     qp_balance: int | None = None
 
@@ -88,11 +88,12 @@ class HalloweenService:
                     return CandyClaim("duplicate")
                 if any(c["slot"] == slot for c in claims):
                     return CandyClaim("taken")
-                servant_id, qp_penalty = H.HOST_ID, 0
+                servant_id, qp_percent, qp_cap = H.HOST_ID, 0, 0
                 if action == "trick":
                     outcome = random.choice(H.TRICKS)
                     candy, flavor = outcome.candy, outcome.flavor
-                    servant_id, qp_penalty = outcome.servant_id, outcome.qp_loss
+                    servant_id = outcome.servant_id
+                    qp_percent, qp_cap = outcome.qp_loss_percent, outcome.qp_loss_cap
                 elif action == "treat":
                     candy, flavor = H.TREAT_CANDY, '**Liz:** "A treat for my little fan!"'
                 else:
@@ -102,14 +103,16 @@ class HalloweenService:
                     event_id, user_id, slot, candy,
                 )
                 qp_lost, qp_balance = 0, None
-                if qp_penalty:
+                if qp_percent:
                     # Use this transaction's connection so a failed reward also refunds
                     # the penalty. The unique claim prevents duplicate charges on retries.
                     qp_balance = await conn.fetchval(
                         "SELECT balance FROM scores WHERE guild_id = $1 AND user_id = $2",
                         guild_id, user_id,
                     ) or 0
-                    qp_lost = min(qp_penalty, qp_balance)
+                    # Whole QP, rounded down with no minimum. Calculate against the
+                    # current spendable balance inside this claim's transaction.
+                    qp_lost = min(qp_balance * qp_percent // 100, qp_cap, qp_balance)
                     if qp_lost:
                         await conn.execute(
                             "UPDATE scores SET balance = balance - $3, updated_at = CURRENT_TIMESTAMP "
@@ -137,5 +140,5 @@ class HalloweenService:
                 return CandyClaim(
                     status="ok", candy=candy, grails=grails, balance=balance,
                     claimed_slots=claimed_slots, complete=complete, bonus=bonus, flavor=flavor,
-                    servant_id=servant_id, qp_penalty=qp_penalty, qp_lost=qp_lost, qp_balance=qp_balance,
+                    servant_id=servant_id, qp_penalty=bool(qp_percent), qp_lost=qp_lost, qp_balance=qp_balance,
                 )

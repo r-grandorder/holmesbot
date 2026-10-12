@@ -28,16 +28,17 @@ class TrickOutcome:
     candy: int
     flavor: str
     servant_id: int = HOST_ID
-    qp_loss: int = 0
+    qp_loss_percent: int = 0
+    qp_loss_cap: int = 0
 
 
 # Four equally likely outcomes. Losses spend QP, never existing candy or grails.
 TRICKS = (
     TrickOutcome(0, 'Liz hands you a ticket. "VIP admission isn\'t free, you know!"',
-                 qp_loss=500),
+                 qp_loss_percent=1, qp_loss_cap=5000),
     TrickOutcome(0, 'Mecha Eli-chan points at Liz\'s broken confetti cannon. "You broke it. You pay for it."',
-                 servant_id=1000400, qp_loss=1000),
+                 servant_id=1000400, qp_loss_percent=2, qp_loss_cap=10000),
     TrickOutcome(2, 'Liz beams. "An encore? For a fan like you, take two!"'),
-    TrickOutcome(2, 'Carmilla slips you two candies. "Not a word about this concert."',
+    TrickOutcome(4, 'Carmilla slips you four candies. "Not a word about this concert."',
                  servant_id=601700),
 )

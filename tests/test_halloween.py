@@ -170,58 +170,68 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                 with patch("services.halloween.random.choice", return_value=outcome):
                     result = await self.service.claim(event["id"], 1, 2, 100, action="trick")
                 self.assertEqual(result.status, "ok")
-                self.assertEqual(result.candy, outcome.candy)
+                expected_candy = 0 if outcome.qp_loss_percent else {H.HOST_ID: 2, 601700: 4}[outcome.servant_id]
+                self.assertEqual(result.candy, expected_candy)
                 self.assertEqual(result.grails, 1)
                 self.assertTrue(result.complete)
                 self.assertEqual(result.servant_id, outcome.servant_id)
-                self.assertEqual(result.qp_lost, outcome.qp_loss)
-                self.assertEqual(await self.service.balance(1, 100), 5 + outcome.candy)
-                self.assertEqual(await self.qp_balance(), 5000 - outcome.qp_loss)
+                expected_loss = {0: 0, 1: 50, 2: 100}[outcome.qp_loss_percent]
+                self.assertEqual(result.qp_lost, expected_loss)
+                self.assertEqual(await self.service.balance(1, 100), 5 + expected_candy)
+                self.assertEqual(await self.qp_balance(), 5000 - expected_loss)
                 self.assertEqual(await self.db.pool.fetchval("SELECT points FROM scores WHERE user_id = 100"), 10000)
                 for action in ("treat", "trick"):
                     retry = await self.service.claim(event["id"], 1, 2, 100, action=action)
                     self.assertEqual(retry.status, "duplicate")
-                    self.assertEqual(await self.service.balance(1, 100), 5 + outcome.candy)
-                    self.assertEqual(await self.qp_balance(), 5000 - outcome.qp_loss)
+                    self.assertEqual(await self.service.balance(1, 100), 5 + expected_candy)
+                    self.assertEqual(await self.qp_balance(), 5000 - expected_loss)
 
-    async def test_trick_penalties_handle_missing_zero_and_insufficient_qp(self):
-        outcome = next(x for x in H.TRICKS if x.qp_loss == 1000)
-        for starting in (None, 0, 125):
-            with self.subTest(starting=starting):
-                if starting is not None:
-                    await self.seed_qp(amount=starting)
-                event = await self.service.create_event(1, 2, "trick_or_treat")
-                with patch("services.halloween.random.choice", return_value=outcome):
-                    result = await self.service.claim(event["id"], 1, 2, 100, action="trick")
-                self.assertEqual(result.qp_lost, starting or 0)
-                self.assertEqual(result.qp_balance, 0)
-                self.assertEqual(await self.qp_balance(), 0)
+    async def test_trick_penalties_scale_round_down_and_stop_at_the_cap(self):
+        cases = (
+            (None, 0, 0), (0, 0, 0), (1, 0, 0), (49, 0, 0), (50, 0, 1),
+            (99, 0, 1), (100, 1, 2), (125, 1, 2), (1000, 10, 20),
+            (50000, 500, 1000), (499999, 4999, 9999), (500000, 5000, 10000),
+            (500001, 5000, 10000), (1000000, 5000, 10000),
+        )
+        for starting, liz_loss, mecha_loss in cases:
+            for percent, expected in ((1, liz_loss), (2, mecha_loss)):
+                with self.subTest(starting=starting, percent=percent):
+                    outcome = next(x for x in H.TRICKS if x.qp_loss_percent == percent)
+                    if starting is not None:
+                        await self.seed_qp(amount=starting)
+                    event = await self.service.create_event(1, 2, "trick_or_treat")
+                    with patch("services.halloween.random.choice", return_value=outcome):
+                        result = await self.service.claim(event["id"], 1, 2, 100, action="trick")
+                    self.assertTrue(result.qp_penalty)
+                    self.assertEqual(result.qp_lost, expected)
+                    self.assertEqual(result.qp_balance, (starting or 0) - expected)
+                    self.assertEqual(await self.qp_balance(), (starting or 0) - expected)
 
     async def test_concurrent_tricks_charge_only_the_claimant_once(self):
         for uid in (100, 200):
             await self.seed_qp(uid=uid)
         event = await self.service.create_event(1, 2, "trick_or_treat")
-        outcome = next(x for x in H.TRICKS if x.qp_loss == 500)
+        outcome = next(x for x in H.TRICKS if x.qp_loss_percent == 1)
         with patch("services.halloween.random.choice", return_value=outcome):
             results = await asyncio.gather(*(
                 self.service.claim(event["id"], 1, 2, uid, action="trick") for uid in (100, 100, 200)
             ))
         self.assertEqual(sum(r.status == "ok" for r in results), 1)
-        self.assertEqual(sum(r.qp_lost for r in results), 500)
-        self.assertEqual(await self.qp_balance(100) + await self.qp_balance(200), 9500)
+        self.assertEqual(sum(r.qp_lost for r in results), 50)
+        self.assertEqual(await self.qp_balance(100) + await self.qp_balance(200), 9950)
 
-    async def test_concurrent_events_cannot_overdraw_the_same_players_qp(self):
+    async def test_concurrent_events_calculate_penalties_from_current_balance(self):
         await self.seed_qp(amount=600)
         events = [await self.service.create_event(1, channel, "trick_or_treat") for channel in (2, 3)]
-        outcome = next(x for x in H.TRICKS if x.qp_loss == 500)
+        outcome = next(x for x in H.TRICKS if x.qp_loss_percent == 1)
         with patch("services.halloween.random.choice", return_value=outcome):
             results = await asyncio.gather(*(
                 self.service.claim(event["id"], 1, event["channel_id"], 100, action="trick")
                 for event in events
             ))
         self.assertTrue(all(result.status == "ok" for result in results))
-        self.assertEqual(sorted(result.qp_lost for result in results), [100, 500])
-        self.assertEqual(await self.qp_balance(), 0)
+        self.assertEqual(sorted(result.qp_lost for result in results), [5, 6])
+        self.assertEqual(await self.qp_balance(), 589)
         self.assertEqual(await self.db.pool.fetchval("SELECT points FROM scores WHERE user_id = 100"), 10000)
 
     async def test_treat_and_spill_never_spend_qp(self):
@@ -263,7 +273,7 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         await self.db._conn.executescript(
             "CREATE TRIGGER fail_candy BEFORE INSERT ON grail_balance BEGIN SELECT RAISE(ABORT, 'test failure'); END;"
         )
-        outcome = next(x for x in H.TRICKS if x.qp_loss == 1000)
+        outcome = next(x for x in H.TRICKS if x.qp_loss_percent == 2)
         with patch("services.halloween.random.choice", return_value=outcome):
             with self.assertRaisesRegex(Exception, "test failure"):
                 await self.service.claim(event["id"], 1, 2, 100, action="trick")
@@ -627,9 +637,9 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.service.balance(1, 100), before)
 
     async def test_trick_updates_both_portraits_to_the_speaker(self):
-        await self.seed_qp()
         for outcome in H.TRICKS:
             with self.subTest(outcome=outcome):
+                await self.seed_qp()
                 event = await self.service.create_event(1, 2, "trick_or_treat")
                 view = CandyEventView(self.cog, event, self.servant.face)
                 self.cog._views.add(view)
@@ -645,8 +655,9 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(reply["embed"].thumbnail.url, face)
                 self.assertEqual(view.message.edit.call_args.kwargs["embed"].thumbnail.url, face)
                 self.assertIn(outcome.flavor, view.render().description)
-                if outcome.qp_loss:
-                    self.assertIn(f"Lost **{outcome.qp_loss:,} QP**", reply["embed"].description)
+                if outcome.qp_loss_percent:
+                    expected_loss = {1: 50, 2: 100}[outcome.qp_loss_percent]
+                    self.assertIn(f"Lost **{expected_loss:,} QP**", reply["embed"].description)
 
     async def test_restricted_or_missing_guest_portrait_does_not_retain_liz(self):
         outcome = next(x for x in H.TRICKS if x.servant_id == 601700)
@@ -682,13 +693,14 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                 self.assertFalse(reply.thumbnail.url)
                 self.assertFalse(view.render().thumbnail.url)
                 self.assertTrue(view.complete)
-                self.assertEqual(await self.qp_balance(), 5000 - outcome.qp_loss)
+                expected_loss = {0: 0, 1: 50, 2: 100}[outcome.qp_loss_percent]
+                self.assertEqual(await self.qp_balance(), 5000 - expected_loss)
                 await view.claim(i, "trick", 0)
-                self.assertEqual(await self.qp_balance(), 5000 - outcome.qp_loss)
+                self.assertEqual(await self.qp_balance(), 5000 - expected_loss)
 
     async def test_trick_response_reports_only_qp_actually_taken(self):
-        outcome = next(x for x in H.TRICKS if x.qp_loss == 1000)
-        for starting in (0, 125):
+        outcome = next(x for x in H.TRICKS if x.qp_loss_percent == 2)
+        for starting, expected_loss in ((0, 0), (25, 0), (125, 2), (1000000, 10000)):
             with self.subTest(starting=starting):
                 await self.seed_qp(amount=starting)
                 event = await self.service.create_event(1, 2, "trick_or_treat")
@@ -699,12 +711,12 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                     await view.claim(i, "trick", 0)
                 embed = i.followup.send.call_args.kwargs["embed"]
                 text = embed.description
-                self.assertIn("0 QP left", embed.footer.text)
-                if starting:
-                    self.assertIn("Lost **125 QP**", text)
+                self.assertIn(f"{starting - expected_loss:,} QP left", embed.footer.text)
+                if expected_loss:
+                    self.assertIn(f"Lost **{expected_loss:,} QP**", text)
                 else:
-                    self.assertIn("No QP to take", text)
-                self.assertNotIn("Lost **1,000 QP**", text)
+                    self.assertIn("No QP lost.", text)
+                    self.assertNotIn("Lost **", text)
 
     async def test_channel_gate_single_active_event_and_timeout(self):
         channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), send=AsyncMock())

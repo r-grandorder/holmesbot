@@ -399,7 +399,7 @@ class CandyEventView(discord.ui.View):
                 if result.qp_lost:
                     text += f"\nLost **{result.qp_lost:,} QP**."
                 else:
-                    text += "\nNo QP to take."
+                    text += "\nNo QP lost."
             if result.bonus:
                 text += f"\n**{result.bonus} bonus candy** for each player!"
             if action == "collect":
