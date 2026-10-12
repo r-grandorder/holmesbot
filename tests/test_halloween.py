@@ -451,6 +451,32 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         contracts._award_qp.assert_awaited_once_with(message.channel, message.author)
         contracts._spawn_chat_drop.assert_not_awaited()
 
+    async def test_event_opening_stays_the_same_through_claims_and_updates(self):
+        for kind, lines, action in (
+            ("candy_spill", H.SPILL_LINES, "collect"),
+            ("trick_or_treat", H.TRICK_OR_TREAT_LINES, "treat"),
+        ):
+            with self.subTest(kind=kind):
+                event = await self.service.create_event(1, 2, kind)
+                with patch("cogs.halloween.random.choice", return_value=lines[0]) as choose:
+                    view = CandyEventView(self.cog, event, self.servant.face)
+                    self.cog._views.add(view)
+                    view.message = SimpleNamespace(edit=AsyncMock(), delete=AsyncMock())
+                    opening = f'**Liz:** "{lines[0]}"'
+                    self.assertTrue(view.render().description.startswith(opening))
+                    await view._update_message()
+                    self.assertTrue(view.message.edit.call_args.kwargs["embed"].description.startswith(opening))
+                    await view.claim(interaction(), action, 0)
+                    if kind == "candy_spill":
+                        self.assertTrue(view.render().description.startswith(opening))
+                        await view.on_timeout()
+                        self.assertTrue(view.render().description.startswith(opening))
+                        await view._cleanup_task
+                    else:
+                        self.assertTrue(view.complete)
+                        self.assertTrue(view.render().description.startswith(view.outcome_flavor))
+                    choose.assert_called_once_with(lines)
+
     async def test_successful_spill_callbacks_disable_buttons_and_report_bonus(self):
         event = await self.service.create_event(1, 2, "candy_spill", slots=2)
         view = CandyEventView(self.cog, event, self.servant.face)

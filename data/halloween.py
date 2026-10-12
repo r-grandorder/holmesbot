@@ -8,6 +8,20 @@ TREAT_CANDY = 1
 SPILL_CANDY = 1
 SPILL_BONUS = 1
 
+SPILL_LINES = (
+    "Master! I dropped my candy stash, help!",
+    "Master, grab those candies before Carmilla sees!",
+    "My Halloween candy! Don't let it get away!",
+    "Quick, Master! Save the candy! My concert can wait!",
+)
+TRICK_OR_TREAT_LINES = (
+    "Trick or treat, my little fans? Choose wisely!",
+    "Master! Your Halloween idol has a surprise for you!",
+    "A trick or a treat? Go on, Master, pick one!",
+    "Candy or mischief? Let's hear it, my little fans!",
+)
+
+
 @dataclass(frozen=True)
 class TrickOutcome:
     candy: int

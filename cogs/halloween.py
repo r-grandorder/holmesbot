@@ -214,6 +214,9 @@ class CandyEventView(discord.ui.View):
         self.message: discord.Message | None = None
         self.claimed_slots: tuple[int, ...] = ()
         self.claim_log: list[str] = []
+        # Choose once so claims and message updates keep the same opening line.
+        lines = H.SPILL_LINES if event["kind"] == "candy_spill" else H.TRICK_OR_TREAT_LINES
+        self.opening_flavor = f'**Liz:** "{random.choice(lines)}"'
         self.outcome_flavor: str | None = None
         self.complete = False
         self.expired = False
@@ -251,13 +254,7 @@ class CandyEventView(discord.ui.View):
 
     def render(self) -> discord.Embed:
         spill = self.event["kind"] == "candy_spill"
-        description = (
-            '**Liz:** "Master! My candy! Catch it!"'
-            if spill else
-            '**Liz:** "Trick or treat, my little fans? Choose wisely!"'
-        )
-        if self.outcome_flavor:
-            description = self.outcome_flavor
+        description = self.outcome_flavor or self.opening_flavor
         if spill and not self.complete and not self.expired:
             description += f"\n\nCollect all {self.event['slots']} to get {H.SPILL_BONUS} bonus candy!"
         if self.event["grails"]:
@@ -278,7 +275,7 @@ class CandyEventView(discord.ui.View):
                             value="\n".join(self.claim_log)[-1024:], inline=False)
         footer = f"{len(self.claimed_slots)}/{self.event['slots']} claimed"
         if spill:
-            footer += " | One claim per player"
+            footer += " | 1 per player"
         embed.set_footer(text=footer)
         return embed
 
