@@ -42,8 +42,14 @@ Eligible players' single drops become
 **Trick or Treat** (each player chooses once during the two-minute window: Treat for 1 guaranteed
 candy, or Trick for a 50% chance of 2 or 4 candy and a 50% chance of no candy plus a QP penalty)
 or **Candy Spill** (1 candy per player, plus 1 extra each if
-everyone collects their piece). Drop chances and cooldowns are unchanged; grail replacements
-still award one grail per participant.
+everyone collects their piece). Automatic Halloween drops share one roll per eligible message:
+0.5% each for Trick or Treat with/without grails, and 0.25% each for Candy Spill with/without
+grails, for 1.5% total when off cooldown. All four share one 60-minute cooldown per channel;
+a successful roll for any variant blocks all four until that hour has passed. Manual
+`/halloweenevent` triggers bypass this cooldown. QP keeps its separate 2% slice of
+the same roll and its own cooldown, and at most one event can trigger per message.
+Ordinary ember/grail rates are unchanged when random Halloween events are off. Grail replacements still award one
+grail per participant.
 Trick's four outcomes are equally likely: Liz charges 1% of your current QP for admission
 (up to 5,000), Mecha Eli-chan charges 2% for repairs (up to 10,000), Liz gives 2 candy,
 or Carmilla gives 4 candy. Trick or Treat stays open until its deadline with no participant
@@ -67,7 +73,7 @@ wherever the bot can post; the whitelist and active dates still apply.
 Manual triggers can run alongside other Halloween events in the same channel. Each event
 allows one claim per player and ends independently. Automatic Halloween drops skip channels
 with an active Halloween event instead of falling back to ordinary events. These rolls still
-consume their usual drop cooldown. With random Halloween events enabled, `/triggerevent`
+consume the shared Halloween cooldown. With random Halloween events enabled, `/triggerevent`
 blocks ordinary ember/grail spawns during the window and directs moderators to
 `/halloweenevent`; its QP option remains available.
 

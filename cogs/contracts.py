@@ -14,6 +14,7 @@ from discord.ext import commands, tasks
 from branding import qp
 from data import contract_game
 from data import garden
+from data import halloween as halloween_data
 from data import images
 from data.grail_hosts import EMBER_HOSTS, GRAIL_HOSTS
 from data.servants import class_display
@@ -183,6 +184,7 @@ class ContractsCog(commands.Cog):
         self._ember_cd: dict[tuple[int, int], float] = {}      # -> last single-ember monotonic
         self._ember_box_cd: dict[tuple[int, int], float] = {}  # -> last ember-box monotonic
         self._qp_cd: dict[tuple[int, int], float] = {}         # -> last QP-reward monotonic
+        self._halloween_cd: dict[tuple[int, int], float] = {}  # shared by all four Halloween variants
         self._duel_cd: dict[tuple[int, int], float] = {}  # (guild,challenger) -> last duel
         self._duel_pair_cd: dict = {}                     # (guild, frozenset{a,b}) -> last duel
         self._switch_cd: dict[tuple[int, int], float] = {}  # (guild,user) -> last active-swap
@@ -1608,30 +1610,38 @@ class ContractsCog(commands.Cog):
         key = (message.guild.id, channel.id)
         now = time.monotonic()
         cg = contract_game
-        if (self._drop_ready(self._qp_cd, key, cg.QP_REWARD_COOLDOWN, now)
-                and random.random() < cg.QP_REWARD_CHANCE):
-            self._qp_cd[key] = now
-            await self._award_qp(channel, message.author)
-            return
-        if (self._drop_ready(self._single_cd, key, cg.GRAIL_SINGLE_COOLDOWN, now)
-                and random.random() < cg.GRAIL_SINGLE_CHANCE):
-            self._single_cd[key] = now
-            await self._spawn_chat_drop(channel, message.author.id, "grail_single")
-            return
-        if (self._drop_ready(self._box_cd, key, cg.GRAIL_BOX_COOLDOWN, now)
-                and random.random() < cg.GRAIL_BOX_CHANCE):
-            self._box_cd[key] = now
-            await self._spawn_chat_drop(channel, message.author.id, "grail_box")
-            return
-        if (self._drop_ready(self._ember_cd, key, cg.EMBER_DROP_COOLDOWN, now)
-                and random.random() < cg.EMBER_DROP_CHANCE):
-            self._ember_cd[key] = now
-            await self._spawn_chat_drop(channel, message.author.id, "ember")
-            return
-        if (self._drop_ready(self._ember_box_cd, key, cg.EMBER_BOX_COOLDOWN, now)
-                and random.random() < cg.EMBER_BOX_CHANCE):
-            self._ember_box_cd[key] = now
-            await self._spawn_chat_drop(channel, message.author.id, "ember_box")
+        seasonal = self.bot.config.halloween_drops_active() and self.bot.get_cog("HalloweenCog") is not None
+        # Halloween uses one roll so the four chances add to exactly 1.5%. QP keeps
+        # its own 2% slice, and only one event can win. All Halloween variants share
+        # one cooldown; normal seasons retain their existing sequential rolls.
+        roll = random.random() if seasonal else 0.0
+        threshold = 0.0
+        drops = (
+            ("qp_reward", self._qp_cd, cg.QP_REWARD_COOLDOWN, cg.QP_REWARD_CHANCE),
+            ("grail_single", self._single_cd, cg.GRAIL_SINGLE_COOLDOWN, cg.GRAIL_SINGLE_CHANCE),
+            ("grail_box", self._box_cd, cg.GRAIL_BOX_COOLDOWN, cg.GRAIL_BOX_CHANCE),
+            ("ember", self._ember_cd, cg.EMBER_DROP_COOLDOWN, cg.EMBER_DROP_CHANCE),
+            ("ember_box", self._ember_box_cd, cg.EMBER_BOX_COOLDOWN, cg.EMBER_BOX_CHANCE),
+        )
+        for kind, cooldown, window, chance in drops:
+            if seasonal and kind in halloween_data.DROP_CHANCES:
+                cooldown = self._halloween_cd
+                window = halloween_data.DROP_COOLDOWN
+                chance = halloween_data.DROP_CHANCES[kind]
+            if not self._drop_ready(cooldown, key, window, now):
+                continue
+            if seasonal:
+                threshold += chance
+                selected = roll < threshold
+            else:
+                selected = random.random() < chance
+            if selected:
+                cooldown[key] = now
+                if kind == "qp_reward":
+                    await self._award_qp(channel, message.author)
+                else:
+                    await self._spawn_chat_drop(channel, message.author.id, kind)
+                return
 
     async def _spawn_chat_drop(self, channel, user_id: int, kind: str) -> None:
         halloween = self.bot.get_cog("HalloweenCog")
