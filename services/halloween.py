@@ -96,7 +96,7 @@ class HalloweenService:
                 elif action == "treat":
                     candy, flavor = H.TREAT_CANDY, '**Liz:** "A treat for my little fan!"'
                 else:
-                    candy, flavor = H.SPILL_CANDY, "You catch a candy from Liz's stash."
+                    candy, flavor = H.SPILL_CANDY, "You took a candy from Liz's stash!"
                 await conn.execute(
                     "INSERT INTO halloween_claims (event_id, user_id, slot, candy) VALUES ($1, $2, $3, $4)",
                     event_id, user_id, slot, candy,
