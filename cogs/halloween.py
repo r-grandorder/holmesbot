@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
+import io
 import logging
+from pathlib import Path
 import random
 import time
 
@@ -15,11 +18,36 @@ from permissions import is_mod
 from services.halloween import HalloweenService
 
 log = logging.getLogger(__name__)
+_LIZ_FACE_DIR = Path(__file__).resolve().parent.parent / "assets" / "halloween" / "liz"
 _DENY = "You don't have access to the Halloween event."
 _EVENT_CHOICES = [
     app_commands.Choice(name="Trick or Treat", value="trick_or_treat"),
     app_commands.Choice(name="Candy Spill", value="candy_spill"),
 ]
+
+
+@dataclass(frozen=True)
+class _Portrait:
+    url: str | None
+    data: bytes | None = None
+    filename: str = ""
+
+    def files(self) -> list[discord.File]:
+        # Discord files are single-use; edits and private replies need fresh copies.
+        return [discord.File(io.BytesIO(self.data), filename=self.filename)] if self.data is not None else []
+
+
+def _portrait(servant_id: int, allowed_face: str | None, emotion: str | None) -> _Portrait:
+    # A local crop follows the same art restriction check as the Atlas thumbnail.
+    if servant_id == H.HOST_ID and allowed_face and emotion:
+        try:
+            data = (_LIZ_FACE_DIR / f"{emotion}.png").read_bytes()
+        except OSError:
+            log.warning("Couldn't load Liz's %s portrait; using the permitted Atlas face", emotion)
+        else:
+            filename = f"halloween-liz-{emotion}.png"
+            return _Portrait(f"attachment://{filename}", data, filename)
+    return _Portrait(allowed_face)
 
 
 class HalloweenCog(commands.Cog):
@@ -115,6 +143,7 @@ class HalloweenCog(commands.Cog):
             async with view._lock:
                 view.message = await channel.send(
                     embed=view.render(), view=view, allowed_mentions=discord.AllowedMentions.none(),
+                    files=view.portrait.files(),
                 )
                 deadline = time.time() + H.EVENT_SECONDS
                 if end is not None:
@@ -213,8 +242,9 @@ class HalloweenCog(commands.Cog):
         description += f'\n\n*"{random.choice(lines)}"*' if lines else f"\n\n{name} enjoys the Halloween treats."
         embed = discord.Embed(title="🍬 A Halloween Treat", description=description, color=discord.Color.orange())
         face = await self._face(s)
-        if face:
-            embed.set_thumbnail(url=face)
+        portrait = _portrait(s.id if s else 0, face, "happy")
+        if portrait.url:
+            embed.set_thumbnail(url=portrait.url)
         remaining = await self.service.balance(gid, uid)
         footer = f"{contract_game.CANDY_XP:,} XP per candy"
         if is_self:
@@ -224,7 +254,8 @@ class HalloweenCog(commands.Cog):
             # Resolve that response before sending the public gift embed.
             await interaction.followup.send(f"Fed **{used} candy**. {remaining:,} candy left.", ephemeral=True)
         embed.set_footer(text=footer)
-        await interaction.followup.send(embed=embed, ephemeral=is_self, allowed_mentions=discord.AllowedMentions.none())
+        await interaction.followup.send(embed=embed, ephemeral=is_self, files=portrait.files(),
+                                        allowed_mentions=discord.AllowedMentions.none())
 
     @candy.autocomplete("servant")
     async def candy_servants(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[int]]:
@@ -248,13 +279,16 @@ class CandyEventView(discord.ui.View):
         # Discord's built-in timeout resets on clicks, including rejected ones. This event
         # has an absolute deadline, so repeated clicks must not keep it occupying a channel.
         super().__init__(timeout=None)
-        self.cog, self.event, self.face = cog, event, face
+        self.cog, self.event, self._host_face = cog, event, face
         self.message: discord.Message | None = None
         self.claimed_slots: tuple[int, ...] = ()
         self.claim_log: list[str] = []
         # Choose once so claims and message updates keep the same opening line.
         lines = H.SPILL_LINES if event["kind"] == "candy_spill" else H.TRICK_OR_TREAT_LINES
-        self.opening_flavor = f'**Liz:** "{random.choice(lines)}"'
+        opening = random.choice(lines)
+        self.opening_flavor = f'**Liz:** "{opening.text}"'
+        self.opening_emotion = opening.emotion
+        self.portrait = _portrait(H.HOST_ID, face, opening.emotion)
         self.outcome_flavor: str | None = None
         self.complete = False
         self.expired = False
@@ -308,8 +342,8 @@ class CandyEventView(discord.ui.View):
             description += f"\nEnds <t:{int(self.event['expires_at'])}:R>."
         embed = discord.Embed(title="🍬 Candy Spill!" if spill else "🎃 Trick or Treat!",
                               description=description, color=discord.Color.orange())
-        if self.face:
-            embed.set_thumbnail(url=self.face)
+        if self.portrait.url:
+            embed.set_thumbnail(url=self.portrait.url)
         if self.claim_log:
             embed.add_field(name="Collected" if spill else "Result",
                             value="\n".join(self.claim_log)[-1024:], inline=False)
@@ -335,7 +369,7 @@ class CandyEventView(discord.ui.View):
                     self._delete_message(delay=0 if self.expired else 15),
                 )
             try:
-                await self.message.edit(embed=self.render(), view=self)
+                await self.message.edit(embed=self.render(), view=self, attachments=self.portrait.files())
             except discord.NotFound:
                 pass  # The cleanup task may already have removed an expired message.
             except discord.HTTPException:
@@ -358,6 +392,9 @@ class CandyEventView(discord.ui.View):
     async def on_timeout(self) -> None:
         async with self._lock:
             self.expired = True
+            if not self.complete:
+                emotion = "upset" if self.event["kind"] == "candy_spill" else "pout"
+                self.portrait = _portrait(H.HOST_ID, self._host_face, emotion)
             self._finish()
             await self._update_message()
 
@@ -390,9 +427,14 @@ class CandyEventView(discord.ui.View):
             if self.complete:
                 self._finish()
             face = await self.cog._face(self.cog.bot.servants.get(result.servant_id))
+            portrait = _portrait(result.servant_id, face, result.emotion)
             if self.event["kind"] == "trick_or_treat":
                 self.outcome_flavor = result.flavor
-                self.face = face
+                self.portrait = portrait
+            else:
+                self._host_face = face
+                emotion = "happy" if self.complete else self.opening_emotion
+                self.portrait = _portrait(H.HOST_ID, face, emotion)
             await self._update_message()
             text = f"{result.flavor}\n\nReceived **{reward}**."
             if result.qp_penalty:
@@ -411,9 +453,9 @@ class CandyEventView(discord.ui.View):
             if result.qp_balance is not None:
                 footer += f" | {result.qp_balance:,} QP left"
             embed.set_footer(text=footer)
-            if face:
-                embed.set_thumbnail(url=face)
-            await interaction.followup.send(embed=embed, ephemeral=True,
+            if portrait.url:
+                embed.set_thumbnail(url=portrait.url)
+            await interaction.followup.send(embed=embed, ephemeral=True, files=portrait.files(),
                                             allowed_mentions=discord.AllowedMentions.none())
 
 

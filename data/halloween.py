@@ -9,17 +9,24 @@ SPILL_CANDY = 1
 SPILL_BONUS = 1
 SPILL_EMOJIS = ("🍬", "🍭", "🍫")
 
+
+@dataclass(frozen=True)
+class LizLine:
+    text: str
+    emotion: str
+
+
 SPILL_LINES = (
-    "Master! I dropped my candy stash, help!",
-    "Master, grab those candies before Carmilla sees!",
-    "My Halloween candy! Don't let it get away!",
-    "Quick, Master! Save the candy! My concert can wait!",
+    LizLine("Master! I dropped my candy stash, help!", "worried"),
+    LizLine("Master, grab those candies before Carmilla sees!", "embarrassed"),
+    LizLine("My Halloween candy! Don't let it get away!", "upset"),
+    LizLine("Quick, Master! Save the candy! My concert can wait!", "worried"),
 )
 TRICK_OR_TREAT_LINES = (
-    "Trick or treat, my little fans? Choose wisely!",
-    "Master! Your Halloween idol has a surprise for you!",
-    "A trick or a treat? Go on, Master, pick one!",
-    "Candy or mischief? Let's hear it, my little fans!",
+    LizLine("Trick or treat, my little fans? Choose wisely!", "happy"),
+    LizLine("Master! Your Halloween idol has a surprise for you!", "happy"),
+    LizLine("A trick or a treat? Go on, Master, pick one!", "pout"),
+    LizLine("Candy or mischief? Let's hear it, my little fans!", "happy"),
 )
 
 
@@ -30,15 +37,16 @@ class TrickOutcome:
     servant_id: int = HOST_ID
     qp_loss_percent: int = 0
     qp_loss_cap: int = 0
+    emotion: str | None = None
 
 
 # Four equally likely outcomes. Losses spend QP, never existing candy or grails.
 TRICKS = (
     TrickOutcome(0, 'Liz hands you a ticket. "VIP admission isn\'t free, you know!"',
-                 qp_loss_percent=1, qp_loss_cap=5000),
+                 qp_loss_percent=1, qp_loss_cap=5000, emotion="pout"),
     TrickOutcome(0, 'Mecha Eli-chan points at Liz\'s broken confetti cannon. "You broke it. You pay for it."',
                  servant_id=1000400, qp_loss_percent=2, qp_loss_cap=10000),
-    TrickOutcome(2, 'Liz beams. "An encore? For a fan like you, take two!"'),
+    TrickOutcome(2, 'Liz beams. "An encore? For a fan like you, take two!"', emotion="happy"),
     TrickOutcome(4, 'Carmilla slips you four candies. "Not a word about this concert."',
                  servant_id=601700),
 )

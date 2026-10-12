@@ -43,8 +43,12 @@ or Carmilla gives 4 candy. The public prompt keeps to Liz's invitation; the priv
 reports the actual candy received and QP lost. Percentage losses round down to whole QP,
 with no minimum charge. Penalties use only available spendable QP, never create debt, and leave lifetime scores
 and existing candy/grails unchanged. Claims and QP penalties commit together, once per event.
-Result embeds use the speaking character's permitted Atlas face, including Carmilla and
-Mecha Eli-chan; the completed Trick or Treat message also updates its thumbnail.
+Liz uses the emotion portraits bundled in `assets/halloween/liz/`: worried/upset for
+spilled candy, embarrassed for the Carmilla line and candy pickups, happy for treats,
+encores and a completed spill, and pout for admission fees. Opening lines keep their
+matching expression throughout the event. Carmilla and Mecha Eli-chan use their own
+permitted Atlas faces; the completed Trick or Treat message updates its thumbnail and
+removes Liz's attachment. Missing local images fall back to Liz's permitted Atlas face.
 QP encounters continue normally. Unlisted players cannot trigger ordinary ember/grail
 events during the window, and only whitelisted players can trigger and claim Halloween
 events. Testers' event messages are visible in the channel. A whitelisted moderator can
@@ -62,7 +66,8 @@ another player's servant when `user` is selected. It defaults to the recipient's
 servant; the servant picker shows their roster. Both players need Halloween access.
 Each candy grants 3,000 XP, equal to one Hellfire or six Embers of Wisdom. Feeding your
 own servant stays private. Gifts show a public embed naming the giver and recipient,
-with the servant's existing face thumbnail and an Atlas level-up subtitle, with no audio.
+with the servant's face thumbnail and an Atlas level-up subtitle, with no audio.
+Halloween Liz uses her happy portrait when fed candy.
 Errors and the giver's remaining candy balance stay private. For example,
 `/candy user:@Alex quantity:1` feeds Alex's active servant using one of your candies.
 Missing dialogue falls back to a descriptive response;

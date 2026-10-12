@@ -23,6 +23,7 @@ class CandyClaim:
     qp_penalty: bool = False
     qp_lost: int = 0
     qp_balance: int | None = None
+    emotion: str | None = None
 
 
 class HalloweenService:
@@ -89,15 +90,19 @@ class HalloweenService:
                 if any(c["slot"] == slot for c in claims):
                     return CandyClaim("taken")
                 servant_id, qp_percent, qp_cap = H.HOST_ID, 0, 0
+                emotion = None
                 if action == "trick":
                     outcome = random.choice(H.TRICKS)
                     candy, flavor = outcome.candy, outcome.flavor
                     servant_id = outcome.servant_id
                     qp_percent, qp_cap = outcome.qp_loss_percent, outcome.qp_loss_cap
+                    emotion = outcome.emotion
                 elif action == "treat":
                     candy, flavor = H.TREAT_CANDY, '**Liz:** "A treat for my little fan!"'
+                    emotion = "happy"
                 else:
                     candy, flavor = H.SPILL_CANDY, "You took a candy from Liz's stash!"
+                    emotion = "embarrassed"
                 await conn.execute(
                     "INSERT INTO halloween_claims (event_id, user_id, slot, candy) VALUES ($1, $2, $3, $4)",
                     event_id, user_id, slot, candy,
@@ -141,4 +146,5 @@ class HalloweenService:
                     status="ok", candy=candy, grails=grails, balance=balance,
                     claimed_slots=claimed_slots, complete=complete, bonus=bonus, flavor=flavor,
                     servant_id=servant_id, qp_penalty=bool(qp_percent), qp_lost=qp_lost, qp_balance=qp_balance,
+                    emotion=emotion,
                 )

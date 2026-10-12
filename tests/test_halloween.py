@@ -4,6 +4,7 @@ import asyncio
 import datetime as dt
 import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 import time
 from types import SimpleNamespace
 import unittest
@@ -125,6 +126,12 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         for view in tuple(self.cog._views):
             view.stop()
         await self.db.close()
+
+    def assert_liz_portrait(self, embed, files, emotion):
+        self.assertEqual(embed.thumbnail.url, f"attachment://halloween-liz-{emotion}.png")
+        self.assertEqual(len(files), 1)
+        self.assertEqual(files[0].filename, f"halloween-liz-{emotion}.png")
+        self.assertEqual(files[0].fp.getvalue(), (ROOT / "assets/halloween/liz" / f"{emotion}.png").read_bytes())
 
     async def seed_candy(self, uid=100, amount=20):
         await self.db.pool.execute(
@@ -360,7 +367,7 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         await self.cog.candy.callback(self.cog, i, quantity=2)
         result = i.followup.send.call_args.kwargs
         self.assertTrue(result["ephemeral"])
-        self.assertEqual(result["embed"].thumbnail.url, self.servant.face)
+        self.assert_liz_portrait(result["embed"], result["files"], "happy")
         self.assertIn("Thanks!", result["embed"].description)
         self.assertIn("3,000 XP per candy", result["embed"].footer.text)
         self.assertNotIn("file", result)
@@ -389,7 +396,7 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("**Tester** gave **Alex's Elisabeth Bathory (Halloween)** **1 candy**!", embed.description)
         self.assertIn("Lv 1 -> **31**", embed.description)
         self.assertIn("Thanks!", embed.description)
-        self.assertEqual(embed.thumbnail.url, self.servant.face)
+        self.assert_liz_portrait(embed, public.kwargs["files"], "happy")
         self.assertNotIn("candy left", embed.footer.text)
         self.assertEqual(public.kwargs["allowed_mentions"].to_dict()["parse"], [])
 
@@ -571,7 +578,7 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                     view = CandyEventView(self.cog, event, self.servant.face)
                     self.cog._views.add(view)
                     view.message = SimpleNamespace(edit=AsyncMock(), delete=AsyncMock())
-                    opening = f'**Liz:** "{lines[0]}"'
+                    opening = f'**Liz:** "{lines[0].text}"'
                     self.assertTrue(view.render().description.startswith(opening))
                     await view._update_message()
                     self.assertTrue(view.message.edit.call_args.kwargs["embed"].description.startswith(opening))
@@ -585,6 +592,61 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                         self.assertTrue(view.complete)
                         self.assertTrue(view.render().description.startswith(view.outcome_flavor))
                     choose.assert_called_once_with(lines)
+
+    async def test_each_event_opening_sends_and_preserves_its_matching_portrait(self):
+        channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), send=AsyncMock())
+        for kind, lines in (("candy_spill", H.SPILL_LINES), ("trick_or_treat", H.TRICK_OR_TREAT_LINES)):
+            for line in lines:
+                with self.subTest(kind=kind, line=line.text):
+                    with patch("cogs.halloween.random.choice", return_value=line):
+                        self.assertTrue(await self.cog.spawn_event(channel, kind, manual=True))
+                    sent = channel.send.call_args.kwargs
+                    self.assert_liz_portrait(sent["embed"], sent["files"], line.emotion)
+                    view = sent["view"]
+                    await view._update_message()
+                    update = view.message.edit.call_args.kwargs
+                    self.assert_liz_portrait(update["embed"], update["attachments"], line.emotion)
+                    self.assertIsNot(sent["files"][0], update["attachments"][0])
+
+    async def test_expired_spill_uses_upset_portrait_and_still_deletes_message(self):
+        event = await self.service.create_event(1, 2, "candy_spill")
+        view = CandyEventView(self.cog, event, self.servant.face)
+        self.cog._views.add(view)
+        view.message = SimpleNamespace(edit=AsyncMock(), delete=AsyncMock())
+        await view.on_timeout()
+        update = view.message.edit.call_args.kwargs
+        self.assert_liz_portrait(update["embed"], update["attachments"], "upset")
+        await view._cleanup_task
+        view.message.delete.assert_awaited_once()
+
+    async def test_local_liz_portraits_respect_art_restrictions(self):
+        self.bot.restrictions.build_allow.return_value = lambda sid, key: False
+        channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), send=AsyncMock())
+        self.assertTrue(await self.cog.spawn_event(channel, "trick_or_treat"))
+        sent = channel.send.call_args.kwargs
+        self.assertFalse(sent["embed"].thumbnail.url)
+        self.assertEqual(sent["files"], [])
+        i = interaction()
+        await sent["view"].claim(i, "treat", 0)
+        reply = i.followup.send.call_args.kwargs
+        self.assertFalse(reply["embed"].thumbnail.url)
+        self.assertEqual(reply["files"], [])
+        self.assertEqual(sent["view"].message.edit.call_args.kwargs["attachments"], [])
+        self.assertEqual(await self.service.balance(1, 100), 1)
+
+    async def test_missing_liz_assets_fall_back_without_losing_committed_reward(self):
+        with TemporaryDirectory() as folder, patch("cogs.halloween._LIZ_FACE_DIR", Path(folder)):
+            with self.assertLogs("cogs.halloween", level="WARNING"):
+                event = await self.service.create_event(1, 2, "trick_or_treat")
+                view = CandyEventView(self.cog, event, self.servant.face)
+                self.cog._views.add(view)
+                self.assertEqual(view.render().thumbnail.url, self.servant.face)
+                i = interaction()
+                await view.claim(i, "treat", 0)
+            reply = i.followup.send.call_args.kwargs
+            self.assertEqual(reply["embed"].thumbnail.url, self.servant.face)
+            self.assertEqual(reply["files"], [])
+            self.assertEqual(await self.service.balance(1, 100), 1)
 
     async def test_spill_emoji_buttons_keep_their_slots_and_appearance_after_claims(self):
         for slots in (3, 5, 8):
@@ -632,6 +694,11 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(self.cog._channels)
         self.assertIn("1 bonus candy", last.followup.send.call_args.kwargs["embed"].description)
         self.assertIn("1 bonus candy", view.render().description)
+        for i in (first, last):
+            reply = i.followup.send.call_args.kwargs
+            self.assert_liz_portrait(reply["embed"], reply["files"], "embarrassed")
+        update = view.message.edit.call_args.kwargs
+        self.assert_liz_portrait(update["embed"], update["attachments"], "happy")
         before = await self.service.balance(1, 100)
         await view.claim(first, "collect", 0)
         self.assertEqual(await self.service.balance(1, 100), before)
@@ -645,15 +712,23 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                 self.cog._views.add(view)
                 view.message = SimpleNamespace(edit=AsyncMock())
                 initial = view.render()
-                self.assertEqual(initial.thumbnail.url, self.servant.face)
+                self.assertTrue(initial.thumbnail.url.startswith("attachment://halloween-liz-"))
                 i = interaction()
                 with patch("services.halloween.random.choice", return_value=outcome):
                     await view.claim(i, "trick", 0)
                 reply = i.followup.send.call_args.kwargs
                 face = self.bot.servants.get(outcome.servant_id).face
                 self.assertTrue(reply["ephemeral"])
-                self.assertEqual(reply["embed"].thumbnail.url, face)
-                self.assertEqual(view.message.edit.call_args.kwargs["embed"].thumbnail.url, face)
+                update = view.message.edit.call_args.kwargs
+                if outcome.servant_id == H.HOST_ID:
+                    self.assert_liz_portrait(reply["embed"], reply["files"], outcome.emotion)
+                    self.assert_liz_portrait(update["embed"], update["attachments"], outcome.emotion)
+                    self.assertIsNot(reply["files"][0], update["attachments"][0])
+                else:
+                    self.assertEqual(reply["embed"].thumbnail.url, face)
+                    self.assertEqual(update["embed"].thumbnail.url, face)
+                    self.assertEqual(reply["files"], [])
+                    self.assertEqual(update["attachments"], [])
                 self.assertIn(outcome.flavor, view.render().description)
                 if outcome.qp_loss_percent:
                     expected_loss = {1: 50, 2: 100}[outcome.qp_loss_percent]
