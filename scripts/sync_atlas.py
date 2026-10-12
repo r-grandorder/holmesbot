@@ -119,6 +119,25 @@ def _summon_line(record: dict) -> "str | None":
     return None
 
 
+def _growth_lines(record: dict) -> list[str]:
+    """Base-form level-up subtitles, without Atlas playback cues or ascension speeches."""
+    lines = []
+    for group in (record.get("profile") or {}).get("voices", []):
+        if group.get("type") != "groeth" or group.get("voicePrefix", 0) != 0:
+            continue
+        for line in group.get("voiceLines", []):
+            if not any(c.get("condType") == "levelUp" for c in line.get("conds", [])):
+                if line.get("condType") != "svtLevel":
+                    continue
+            text = re.sub(r"\[(?:id|delay|wait|charaFace|charaTalk)\b[^\]]*\]", "", line.get("subtitle") or "")
+            # Some paired servants use speaker labels rather than a single narrator.
+            text = re.sub(r"\[MaterialOnly\s+([^\]]*)\]", r"\1", text)
+            text = " ".join(text.split()).strip()
+            if text and text not in lines:
+                lines.append(text[:500])
+    return lines
+
+
 def main_na() -> int:
     print(f"Fetching {EXPORT_URL} ...", flush=True)
     with urllib.request.urlopen(EXPORT_URL) as resp:
@@ -152,6 +171,7 @@ def main_na() -> int:
                 "cv": ((s.get("profile") or {}).get("cv") or "").strip() or None,
                 "skills": _active_skills(s),
                 "summon_line": _summon_line(s),
+                "growth_lines": _growth_lines(s),
             }
         )
 
@@ -217,6 +237,7 @@ def main_jp() -> int:
                 ),
                 "skills": _active_skills(nice),
                 "summon_line": _summon_line(nice),
+                "growth_lines": _growth_lines(nice),
             }
         )
         if i % 10 == 0:

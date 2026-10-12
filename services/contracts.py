@@ -242,8 +242,11 @@ class ContractService:
         refused BEFORE anything is spent, since apply_xp discards xp past the cap and the item
         would be wasted. Returns (status, applied, old_level, new_level, cap) with status in
         {'ok','not_owned','no_items','at_cap'}; applied is 0 unless 'ok'."""
-        col = {"embers": "embers", "hellfire": "hellfire"}[kind]  # whitelist the column name
-        xp_each = contract_game.EMBER_XP if kind == "embers" else contract_game.HELLFIRE_XP
+        col = {"embers": "embers", "hellfire": "hellfire", "candy": "candy"}[kind]
+        xp_each = {"embers": contract_game.EMBER_XP, "hellfire": contract_game.HELLFIRE_XP,
+                   "candy": contract_game.CANDY_XP}[kind]
+        if kind == "candy" and giver_id != target_id:
+            raise ValueError("Candy can only be fed to your own servants")
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 row = await conn.fetchrow(
@@ -266,6 +269,9 @@ class ContractService:
                 if not held:
                     return "no_items", 0, row["level"], row["level"], cap
                 applied = min(max(1, int(quantity)), int(held))
+                if kind == "candy":
+                    needed = sum(contract_game.xp_to_next(lv) for lv in range(row["level"], cap)) - row["xp"]
+                    applied = min(applied, max(1, (needed + xp_each - 1) // xp_each))
                 # Conditional debit: the balance is re-checked in the UPDATE itself, so the
                 # spend can never go negative even if the read above went stale.
                 spent = await conn.fetchrow(

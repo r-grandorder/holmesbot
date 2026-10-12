@@ -518,6 +518,11 @@ class ContractsCog(commands.Cog):
         embed.add_field(name="Ember of Wisdom", value=f"{embers:,} {ee}".strip() if ee else f"{embers:,}")
         embed.add_field(name="Hellfire of Wisdom", value=f"{hellfire:,} {he}".strip() if he else f"{hellfire:,}")
         embed.set_footer(text="Feed XP to a servant with /ember")
+        halloween = self.bot.get_cog("HalloweenCog")
+        if halloween and halloween.allowed(uid):
+            candy = await halloween.service.balance(gid, uid)
+            embed.add_field(name="Halloween Candy", value=f"{candy:,}")
+            embed.set_footer(text="Feed XP with /ember or Halloween candy with /candy")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.command(name="shop", description="Visit Da Vinci's Workshop to spend QP on Holy Grails and Summon Tickets.")
@@ -1518,6 +1523,12 @@ class ContractsCog(commands.Cog):
                 "You need moderator permissions to spawn an event.", ephemeral=True
             )
         value = event.value if event else random.choice([v for v, _ in _EVENTS])
+        halloween = self.bot.get_cog("HalloweenCog")
+        if value != "qp_reward" and halloween and self.bot.config.halloween_active():
+            return await interaction.response.send_message(
+                "Halloween has replaced grail and ember events. Use /halloweenevent to spawn Trick or Treat or Candy Spill.",
+                ephemeral=True,
+            )
         target = channel or interaction.channel
         if value == "qp_reward":
             await self._award_qp(target, interaction.user)
@@ -1605,22 +1616,28 @@ class ContractsCog(commands.Cog):
         if (self._drop_ready(self._single_cd, key, cg.GRAIL_SINGLE_COOLDOWN, now)
                 and random.random() < cg.GRAIL_SINGLE_CHANCE):
             self._single_cd[key] = now
-            await self._spawn_single(channel)
+            await self._spawn_chat_drop(channel, message.author.id, "grail_single")
             return
         if (self._drop_ready(self._box_cd, key, cg.GRAIL_BOX_COOLDOWN, now)
                 and random.random() < cg.GRAIL_BOX_CHANCE):
             self._box_cd[key] = now
-            await self._spawn_box(channel)
+            await self._spawn_chat_drop(channel, message.author.id, "grail_box")
             return
         if (self._drop_ready(self._ember_cd, key, cg.EMBER_DROP_COOLDOWN, now)
                 and random.random() < cg.EMBER_DROP_CHANCE):
             self._ember_cd[key] = now
-            await self._spawn_ember(channel)
+            await self._spawn_chat_drop(channel, message.author.id, "ember")
             return
         if (self._drop_ready(self._ember_box_cd, key, cg.EMBER_BOX_COOLDOWN, now)
                 and random.random() < cg.EMBER_BOX_CHANCE):
             self._ember_box_cd[key] = now
-            await self._spawn_ember_box(channel)
+            await self._spawn_chat_drop(channel, message.author.id, "ember_box")
+
+    async def _spawn_chat_drop(self, channel, user_id: int, kind: str) -> None:
+        halloween = self.bot.get_cog("HalloweenCog")
+        if halloween and await halloween.replace_drop(channel, user_id, kind):
+            return
+        await getattr(self, _EVENT_SPAWN[kind])(channel)
 
     async def _spawn_ember_box(self, channel: discord.abc.Messageable) -> None:
         host = random.choice(list(EMBER_HOSTS.values()))

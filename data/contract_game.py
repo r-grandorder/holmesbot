@@ -47,6 +47,7 @@ GRAIL_EVENT_TTL = 120.0           # seconds an unfinished event lingers before s
 # big tier, war rewards + mod grant only. See EMBER_HOSTS for the drop announcers. ---
 EMBER_XP = 500            # XP per Ember of Wisdom (~20 chat messages; a small nudge, not a shortcut)
 HELLFIRE_XP = 3000        # XP per Hellfire of Wisdom (6x an ember; the big war/mod tier)
+CANDY_XP = 3000          # Limited-event treat: one Hellfire / six Embers of Wisdom
 EMBER_SHOP_COST = 2000    # QP to buy one Ember in /shop (Da Vinci's Workshop)
 EMBER_DROP_COOLDOWN = 40 * 60   # seconds; at most one Ember drop per CHANNEL per window
 EMBER_DROP_CHANCE = 0.02        # chance per qualifying message once off cooldown

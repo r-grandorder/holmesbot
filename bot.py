@@ -127,6 +127,10 @@ class HolmesBot(commands.Bot):
                 if self.config.contract_open
                 else f"{len(self.config.contract_whitelist)} user(s)",
             )
+            if self.config.halloween_open or self.config.halloween_whitelist:
+                await self.load_extension("cogs.halloween")
+                log.info("Halloween enabled (%s)", "all contract players" if self.config.halloween_open
+                         else f"{len(self.config.halloween_whitelist)} tester(s)")
         # The garden ships dark: /water, /mulch and /height only register when WATER_ENABLED is set.
         if self.config.water_enabled:
             await self.load_extension("cogs.garden")

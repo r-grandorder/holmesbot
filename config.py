@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 
@@ -74,6 +75,25 @@ class Config:
     # Discord user ids allowed to use the dashboard's write features (the kit editor). Explicit
     # allowlist -- kit edits are powerful, so we gate on named ids rather than a Discord role.
     dashboard_mod_ids: frozenset[int]
+    # Halloween inherits contract access and adds its own opt-in tester gate.
+    halloween_open: bool = False
+    halloween_whitelist: frozenset[int] = frozenset()
+    halloween_start_at: datetime | None = None
+    halloween_end_at: datetime | None = None
+
+    def halloween_allowed(self, user_id: int) -> bool:
+        return (
+            (self.contract_open or user_id in self.contract_whitelist)
+            and (self.halloween_open or user_id in self.halloween_whitelist)
+        )
+
+    def halloween_active(self, now: datetime | None = None) -> bool:
+        now = now or datetime.now(timezone.utc)
+        return bool(
+            (self.halloween_open or self.halloween_whitelist)
+            and (self.halloween_start_at is None or now >= self.halloween_start_at)
+            and (self.halloween_end_at is None or now < self.halloween_end_at)
+        )
 
     @property
     def dashboard_enabled(self) -> bool:
@@ -104,6 +124,16 @@ class Config:
                 if x.isdigit() and int(x) > 0
             )
         )
+        raw_halloween = (os.environ.get("HALLOWEEN_WHITELIST") or "").strip()
+        halloween_open = raw_halloween.lower() in ("true", "1", "yes", "on", "all", "*", "enabled")
+        halloween_whitelist = frozenset(
+            int(x) for x in raw_halloween.replace(",", " ").split()
+            if not halloween_open and x.isdigit() and int(x) > 0
+        )
+        halloween_start = _event_time("HALLOWEEN_START_AT")
+        halloween_end = _event_time("HALLOWEEN_END_AT")
+        if halloween_start and halloween_end and halloween_start >= halloween_end:
+            raise RuntimeError("HALLOWEEN_END_AT must be after HALLOWEEN_START_AT")
         return cls(
             discord_token=_require("DISCORD_BOT_TOKEN"),
             application_id=int(_require("DISCORD_APPLICATION_ID")),
@@ -122,6 +152,10 @@ class Config:
             next_vote_seconds=int(os.environ.get("NEXT_VOTE_SECONDS") or "0"),
             contract_open=contract_open,
             contract_whitelist=contract_whitelist,
+            halloween_open=halloween_open,
+            halloween_whitelist=halloween_whitelist,
+            halloween_start_at=halloween_start,
+            halloween_end_at=halloween_end,
             contract_summon_cost=int(os.environ.get("CONTRACT_SUMMON_COST") or "100"),
             shop_grail_cost=int(os.environ.get("SHOP_GRAIL_COST") or "10000"),
             shop_ticket_cost=int(os.environ.get("SHOP_TICKET_COST") or "100000"),
@@ -154,3 +188,16 @@ def _require(name: str) -> str:
     if not value:
         raise RuntimeError(f"Missing required environment variable: {name}")
     return value
+
+
+def _event_time(name: str) -> datetime | None:
+    raw = (os.environ.get(name) or "").strip()
+    if not raw:
+        return None
+    try:
+        value = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if value.tzinfo is not None:
+            return value.astimezone(timezone.utc)
+    except ValueError:
+        pass
+    raise RuntimeError(f"{name} must be an ISO timestamp with a timezone")

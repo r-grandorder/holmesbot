@@ -1,0 +1,576 @@
+from __future__ import annotations
+
+import asyncio
+import datetime as dt
+import os
+from pathlib import Path
+import time
+from types import SimpleNamespace
+import unittest
+from unittest.mock import AsyncMock, patch
+
+from discord import app_commands
+
+from config import Config
+from cogs.contracts import ContractsCog
+from cogs.halloween import CandyEventView, HalloweenCog
+from data import halloween as H
+from data.servants import Servant, ServantIndex
+from db import Database
+from scripts.sync_atlas import _growth_lines
+from services.contracts import ContractService
+from services.halloween import HalloweenService
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def config(**values):
+    env = {"DISCORD_BOT_TOKEN": "test", "DISCORD_APPLICATION_ID": "999",
+           "DATABASE_URL": "sqlite::memory:", "CONTRACT_WHITELIST": "all", **values}
+    with patch.dict(os.environ, env, clear=True):
+        return Config.from_env()
+
+
+def interaction(user_id=100):
+    return SimpleNamespace(
+        guild_id=1, channel_id=2, user=SimpleNamespace(id=user_id, display_name="Tester"),
+        response=SimpleNamespace(send_message=AsyncMock(), defer=AsyncMock()),
+        followup=SimpleNamespace(send=AsyncMock()),
+    )
+
+
+class HalloweenConfigTests(unittest.TestCase):
+    def test_default_and_explicit_off(self):
+        for value in ("", "false", "off", "0", "invalid"):
+            cfg = config(HALLOWEEN_WHITELIST=value)
+            self.assertFalse(cfg.halloween_open or cfg.halloween_whitelist)
+            self.assertFalse(cfg.halloween_allowed(100))
+            self.assertFalse(cfg.halloween_active())
+
+    def test_testers_need_both_whitelists(self):
+        cfg = config(HALLOWEEN_WHITELIST="100, 200 300", CONTRACT_WHITELIST="100,200")
+        self.assertTrue(cfg.halloween_allowed(100))
+        self.assertTrue(cfg.halloween_allowed(200))
+        self.assertFalse(cfg.halloween_allowed(300))
+        self.assertFalse(cfg.halloween_allowed(400))
+        self.assertTrue(config(HALLOWEEN_WHITELIST="all").halloween_allowed(400))
+        self.assertFalse(config(HALLOWEEN_WHITELIST="all", CONTRACT_WHITELIST="").halloween_allowed(100))
+
+    def test_schedule_boundaries_and_feeding_after_end(self):
+        cfg = config(HALLOWEEN_WHITELIST="100", HALLOWEEN_START_AT="2026-10-20T00:00:00-07:00",
+                     HALLOWEEN_END_AT="2026-11-01T00:00:00-07:00")
+        self.assertFalse(cfg.halloween_active(cfg.halloween_start_at - dt.timedelta(seconds=1)))
+        self.assertTrue(cfg.halloween_active(cfg.halloween_start_at))
+        self.assertTrue(cfg.halloween_active(cfg.halloween_end_at - dt.timedelta(seconds=1)))
+        self.assertFalse(cfg.halloween_active(cfg.halloween_end_at))
+        self.assertTrue(cfg.halloween_allowed(100))
+
+    def test_invalid_dates_fail_with_clear_error(self):
+        for value in ("tomorrow", "2026-10-20", "2026-10-20T00:00:00"):
+            with self.assertRaisesRegex(RuntimeError, "HALLOWEEN_START_AT"):
+                config(HALLOWEEN_START_AT=value)
+        with self.assertRaisesRegex(RuntimeError, "must be after"):
+            config(HALLOWEEN_START_AT="2026-11-01T00:00:00Z", HALLOWEEN_END_AT="2026-10-01T00:00:00Z")
+
+
+class GrowthDialogueTests(unittest.TestCase):
+    def test_only_base_form_level_up_lines_are_used_and_cleaned(self):
+        line = {"condType": "svtLevel", "conds": [{"condType": "levelUp"}],
+                "subtitle": "[id 502600_0_G010,502600_0_G011]Thanks. [delay 0.1] I can still get stronger, Master!"}
+        record = {"profile": {"voices": [
+            {"type": "groeth", "voicePrefix": 0, "voiceLines": [line, line,
+                {"condType": "svtLimit", "subtitle": "Ascension spoiler"},
+                {"conds": [{"condType": "levelUp"}], "subtitle": "[MaterialOnly Alice: ]Another [wait 1] reaction."}]},
+            {"type": "groeth", "voicePrefix": 1, "voiceLines": [{**line, "subtitle": "Different form"}]},
+            {"type": "battle", "voiceLines": [line]},
+        ]}}
+        self.assertEqual(_growth_lines(record), ["Thanks. I can still get stronger, Master!", "Alice: Another reaction."])
+        self.assertEqual(_growth_lines({"profile": None}), [])
+
+    def test_index_loads_dialogue_and_old_records_still_load(self):
+        raw = dict(id=502600, name="Liz", art={"1": "https://example.com/art.png"},
+                   face="https://example.com/face.png", growth_lines=["Thanks!"])
+        self.assertEqual(ServantIndex.item_to_servant(raw).growth_lines, ("Thanks!",))
+        del raw["growth_lines"]
+        self.assertEqual(ServantIndex.item_to_servant(raw).growth_lines, ())
+
+
+class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        self.db = Database("sqlite::memory:")
+        await self.db.connect()
+        for migration in sorted((ROOT / "database/migrations").glob("*.sql")):
+            await self.db._conn.executescript(migration.read_text().split("-- migrate:down")[0])
+        self.contracts = ContractService(self.db.pool)
+        self.service = HalloweenService(self.db.pool)
+        self.servant = Servant(id=502600, name="Elisabeth Bathory (Halloween)", class_name="caster", rarity=4,
+                              art={"1": "https://example.com/liz.png"}, figure={},
+                              face="https://example.com/liz-face.png", growth_lines=("Thanks!",))
+        guests = [Servant(id=sid, name=name, class_name=cls, rarity=4,
+                         art={"1": f"https://example.com/{sid}.png"}, figure={},
+                         face=f"https://example.com/{sid}-face.png")
+                  for sid, name, cls in ((601700, "Carmilla", "assassin"),
+                                         (1000400, "Mecha Eli-chan", "alterEgo"))]
+        self.bot = SimpleNamespace(
+            config=config(HALLOWEEN_WHITELIST="100,200,300,400,500"), db=self.db, contracts=self.contracts,
+            servants=ServantIndex([self.servant, *guests]),
+            restrictions=SimpleNamespace(build_allow=AsyncMock(return_value=lambda sid, key: True)),
+            guild_config=SimpleNamespace(is_event_channel_allowed=AsyncMock(return_value=True)),
+        )
+        self.cog = HalloweenCog(self.bot)
+
+    async def asyncTearDown(self):
+        for view in tuple(self.cog._views):
+            view.stop()
+        await self.db.close()
+
+    async def seed_candy(self, uid=100, amount=20):
+        await self.db.pool.execute(
+            "INSERT INTO grail_balance (guild_id, user_id, candy) VALUES (1, $1, $2) "
+            "ON CONFLICT (guild_id, user_id) DO UPDATE SET candy = $2", uid, amount,
+        )
+
+    async def seed_qp(self, uid=100, amount=5000):
+        await self.db.pool.execute(
+            "INSERT INTO scores (guild_id, user_id, balance, points) VALUES (1, $1, $2, 10000) "
+            "ON CONFLICT (guild_id, user_id) DO UPDATE SET balance = $2", uid, amount,
+        )
+
+    async def qp_balance(self, uid=100):
+        return await self.db.pool.fetchval(
+            "SELECT balance FROM scores WHERE guild_id = 1 AND user_id = $1", uid,
+        ) or 0
+
+    async def test_trick_or_treat_has_one_winner_even_with_simultaneous_clicks(self):
+        event = await self.service.create_event(1, 2, "trick_or_treat", grails=1)
+        results = await asyncio.gather(*(
+            self.service.claim(event["id"], 1, 2, uid, action="treat") for uid in (100, 200, 300)
+        ))
+        self.assertEqual(sorted(r.status for r in results), ["ok", "taken", "taken"])
+        self.assertEqual(await self.db.pool.fetchval("SELECT SUM(candy) FROM grail_balance"), 1)
+        self.assertEqual(await self.db.pool.fetchval("SELECT SUM(balance) FROM grail_balance"), 1)
+
+    async def test_spill_duplicate_player_or_slot_cannot_claim_again(self):
+        event = await self.service.create_event(1, 2, "candy_spill")
+        first = await self.service.claim(event["id"], 1, 2, 100, slot=0)
+        self.assertEqual(first.candy, 1)
+        self.assertEqual((await self.service.claim(event["id"], 1, 2, 100, slot=1)).status, "duplicate")
+        self.assertEqual((await self.service.claim(event["id"], 1, 2, 200, slot=0)).status, "taken")
+        self.assertEqual(await self.service.balance(1, 100), first.candy)
+        self.assertEqual(await self.service.balance(1, 200), 0)
+
+    async def test_each_trick_charges_only_its_qp_penalty_and_never_allows_a_retry(self):
+        for outcome in H.TRICKS:
+            with self.subTest(outcome=outcome):
+                await self.seed_candy(amount=5)
+                await self.seed_qp()
+                event = await self.service.create_event(1, 2, "trick_or_treat", grails=1)
+                with patch("services.halloween.random.choice", return_value=outcome):
+                    result = await self.service.claim(event["id"], 1, 2, 100, action="trick")
+                self.assertEqual(result.status, "ok")
+                self.assertEqual(result.candy, outcome.candy)
+                self.assertEqual(result.grails, 1)
+                self.assertTrue(result.complete)
+                self.assertEqual(result.servant_id, outcome.servant_id)
+                self.assertEqual(result.qp_lost, outcome.qp_loss)
+                self.assertEqual(await self.service.balance(1, 100), 5 + outcome.candy)
+                self.assertEqual(await self.qp_balance(), 5000 - outcome.qp_loss)
+                self.assertEqual(await self.db.pool.fetchval("SELECT points FROM scores WHERE user_id = 100"), 10000)
+                for action in ("treat", "trick"):
+                    retry = await self.service.claim(event["id"], 1, 2, 100, action=action)
+                    self.assertEqual(retry.status, "duplicate")
+                    self.assertEqual(await self.service.balance(1, 100), 5 + outcome.candy)
+                    self.assertEqual(await self.qp_balance(), 5000 - outcome.qp_loss)
+
+    async def test_trick_penalties_handle_missing_zero_and_insufficient_qp(self):
+        outcome = next(x for x in H.TRICKS if x.qp_loss == 1000)
+        for starting in (None, 0, 125):
+            with self.subTest(starting=starting):
+                if starting is not None:
+                    await self.seed_qp(amount=starting)
+                event = await self.service.create_event(1, 2, "trick_or_treat")
+                with patch("services.halloween.random.choice", return_value=outcome):
+                    result = await self.service.claim(event["id"], 1, 2, 100, action="trick")
+                self.assertEqual(result.qp_lost, starting or 0)
+                self.assertEqual(result.qp_balance, 0)
+                self.assertEqual(await self.qp_balance(), 0)
+
+    async def test_concurrent_tricks_charge_only_the_claimant_once(self):
+        for uid in (100, 200):
+            await self.seed_qp(uid=uid)
+        event = await self.service.create_event(1, 2, "trick_or_treat")
+        outcome = next(x for x in H.TRICKS if x.qp_loss == 500)
+        with patch("services.halloween.random.choice", return_value=outcome):
+            results = await asyncio.gather(*(
+                self.service.claim(event["id"], 1, 2, uid, action="trick") for uid in (100, 100, 200)
+            ))
+        self.assertEqual(sum(r.status == "ok" for r in results), 1)
+        self.assertEqual(sum(r.qp_lost for r in results), 500)
+        self.assertEqual(await self.qp_balance(100) + await self.qp_balance(200), 9500)
+
+    async def test_concurrent_events_cannot_overdraw_the_same_players_qp(self):
+        await self.seed_qp(amount=600)
+        events = [await self.service.create_event(1, channel, "trick_or_treat") for channel in (2, 3)]
+        outcome = next(x for x in H.TRICKS if x.qp_loss == 500)
+        with patch("services.halloween.random.choice", return_value=outcome):
+            results = await asyncio.gather(*(
+                self.service.claim(event["id"], 1, event["channel_id"], 100, action="trick")
+                for event in events
+            ))
+        self.assertTrue(all(result.status == "ok" for result in results))
+        self.assertEqual(sorted(result.qp_lost for result in results), [100, 500])
+        self.assertEqual(await self.qp_balance(), 0)
+        self.assertEqual(await self.db.pool.fetchval("SELECT points FROM scores WHERE user_id = 100"), 10000)
+
+    async def test_treat_and_spill_never_spend_qp(self):
+        await self.seed_qp()
+        for kind, action in (("trick_or_treat", "treat"), ("candy_spill", "collect")):
+            event = await self.service.create_event(1, 2, kind)
+            result = await self.service.claim(event["id"], 1, 2, 100, action=action)
+            self.assertEqual(result.qp_lost, 0)
+            self.assertEqual(await self.qp_balance(), 5000)
+
+    async def test_spill_completion_bonus_is_atomic_and_paid_once_to_everyone(self):
+        event = await self.service.create_event(1, 2, "candy_spill", slots=3, grails=1)
+        users = [100, 200, 300]
+        results = await asyncio.gather(*(
+            self.service.claim(event["id"], 1, 2, uid, slot=slot) for slot, uid in enumerate(users)
+        ))
+        self.assertEqual(sum(r.bonus > 0 for r in results), 1)
+        for uid, result in zip(users, results):
+            self.assertEqual(result.candy, 1)
+            self.assertEqual(await self.service.balance(1, uid), 2)
+            self.assertEqual(await self.contracts.grail_balance(1, uid), 1)
+        retry = await self.service.claim(event["id"], 1, 2, 300, slot=2)
+        self.assertEqual(retry.status, "duplicate")
+        self.assertEqual(await self.service.balance(1, 100), 2)
+
+    async def test_expired_wrong_channel_and_invalid_requests_give_nothing(self):
+        expired = await self.service.create_event(1, 2, "candy_spill", expires_at=time.time() - 1)
+        event = await self.service.create_event(1, 2, "candy_spill")
+        requests = [(expired["id"], 1, 2, 0), (event["id"], 9, 2, 0),
+                    (event["id"], 1, 9, 0), (event["id"], 1, 2, 100)]
+        for eid, gid, cid, slot in requests:
+            result = await self.service.claim(eid, gid, cid, 100, slot=slot)
+            self.assertNotEqual(result.status, "ok")
+        self.assertEqual(await self.service.balance(1, 100), 0)
+
+    async def test_reward_failure_rolls_back_claim_so_player_can_retry(self):
+        event = await self.service.create_event(1, 2, "trick_or_treat")
+        await self.seed_qp()
+        await self.db._conn.executescript(
+            "CREATE TRIGGER fail_candy BEFORE INSERT ON grail_balance BEGIN SELECT RAISE(ABORT, 'test failure'); END;"
+        )
+        outcome = next(x for x in H.TRICKS if x.qp_loss == 1000)
+        with patch("services.halloween.random.choice", return_value=outcome):
+            with self.assertRaisesRegex(Exception, "test failure"):
+                await self.service.claim(event["id"], 1, 2, 100, action="trick")
+        self.assertEqual(await self.db.pool.fetchval("SELECT COUNT(*) FROM halloween_claims"), 0)
+        self.assertEqual(await self.qp_balance(), 5000)
+        await self.db.pool.execute("DROP TRIGGER fail_candy")
+        self.assertEqual((await self.service.claim(event["id"], 1, 2, 100, action="treat")).status, "ok")
+
+    async def test_feeding_preserves_ownership_and_caps_without_wasting_stock(self):
+        await self.seed_candy()
+        self.assertEqual((await self.contracts.feed_xp(1, 100, 100, 502600, "candy", 5))[0], "not_owned")
+        self.assertEqual(await self.service.balance(1, 100), 20)
+        await self.contracts.contract(1, 100, 502600)
+        await self.contracts.set_active_level(1, 100, 59)
+        result = await self.contracts.feed_xp(1, 100, 100, 502600, "candy", 20)
+        self.assertEqual(result, ("ok", 1, 59, 60, 60))
+        self.assertEqual(await self.service.balance(1, 100), 19)
+        self.assertEqual((await self.contracts.feed_xp(1, 100, 100, 502600, "candy"))[0], "at_cap")
+        self.assertEqual(await self.service.balance(1, 100), 19)
+        with self.assertRaises(ValueError):
+            await self.contracts.feed_xp(1, 100, 200, 502600, "candy")
+
+    async def test_concurrent_feeds_cannot_spend_the_same_candy(self):
+        await self.seed_candy(amount=1)
+        await self.contracts.contract(1, 100, 502600)
+        results = await asyncio.gather(*(
+            self.contracts.feed_xp(1, 100, 100, 502600, "candy", 1) for _ in range(2)
+        ))
+        self.assertEqual(sorted(r[0] for r in results), ["no_items", "ok"])
+        self.assertEqual(await self.service.balance(1, 100), 0)
+        self.assertEqual((await self.contracts.active(1, 100))["level"], 31)
+
+    async def test_feed_xp_failure_rolls_back_spending(self):
+        await self.seed_candy(amount=3)
+        await self.contracts.contract(1, 100, 502600)
+        await self.db._conn.executescript(
+            "CREATE TRIGGER fail_xp BEFORE UPDATE OF level ON servant_contracts "
+            "BEGIN SELECT RAISE(ABORT, 'xp failure'); END;"
+        )
+        with self.assertRaisesRegex(Exception, "xp failure"):
+            await self.contracts.feed_xp(1, 100, 100, 502600, "candy", 3)
+        self.assertEqual(await self.service.balance(1, 100), 3)
+        self.assertEqual((await self.contracts.active(1, 100))["level"], 1)
+
+    async def test_one_candy_applies_full_xp_above_base_cap(self):
+        await self.seed_candy(amount=1)
+        await self.contracts.contract(1, 100, 502600)
+        await self.db.pool.execute(
+            "UPDATE servant_contracts SET level = 60, grails_used = 4 "
+            "WHERE guild_id = 1 AND user_id = 100 AND servant_id = 502600"
+        )
+        result = await self.contracts.feed_xp(1, 100, 100, 502600, "candy")
+        self.assertEqual(result, ("ok", 1, 60, 71, 80))
+        self.assertEqual((await self.contracts.active(1, 100))["xp"], 250)
+        self.assertEqual(await self.service.balance(1, 100), 0)
+
+    async def test_ordinary_ember_feeding_still_works(self):
+        await self.contracts.contract(1, 100, 502600)
+        await self.contracts.grant_xp_item(1, 100, "embers", 1)
+        result = await self.contracts.feed_xp(1, 100, 100, 502600, "embers")
+        self.assertEqual(result, ("ok", 1, 1, 6, 60))
+        self.assertEqual(await self.contracts.xp_items(1, 100), (0, 0))
+
+    async def test_unlisted_users_cannot_claim_feed_or_autocomplete(self):
+        event = await self.service.create_event(1, 2, "candy_spill")
+        view = CandyEventView(self.cog, event, None)
+        i = interaction(999)
+        await view.claim(i, "collect", 0)
+        await self.cog.candy.callback(self.cog, i)
+        self.assertEqual(i.response.send_message.await_count, 2)
+        self.assertEqual(await self.cog.candy_servants(i, ""), [])
+        self.assertEqual(await self.service.balance(1, 999), 0)
+        view.stop()
+
+    async def test_feed_embed_has_actual_text_and_face_without_audio_after_end(self):
+        self.bot.config = config(HALLOWEEN_WHITELIST="100", HALLOWEEN_END_AT="2020-01-01T00:00:00Z")
+        await self.seed_candy()
+        await self.contracts.contract(1, 100, 502600)
+        i = interaction()
+        await self.cog.candy.callback(self.cog, i, quantity=2)
+        result = i.followup.send.call_args.kwargs
+        self.assertTrue(result["ephemeral"])
+        self.assertEqual(result["embed"].thumbnail.url, self.servant.face)
+        self.assertIn("Thanks!", result["embed"].description)
+        self.assertIn("3,000 XP per candy", result["embed"].footer.text)
+        self.assertNotIn("file", result)
+        self.assertEqual(await self.service.balance(1, 100), 18)
+        choices = await self.cog.candy_servants(i, "Elisabeth")
+        self.assertEqual([c.value for c in choices], [502600])
+
+    async def test_restricted_thumbnail_and_missing_dialogue_fallback(self):
+        self.bot.servants = ServantIndex([Servant(id=10, name="Custom", class_name="caster", rarity=4,
+                                                  art={"1": "art"}, figure={}, face="https://example.com/custom.png")])
+        self.bot.restrictions.build_allow.return_value = lambda sid, key: False
+        await self.seed_candy()
+        await self.contracts.contract(1, 100, 10)
+        i = interaction()
+        await self.cog.candy.callback(self.cog, i)
+        embed = i.followup.send.call_args.kwargs["embed"]
+        self.assertFalse(embed.thumbnail.url)
+        self.assertIn("Custom enjoys", embed.description)
+
+    async def test_routing_replaces_only_eligible_drops(self):
+        channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), send=AsyncMock())
+        self.cog.spawn_event = AsyncMock(return_value=True)
+        self.assertTrue(await self.cog.replace_drop(channel, 999, "ember"))
+        self.cog.spawn_event.assert_not_awaited()
+        self.assertTrue(await self.cog.replace_drop(channel, 100, "grail_single"))
+        self.cog.spawn_event.assert_awaited_once_with(channel, "trick_or_treat", slots=1, grails=1)
+        self.bot.config = config()
+        self.assertFalse(await self.cog.replace_drop(channel, 100, "ember"))
+        self.bot.config = config(HALLOWEEN_WHITELIST="100", HALLOWEEN_END_AT="2020-01-01T00:00:00Z")
+        self.assertFalse(await self.cog.replace_drop(channel, 100, "ember"))
+
+    async def test_normal_drop_dispatch_is_preserved_with_halloween_off(self):
+        contracts = ContractsCog(self.bot)
+        self.bot.get_cog = lambda _: None
+        contracts._spawn_ember = AsyncMock()
+        await contracts._spawn_chat_drop("channel", 100, "ember")
+        contracts._spawn_ember.assert_awaited_once_with("channel")
+
+    async def test_active_halloween_never_falls_back_to_any_normal_drop(self):
+        contracts = ContractsCog(self.bot)
+        self.bot.get_cog = lambda _: self.cog
+        self.cog.spawn_event = AsyncMock(return_value=False)
+        for kind, method in (("grail_single", "_spawn_single"), ("grail_box", "_spawn_box"),
+                             ("ember", "_spawn_ember"), ("ember_box", "_spawn_ember_box")):
+            spawner = AsyncMock()
+            setattr(contracts, method, spawner)
+            for uid in (100, 999):
+                with self.subTest(kind=kind, uid=uid):
+                    await contracts._spawn_chat_drop("channel", uid, kind)
+                    spawner.assert_not_awaited()
+
+    async def test_all_normal_drops_resume_outside_halloween_window(self):
+        contracts = ContractsCog(self.bot)
+        self.bot.get_cog = lambda _: self.cog
+        for settings in ({}, {"HALLOWEEN_WHITELIST": "100", "HALLOWEEN_START_AT": "2099-01-01T00:00:00Z"},
+                         {"HALLOWEEN_WHITELIST": "100", "HALLOWEEN_END_AT": "2020-01-01T00:00:00Z"}):
+            self.bot.config = config(**settings)
+            for kind, method in (("grail_single", "_spawn_single"), ("grail_box", "_spawn_box"),
+                                 ("ember", "_spawn_ember"), ("ember_box", "_spawn_ember_box")):
+                with self.subTest(settings=settings, kind=kind):
+                    spawner = AsyncMock()
+                    setattr(contracts, method, spawner)
+                    await contracts._spawn_chat_drop("channel", 100, kind)
+                    spawner.assert_awaited_once_with("channel")
+
+    async def test_triggerevent_cannot_bypass_halloween_but_can_still_spawn_qp(self):
+        contracts = ContractsCog(self.bot)
+        self.bot.get_cog = lambda _: self.cog
+        i = interaction()
+        i.channel = SimpleNamespace(mention="#events")
+        contracts._award_qp = AsyncMock()
+        with patch("cogs.contracts.is_mod", return_value=True):
+            for kind, method in (("grail_single", "_spawn_single"), ("grail_box", "_spawn_box"),
+                                 ("ember", "_spawn_ember"), ("ember_box", "_spawn_ember_box")):
+                with self.subTest(kind=kind):
+                    spawner = AsyncMock()
+                    setattr(contracts, method, spawner)
+                    await contracts.triggerevent.callback(
+                        contracts, i, app_commands.Choice(name=kind, value=kind),
+                    )
+                    spawner.assert_not_awaited()
+                    self.assertIn("/halloweenevent", i.response.send_message.call_args.args[0])
+            await contracts.triggerevent.callback(
+                contracts, i, app_commands.Choice(name="QP", value="qp_reward"),
+            )
+            contracts._award_qp.assert_awaited_once_with(i.channel, i.user)
+            self.bot.config = config(HALLOWEEN_WHITELIST="100", HALLOWEEN_END_AT="2020-01-01T00:00:00Z")
+            await contracts.triggerevent.callback(
+                contracts, i, app_commands.Choice(name="Ember", value="ember"),
+            )
+            contracts._spawn_ember.assert_awaited_once_with(i.channel)
+
+    async def test_automatic_qp_drops_continue_during_halloween(self):
+        contracts = ContractsCog(self.bot)
+        contracts._award_qp = AsyncMock()
+        contracts._spawn_chat_drop = AsyncMock()
+        message = SimpleNamespace(channel=SimpleNamespace(id=2), guild=SimpleNamespace(id=1),
+                                  author=SimpleNamespace(id=100))
+        with patch("cogs.contracts.random.random", return_value=0), \
+                patch("cogs.contracts.time.monotonic", return_value=10000):
+            await contracts._maybe_drop_event(message)
+        contracts._award_qp.assert_awaited_once_with(message.channel, message.author)
+        contracts._spawn_chat_drop.assert_not_awaited()
+
+    async def test_successful_spill_callbacks_disable_buttons_and_report_bonus(self):
+        event = await self.service.create_event(1, 2, "candy_spill", slots=2)
+        view = CandyEventView(self.cog, event, self.servant.face)
+        view.message = SimpleNamespace(edit=AsyncMock())
+        self.cog._views.add(view)
+        self.cog._channels.add(2)
+        first, last = interaction(100), interaction(200)
+        await asyncio.gather(view.claim(first, "collect", 0), view.claim(last, "collect", 1))
+        self.assertTrue(view.complete)
+        self.assertTrue(all(b.disabled for b in view.children))
+        self.assertFalse(self.cog._channels)
+        self.assertIn("Everyone also received", last.followup.send.call_args.kwargs["embed"].description)
+        self.assertIn("Every participant received", view.render().description)
+        before = await self.service.balance(1, 100)
+        await view.claim(first, "collect", 0)
+        self.assertEqual(await self.service.balance(1, 100), before)
+
+    async def test_trick_discloses_risk_and_updates_both_portraits_to_the_speaker(self):
+        await self.seed_qp()
+        for outcome in H.TRICKS:
+            with self.subTest(outcome=outcome):
+                event = await self.service.create_event(1, 2, "trick_or_treat")
+                view = CandyEventView(self.cog, event, self.servant.face)
+                self.cog._views.add(view)
+                view.message = SimpleNamespace(edit=AsyncMock())
+                initial = view.render()
+                self.assertEqual(initial.thumbnail.url, self.servant.face)
+                self.assertIn("50% chance of 2 candy", initial.description)
+                self.assertIn("500 or 1,000 QP", initial.description)
+                i = interaction()
+                with patch("services.halloween.random.choice", return_value=outcome):
+                    await view.claim(i, "trick", 0)
+                reply = i.followup.send.call_args.kwargs
+                face = self.bot.servants.get(outcome.servant_id).face
+                self.assertTrue(reply["ephemeral"])
+                self.assertEqual(reply["embed"].thumbnail.url, face)
+                self.assertEqual(view.message.edit.call_args.kwargs["embed"].thumbnail.url, face)
+                self.assertIn(outcome.flavor, view.render().description)
+                if outcome.qp_loss:
+                    self.assertIn(f"lost **{outcome.qp_loss:,} QP**", reply["embed"].description)
+
+    async def test_restricted_or_missing_guest_portrait_does_not_retain_liz(self):
+        outcome = next(x for x in H.TRICKS if x.servant_id == 601700)
+        for missing in (False, True):
+            with self.subTest(missing=missing):
+                if missing:
+                    self.bot.servants = ServantIndex([self.servant])
+                self.bot.restrictions.build_allow.return_value = lambda sid, key: sid != 601700
+                event = await self.service.create_event(1, 2, "trick_or_treat")
+                view = CandyEventView(self.cog, event, self.servant.face)
+                self.cog._views.add(view)
+                i = interaction()
+                with patch("services.halloween.random.choice", return_value=outcome):
+                    await view.claim(i, "trick", 0)
+                self.assertFalse(view.render().thumbnail.url)
+                self.assertFalse(i.followup.send.call_args.kwargs["embed"].thumbnail.url)
+
+    async def test_portrait_lookup_failure_still_reports_committed_trick_result(self):
+        for outcome in H.TRICKS:
+            with self.subTest(outcome=outcome):
+                await self.seed_qp()
+                event = await self.service.create_event(1, 2, "trick_or_treat")
+                view = CandyEventView(self.cog, event, self.servant.face)
+                self.cog._views.add(view)
+                view.message = SimpleNamespace(edit=AsyncMock())
+                self.bot.restrictions.build_allow.side_effect = RuntimeError("restriction lookup failed")
+                i = interaction()
+                with patch("services.halloween.random.choice", return_value=outcome):
+                    with self.assertLogs("cogs.halloween", level="WARNING"):
+                        await view.claim(i, "trick", 0)
+                reply = i.followup.send.call_args.kwargs["embed"]
+                self.assertIn(outcome.flavor, reply.description)
+                self.assertFalse(reply.thumbnail.url)
+                self.assertFalse(view.render().thumbnail.url)
+                self.assertTrue(view.complete)
+                self.assertEqual(await self.qp_balance(), 5000 - outcome.qp_loss)
+                await view.claim(i, "trick", 0)
+                self.assertEqual(await self.qp_balance(), 5000 - outcome.qp_loss)
+
+    async def test_trick_response_reports_only_qp_actually_taken(self):
+        outcome = next(x for x in H.TRICKS if x.qp_loss == 1000)
+        for starting in (0, 125):
+            with self.subTest(starting=starting):
+                await self.seed_qp(amount=starting)
+                event = await self.service.create_event(1, 2, "trick_or_treat")
+                view = CandyEventView(self.cog, event, self.servant.face)
+                self.cog._views.add(view)
+                i = interaction()
+                with patch("services.halloween.random.choice", return_value=outcome):
+                    await view.claim(i, "trick", 0)
+                text = i.followup.send.call_args.kwargs["embed"].description
+                self.assertIn("QP remaining: **0**", text)
+                if starting:
+                    self.assertIn("You lost **125 QP**", text)
+                    self.assertIn("limited to your available QP", text)
+                else:
+                    self.assertIn("you lost nothing", text)
+                self.assertNotIn("lost **1,000 QP**", text)
+
+    async def test_channel_gate_single_active_event_and_timeout(self):
+        channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), send=AsyncMock())
+        self.bot.guild_config.is_event_channel_allowed.return_value = False
+        self.assertFalse(await self.cog.spawn_event(channel, "candy_spill"))
+        channel.send.assert_not_awaited()
+        self.bot.guild_config.is_event_channel_allowed.return_value = True
+        results = await asyncio.gather(*(self.cog.spawn_event(channel, "candy_spill") for _ in range(2)))
+        self.assertEqual(sorted(results), [False, True])
+        view = next(iter(self.cog._views))
+        await view.on_timeout()
+        self.assertTrue(all(b.disabled for b in view.children))
+        self.assertFalse(self.cog._channels)
+
+    async def test_event_expires_at_absolute_deadline_without_a_click(self):
+        event = await self.service.create_event(1, 2, "candy_spill", expires_at=time.time() + 0.02)
+        view = CandyEventView(self.cog, event, None)
+        self.cog._views.add(view)
+        self.cog._channels.add(2)
+        await asyncio.wait_for(view._expiry_task, timeout=1)
+        self.assertTrue(view.expired)
+        self.assertTrue(view.is_finished())
+        self.assertFalse(self.cog._channels)
+
+
+if __name__ == "__main__":
+    unittest.main()

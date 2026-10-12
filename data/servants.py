@@ -48,6 +48,7 @@ class Servant:
     summon_weight: float = 1.0  # a custom unit's relative summon odds (ignored for normal servants)
     wishable: bool = False     # a custom unit may be /wish-ed (only consulted when custom is True;
     #                            normal servants are wishable by rule, see is_wishable)
+    growth_lines: tuple[str, ...] = ()  # Atlas level-up subtitles; text-only candy reactions
 
     def assets(self, kind: str) -> dict[str, str]:
         return self.figure if kind == "figure" else self.art
@@ -202,6 +203,7 @@ class ServantIndex:
                 if sk.get("num") and sk.get("name") and sk.get("icon")
             ),
             summon_line=item.get("summon_line"),
+            growth_lines=tuple(item.get("growth_lines") or ()),
         )
 
     def __len__(self) -> int:

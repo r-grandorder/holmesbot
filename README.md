@@ -16,6 +16,61 @@ docker compose up -d
 
 See [DEPLOY.md](DEPLOY.md) for the full walkthrough (GHCR access, updates, backups).
 
+## Halloween testing
+
+Halloween ships off. Set `HALLOWEEN_WHITELIST` to comma-separated Discord user IDs to
+enable it for testers, or `all` to enable it for everyone with contract access. Players
+must also be admitted by `CONTRACT_WHITELIST`; an empty Halloween whitelist loads no
+Halloween commands and leaves ordinary drops alone. Restart the bot after changing env vars.
+
+```dotenv
+CONTRACT_WHITELIST=123456789012345678
+HALLOWEEN_WHITELIST=123456789012345678
+HALLOWEEN_START_AT=
+HALLOWEEN_END_AT=
+```
+
+Use `/summonconfig eventchannel` to choose the channels. During the active window, Halloween
+fully replaces ordinary ember/grail events. Eligible players' single drops become
+**Trick or Treat** (first claimant chooses Treat for 1 guaranteed
+candy, or Trick for a 50% chance of 2 candy and a 50% chance of no candy plus a QP penalty)
+or **Candy Spill** (1 candy per player, plus 1 extra each if
+everyone collects their piece). Drop chances and cooldowns are unchanged; grail replacements
+still award the original grails.
+Trick's four outcomes are equally likely: Liz charges 500 QP for admission, Mecha Eli-chan
+charges 1,000 QP for repairs, or Liz/Carmilla gives 2 candy. The risk is shown before choosing.
+Penalties use only available spendable QP, never create debt, and leave lifetime scores
+and existing candy/grails unchanged. Claims and QP penalties commit together, once per event.
+Result embeds use the speaking character's permitted Atlas face, including Carmilla and
+Mecha Eli-chan; the completed Trick or Treat message also updates its thumbnail.
+QP encounters continue normally. Unlisted players cannot trigger ordinary ember/grail
+events during the window, and only whitelisted players can trigger and claim Halloween
+events. Testers' event messages are visible in the channel. A whitelisted moderator can
+use `/halloweenevent` to spawn either event in an event channel without waiting for a roll.
+Only one Halloween event can run in a channel at once; extra rolled ember/grail drops are
+skipped instead of falling back to ordinary events. These rolls still consume their usual
+drop cooldown. `/triggerevent` blocks ordinary ember/grail spawns during the window and
+directs moderators to `/halloweenevent`; its QP option remains available.
+
+`/candy [servant] [quantity]` feeds one of your owned servants (active by default), granting
+3,000 XP per candy, equal to one Hellfire or six Embers of Wisdom. The private response
+shows their existing face thumbnail and an Atlas level-up subtitle, with no audio.
+Missing dialogue falls back to a descriptive response;
+this includes the current JP-only roster, whose Atlas export has no subtitles. Art
+restrictions still apply. `/items` includes the candy balance. Feeding keeps surplus
+candy when the servant reaches its cap. Claims, group bonuses, and XP spending are transactional.
+
+Optional `HALLOWEEN_START_AT` and `HALLOWEEN_END_AT` accept ISO timestamps with a timezone.
+At the end, ordinary drops resume automatically. Leave the whitelist enabled so collected
+candy remains usable; clearing it disables the commands too, without deleting balances.
+New events last two minutes at most, and end sooner if the seasonal end time arrives.
+In-progress event buttons expire on bot restart, as ordinary drop buttons do; awarded candy
+is persistent. The container's normal Atlas sync bakes in the dialogue. For local development,
+run `make sync-data` to refresh the NA and JP indexes after updating the sync script.
+
+Run the focused checks with `python -m unittest discover -s tests -v` using Python 3.12
+and the dependencies from `requirements.txt`.
+
 ## Database
 
 Local SQLite, no DB server. `dbmate` applies `database/migrations/` on startup. Inspect:
