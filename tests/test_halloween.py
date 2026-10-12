@@ -600,39 +600,40 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
             )
             contracts._spawn_ember.assert_awaited_once_with(i.channel)
 
-    async def test_automatic_qp_drops_continue_during_halloween(self):
+    async def test_concurrent_messages_cannot_spawn_multiple_automatic_events(self):
         contracts = ContractsCog(self.bot)
-        contracts._halloween_cd[(1, 2)] = 10000
         contracts._award_qp = AsyncMock()
         contracts._spawn_chat_drop = AsyncMock()
         message = SimpleNamespace(channel=SimpleNamespace(id=2), guild=SimpleNamespace(id=1),
                                   author=SimpleNamespace(id=100))
         with patch("cogs.contracts.random.random", return_value=0), \
-                patch("cogs.contracts.time.monotonic", return_value=10000):
-            await contracts._maybe_drop_event(message)
+                patch("cogs.contracts.time", SimpleNamespace(monotonic=lambda: 10000)):
+            await asyncio.gather(*(contracts._maybe_drop_event(message) for _ in range(10)))
         contracts._award_qp.assert_awaited_once_with(message.channel, message.author)
         contracts._spawn_chat_drop.assert_not_awaited()
+        self.assertEqual(contracts._event_cd, {(1, 2): 10000})
 
-    async def test_halloween_single_roll_covers_four_rates_and_qp_without_priority_discount(self):
+    async def test_one_message_roll_has_two_percent_total_in_every_event_mode(self):
         message = SimpleNamespace(channel=SimpleNamespace(id=2), guild=SimpleNamespace(id=1),
                                   author=SimpleNamespace(id=100))
-        for qp_ready, offset in ((True, 0.02), (False, 0.0)):
-            cases = [
-                (offset + 0.000001, "grail_single"), (offset + 0.004999, "grail_single"),
-                (offset + 0.005001, "grail_box"), (offset + 0.007499, "grail_box"),
-                (offset + 0.007501, "ember"), (offset + 0.012499, "ember"),
-                (offset + 0.012501, "ember_box"), (offset + 0.014999, "ember_box"),
-                (offset + 0.015001, None), (0.99, None),
-            ]
-            if qp_ready:
-                cases += [(0.0, "qp_reward"), (0.019999, "qp_reward")]
+        cases = (
+            (0.0, "qp_reward"), (0.004999, "qp_reward"),
+            (0.005001, "grail_single"), (0.009999, "grail_single"),
+            (0.010001, "grail_box"), (0.012499, "grail_box"),
+            (0.012501, "ember"), (0.017499, "ember"),
+            (0.017501, "ember_box"), (0.019999, "ember_box"),
+            (0.020001, None), (0.99, None),
+        )
+        for settings in ({}, {"HALLOWEEN_WHITELIST": "100"},
+                         {"HALLOWEEN_WHITELIST": "100", "HALLOWEEN_RANDOM_EVENTS": "false"},
+                         {"HALLOWEEN_WHITELIST": "100", "HALLOWEEN_START_AT": "2099-01-01T00:00:00Z"},
+                         {"HALLOWEEN_WHITELIST": "100", "HALLOWEEN_END_AT": "2020-01-01T00:00:00Z"}):
+            self.bot.config = config(**settings)
             for roll, expected in cases:
-                with self.subTest(qp_ready=qp_ready, roll=roll, expected=expected):
+                with self.subTest(settings=settings, roll=roll, expected=expected):
                     contracts = ContractsCog(self.bot)
                     contracts._award_qp = AsyncMock()
                     contracts._spawn_chat_drop = AsyncMock()
-                    if not qp_ready:
-                        contracts._qp_cd[(1, 2)] = 10000
                     with patch("cogs.contracts.random.random", return_value=roll) as rng, \
                             patch("cogs.contracts.time.monotonic", return_value=10000):
                         await contracts._maybe_drop_event(message)
@@ -645,17 +646,14 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                         contracts._spawn_chat_drop.assert_awaited_once_with(message.channel, 100, expected)
                     else:
                         contracts._spawn_chat_drop.assert_not_awaited()
-                    expected_cooldown = {(1, 2): 10000} if expected in H.DROP_CHANCES else {}
-                    self.assertEqual(contracts._halloween_cd, expected_cooldown)
-                    for cooldown in (contracts._single_cd, contracts._box_cd, contracts._ember_cd, contracts._ember_box_cd):
-                        self.assertEqual(cooldown, {})
+                    self.assertEqual(contracts._event_cd, {(1, 2): 10000} if expected else {})
 
-    async def test_every_halloween_variant_starts_the_same_hourly_channel_cooldown(self):
-        cases = ((0.001, "grail_single"), (0.006, "grail_box"), (0.008, "ember"), (0.013, "ember_box"))
+    async def test_every_automatic_event_starts_the_same_hourly_channel_cooldown(self):
+        cases = ((0.001, "qp_reward"), (0.006, "grail_single"), (0.011, "grail_box"),
+                 (0.015, "ember"), (0.019, "ember_box"))
         for roll, expected in cases:
             with self.subTest(first_event=expected):
                 contracts = ContractsCog(self.bot)
-                contracts._qp_cd[(1, 2)] = 10000
                 contracts._award_qp = AsyncMock()
                 contracts._spawn_chat_drop = AsyncMock()
                 message = SimpleNamespace(channel=SimpleNamespace(id=2), guild=SimpleNamespace(id=1),
@@ -663,39 +661,44 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                 with patch("cogs.contracts.random.random", return_value=roll), \
                         patch("cogs.contracts.time.monotonic", return_value=10000):
                     await contracts._maybe_drop_event(message)
-                contracts._award_qp.assert_not_awaited()
-                contracts._spawn_chat_drop.assert_awaited_once_with(message.channel, 100, expected)
-                self.assertEqual(contracts._halloween_cd[(1, 2)], 10000)
+                if expected == "qp_reward":
+                    contracts._award_qp.assert_awaited_once_with(message.channel, message.author)
+                else:
+                    contracts._spawn_chat_drop.assert_awaited_once_with(message.channel, 100, expected)
+                self.assertEqual(contracts._event_cd[(1, 2)], 10000)
+                contracts._award_qp.reset_mock()
                 contracts._spawn_chat_drop.reset_mock()
                 for elapsed in (1, 2400, 3599):
-                    contracts._qp_cd[(1, 2)] = 10000 + elapsed
                     for blocked_roll, _ in cases:
-                        with patch("cogs.contracts.random.random", return_value=blocked_roll), \
+                        with patch("cogs.contracts.random.random", return_value=blocked_roll) as rng, \
                                 patch("cogs.contracts.time.monotonic", return_value=10000 + elapsed):
                             await contracts._maybe_drop_event(message)
+                        rng.assert_not_called()
+                contracts._award_qp.assert_not_awaited()
                 contracts._spawn_chat_drop.assert_not_awaited()
-                self.assertEqual(contracts._halloween_cd[(1, 2)], 10000)
+                self.assertEqual(contracts._event_cd[(1, 2)], 10000)
 
-                contracts._qp_cd[(1, 2)] = 13600
                 with patch("cogs.contracts.random.random", return_value=roll), \
                         patch("cogs.contracts.time.monotonic", return_value=13600):
                     await contracts._maybe_drop_event(message)
-                contracts._spawn_chat_drop.assert_awaited_once_with(message.channel, 100, expected)
-                self.assertEqual(contracts._halloween_cd[(1, 2)], 13600)
+                if expected == "qp_reward":
+                    contracts._award_qp.assert_awaited_once_with(message.channel, message.author)
+                else:
+                    contracts._spawn_chat_drop.assert_awaited_once_with(message.channel, 100, expected)
+                self.assertEqual(contracts._event_cd[(1, 2)], 13600)
 
                 # A different channel still has its full chance during this one's cooldown.
                 contracts._spawn_chat_drop.reset_mock()
-                contracts._qp_cd[(1, 3)] = 13600
                 message.channel = SimpleNamespace(id=3)
-                with patch("cogs.contracts.random.random", return_value=0.014999), \
+                with patch("cogs.contracts.random.random", return_value=0.019999), \
                         patch("cogs.contracts.time.monotonic", return_value=13600):
                     await contracts._maybe_drop_event(message)
                 contracts._spawn_chat_drop.assert_awaited_once_with(message.channel, 100, "ember_box")
 
     async def test_manual_events_bypass_shared_automatic_cooldown(self):
         contracts = ContractsCog(self.bot)
-        contracts._halloween_cd[(1, 2)] = time.monotonic()
-        original_cooldown = dict(contracts._halloween_cd)
+        contracts._event_cd[(1, 2)] = time.monotonic()
+        original_cooldown = dict(contracts._event_cd)
         channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), mention="#testing", send=AsyncMock())
         for kind in ("trick_or_treat", "candy_spill"):
             i = interaction()
@@ -703,29 +706,50 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
             i.channel = channel
             await self.cog.halloweenevent.callback(self.cog, i, app_commands.Choice(name=kind, value=kind))
         self.assertEqual(channel.send.await_count, 2)
-        self.assertEqual(contracts._halloween_cd, original_cooldown)
+        self.bot.config = config(HALLOWEEN_WHITELIST="100", HALLOWEEN_RANDOM_EVENTS="false")
+        for kind, method in (("qp_reward", "_award_qp"), ("grail_single", "_spawn_single"),
+                             ("grail_box", "_spawn_box"), ("ember", "_spawn_ember"), ("ember_box", "_spawn_ember_box")):
+            spawner = AsyncMock()
+            setattr(contracts, method, spawner)
+            await contracts.triggerevent.callback(contracts, i, app_commands.Choice(name=kind, value=kind))
+            if kind == "qp_reward":
+                spawner.assert_awaited_once_with(channel, i.user)
+            else:
+                spawner.assert_awaited_once_with(channel)
+        self.assertEqual(contracts._event_cd, original_cooldown)
 
-    async def test_normal_message_rolls_keep_original_rates_when_halloween_replacement_is_off(self):
+    async def test_shared_event_cooldown_survives_halloween_mode_changes(self):
+        contracts = ContractsCog(self.bot)
+        contracts._event_cd[(1, 2)] = 10000
+        contracts._award_qp = AsyncMock()
+        contracts._spawn_chat_drop = AsyncMock()
         message = SimpleNamespace(channel=SimpleNamespace(id=2), guild=SimpleNamespace(id=1),
                                   author=SimpleNamespace(id=100))
-        for settings in ({}, {"HALLOWEEN_WHITELIST": "100", "HALLOWEEN_RANDOM_EVENTS": "false"},
-                         {"HALLOWEEN_WHITELIST": "100", "HALLOWEEN_END_AT": "2020-01-01T00:00:00Z"}):
+        for settings in ({}, {"HALLOWEEN_WHITELIST": "all"},
+                         {"HALLOWEEN_WHITELIST": "all", "HALLOWEEN_RANDOM_EVENTS": "false"}):
             self.bot.config = config(**settings)
-            for rolls, expected in (([0.019], "grail_single"), ([0.99, 0.009], "grail_box"),
-                                    ([0.99, 0.99, 0.019], "ember"), ([0.99, 0.99, 0.99, 0.009], "ember_box"),
-                                    ([0.99] * 4, None)):
-                with self.subTest(settings=settings, rolls=rolls):
-                    contracts = ContractsCog(self.bot)
-                    contracts._qp_cd[(1, 2)] = 10000
-                    contracts._spawn_chat_drop = AsyncMock()
-                    with patch("cogs.contracts.random.random", side_effect=rolls) as rng, \
-                            patch("cogs.contracts.time.monotonic", return_value=10000):
-                        await contracts._maybe_drop_event(message)
-                    self.assertEqual(rng.call_count, len(rolls))
-                    if expected:
-                        contracts._spawn_chat_drop.assert_awaited_once_with(message.channel, 100, expected)
-                    else:
-                        contracts._spawn_chat_drop.assert_not_awaited()
+            with patch("cogs.contracts.random.random", return_value=0) as rng, \
+                    patch("cogs.contracts.time.monotonic", return_value=10001):
+                await contracts._maybe_drop_event(message)
+            rng.assert_not_called()
+        contracts._award_qp.assert_not_awaited()
+        contracts._spawn_chat_drop.assert_not_awaited()
+
+    async def test_shared_event_cooldown_allows_fresh_channels_and_respects_channel_gate(self):
+        contracts = ContractsCog(self.bot)
+        contracts._award_qp = AsyncMock()
+        message = SimpleNamespace(channel=SimpleNamespace(id=2), guild=SimpleNamespace(id=1),
+                                  author=SimpleNamespace(id=100))
+        with patch("cogs.contracts.time.monotonic", return_value=100), \
+                patch("cogs.contracts.random.random", return_value=0) as rng:
+            self.bot.guild_config.is_event_channel_allowed.return_value = False
+            await contracts._maybe_drop_event(message)
+            rng.assert_not_called()
+            self.assertFalse(contracts._event_cd)
+            self.bot.guild_config.is_event_channel_allowed.return_value = True
+            await contracts._maybe_drop_event(message)
+        contracts._award_qp.assert_awaited_once_with(message.channel, message.author)
+        self.assertEqual(contracts._event_cd, {(1, 2): 100})
 
     async def test_event_opening_stays_the_same_through_claims_and_updates(self):
         for kind, lines, action in (

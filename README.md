@@ -16,6 +16,26 @@ docker compose up -d
 
 See [DEPLOY.md](DEPLOY.md) for the full walkthrough (GHCR access, updates, backups).
 
+## Automatic channel events
+
+Eligible chat messages in `/summonconfig eventchannel` channels get one roll, with a
+**2% combined chance** when the channel is ready:
+
+| Event | Chance per message |
+| --- | ---: |
+| QP encounter | 0.5% |
+| Single grail | 0.5% |
+| Grail present box | 0.25% |
+| Embers | 0.5% |
+| Ember present box | 0.25% |
+
+All five share **one 60-minute cooldown per channel**, including their Halloween
+replacements. A winning roll starts the timer before posting, so simultaneous messages
+cannot trigger multiple events. After the hour, messages can roll again; a drop isn't
+guaranteed immediately. Threads inherit their parent's channel eligibility and have their
+own cooldown. `/triggerevent` and `/halloweenevent` bypass the automatic timer.
+Cooldowns are kept in memory and reset on bot restart.
+
 ## Halloween testing
 
 Halloween ships off. Set `HALLOWEEN_WHITELIST` to comma-separated Discord user IDs to
@@ -44,11 +64,9 @@ candy, or Trick for a 50% chance of 2 or 4 candy and a 50% chance of no candy pl
 or **Candy Spill** (1 candy per player, plus 1 extra each if
 everyone collects their piece). Automatic Halloween drops share one roll per eligible message:
 0.5% each for Trick or Treat with/without grails, and 0.25% each for Candy Spill with/without
-grails, for 1.5% total when off cooldown. All four share one 60-minute cooldown per channel;
-a successful roll for any variant blocks all four until that hour has passed. Manual
-`/halloweenevent` triggers bypass this cooldown. QP keeps its separate 2% slice of
-the same roll and its own cooldown, and at most one event can trigger per message.
-Ordinary ember/grail rates are unchanged when random Halloween events are off. Grail replacements still award one
+grails, for 1.5% total when off cooldown. QP adds 0.5%, making 2% combined. All five share
+the same 60-minute channel cooldown described above; QP also blocks Halloween drops and
+vice versa. Manual triggers bypass this cooldown. Grail replacements still award one
 grail per participant.
 Trick's four outcomes are equally likely: Liz charges 1% of your current QP for admission
 (up to 5,000), Mecha Eli-chan charges 2% for repairs (up to 10,000), Liz gives 2 candy,
@@ -73,7 +91,7 @@ wherever the bot can post; the whitelist and active dates still apply.
 Manual triggers can run alongside other Halloween events in the same channel. Each event
 allows one claim per player and ends independently. Automatic Halloween drops skip channels
 with an active Halloween event instead of falling back to ordinary events. These rolls still
-consume the shared Halloween cooldown. With random Halloween events enabled, `/triggerevent`
+consume the shared event cooldown. With random Halloween events enabled, `/triggerevent`
 blocks ordinary ember/grail spawns during the window and directs moderators to
 `/halloweenevent`; its QP option remains available.
 

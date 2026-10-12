@@ -4,15 +4,6 @@ from dataclasses import dataclass
 
 HOST_ID = 502600  # Elisabeth Bathory (Halloween), already in the Atlas index
 EVENT_SECONDS = 120
-DROP_COOLDOWN = 60 * 60  # One shared automatic-event cooldown per channel.
-# Mutually exclusive slices of one message roll: 1.5% total when the cooldown is ready.
-# Keep the original 2:1 ratio of single events to Candy Spills.
-DROP_CHANCES = {
-    "grail_single": 0.005,
-    "grail_box": 0.0025,
-    "ember": 0.005,
-    "ember_box": 0.0025,
-}
 TREAT_CANDY = 1
 SPILL_CANDY = 1
 SPILL_BONUS = 1

@@ -14,7 +14,6 @@ from discord.ext import commands, tasks
 from branding import qp
 from data import contract_game
 from data import garden
-from data import halloween as halloween_data
 from data import images
 from data.grail_hosts import EMBER_HOSTS, GRAIL_HOSTS
 from data.servants import class_display
@@ -179,12 +178,7 @@ class ContractsCog(commands.Cog):
         self._xp_cd: dict[tuple[int, int], float] = {}  # (guild,user) -> last xp monotonic
         # Drop cooldowns run per (guild, CHANNEL) so a thread gets its own window rather
         # than sharing the parent channel's -- see _maybe_drop_event.
-        self._single_cd: dict[tuple[int, int], float] = {}     # -> last single-grail monotonic
-        self._box_cd: dict[tuple[int, int], float] = {}        # -> last grail-box monotonic
-        self._ember_cd: dict[tuple[int, int], float] = {}      # -> last single-ember monotonic
-        self._ember_box_cd: dict[tuple[int, int], float] = {}  # -> last ember-box monotonic
-        self._qp_cd: dict[tuple[int, int], float] = {}         # -> last QP-reward monotonic
-        self._halloween_cd: dict[tuple[int, int], float] = {}  # shared by all four Halloween variants
+        self._event_cd: dict[tuple[int, int], float] = {}  # shared by QP, grail, ember, and Halloween drops
         self._duel_cd: dict[tuple[int, int], float] = {}  # (guild,challenger) -> last duel
         self._duel_pair_cd: dict = {}                     # (guild, frozenset{a,b}) -> last duel
         self._switch_cd: dict[tuple[int, int], float] = {}  # (guild,user) -> last active-swap
@@ -1594,7 +1588,8 @@ class ContractsCog(commands.Cog):
         if len(cd) > _CD_PRUNE_AT:
             for stale in [k for k, ts in cd.items() if now - ts >= window]:
                 del cd[stale]
-        return now - cd.get(key, 0.0) >= window
+        previous = cd.get(key)
+        return previous is None or now - previous >= window
 
     async def _maybe_drop_event(self, message: discord.Message) -> None:
         channel = message.channel
@@ -1610,33 +1605,23 @@ class ContractsCog(commands.Cog):
         key = (message.guild.id, channel.id)
         now = time.monotonic()
         cg = contract_game
-        seasonal = self.bot.config.halloween_drops_active() and self.bot.get_cog("HalloweenCog") is not None
-        # Halloween uses one roll so the four chances add to exactly 1.5%. QP keeps
-        # its own 2% slice, and only one event can win. All Halloween variants share
-        # one cooldown; normal seasons retain their existing sequential rolls.
-        roll = random.random() if seasonal else 0.0
+        if not self._drop_ready(self._event_cd, key, cg.EVENT_DROP_COOLDOWN, now):
+            return
+        # One roll with exclusive ranges: no priority discount and no back-to-back
+        # event types. Halloween replacements use the same rates and shared timer.
+        roll = random.random()
         threshold = 0.0
         drops = (
-            ("qp_reward", self._qp_cd, cg.QP_REWARD_COOLDOWN, cg.QP_REWARD_CHANCE),
-            ("grail_single", self._single_cd, cg.GRAIL_SINGLE_COOLDOWN, cg.GRAIL_SINGLE_CHANCE),
-            ("grail_box", self._box_cd, cg.GRAIL_BOX_COOLDOWN, cg.GRAIL_BOX_CHANCE),
-            ("ember", self._ember_cd, cg.EMBER_DROP_COOLDOWN, cg.EMBER_DROP_CHANCE),
-            ("ember_box", self._ember_box_cd, cg.EMBER_BOX_COOLDOWN, cg.EMBER_BOX_CHANCE),
+            ("qp_reward", cg.QP_REWARD_CHANCE),
+            ("grail_single", cg.GRAIL_SINGLE_CHANCE),
+            ("grail_box", cg.GRAIL_BOX_CHANCE),
+            ("ember", cg.EMBER_DROP_CHANCE),
+            ("ember_box", cg.EMBER_BOX_CHANCE),
         )
-        for kind, cooldown, window, chance in drops:
-            if seasonal and kind in halloween_data.DROP_CHANCES:
-                cooldown = self._halloween_cd
-                window = halloween_data.DROP_COOLDOWN
-                chance = halloween_data.DROP_CHANCES[kind]
-            if not self._drop_ready(cooldown, key, window, now):
-                continue
-            if seasonal:
-                threshold += chance
-                selected = roll < threshold
-            else:
-                selected = random.random() < chance
-            if selected:
-                cooldown[key] = now
+        for kind, chance in drops:
+            threshold += chance
+            if roll < threshold:
+                self._event_cd[key] = now
                 if kind == "qp_reward":
                     await self._award_qp(channel, message.author)
                 else:
