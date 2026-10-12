@@ -174,7 +174,7 @@
   "divine_lens": {
     "name": "Divine Lens",
     "description": "Increases Max HP by 500% for 5 turns, but lowers defense by 20% permanently",
-    "price": 50000000000000,
+    "price": 5000000,
     "trigger": "on_enter",
     "effects": [
       {
@@ -193,7 +193,7 @@
         "duration": 5
       }
     ],
-    "consumable": true,
+    "consumable": false,
     "emoji": "🔍"
   }
 }

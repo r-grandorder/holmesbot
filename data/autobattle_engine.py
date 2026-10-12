@@ -474,7 +474,9 @@ def apply_item_effects(servant: dict, trigger: str, battle_log: list):
     effects = item.get("effects") or ([item["effect"]] if item.get("effect") else [])
     for ed in effects:
         _apply_item_effect(servant, ed, emoji, name, battle_log)
-    if item.get("consumable") and trigger == "on_enter":
+    if trigger == "on_enter":
+        # Activate once per fight, including reusable gear. Inventory consumption
+        # is separate; a fresh battle equips the owned item again.
         servant["equipped_item"] = None
 
 

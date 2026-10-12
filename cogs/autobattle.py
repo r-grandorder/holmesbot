@@ -5,14 +5,14 @@ Everything lives under one /ab group:
   /ab team   -- set/view your 1-3 servant team + loadout
   /ab fight  -- fight a preconfigured PvE boss stage; small capped QP on a win
   /ab duel   -- battle another player's team (PvP); cross-faction wins score war points, own cap
-  /ab shop   -- spend QP on consumable battle items (the QP sink)
+  /ab shop   -- spend QP on battle items
   /ab equip  -- equip/unequip an item to one of your team's servants
   /ab kit    -- look up any servant's kit (skill + effects)
 
 Uses the contract feature's roster (servant_contracts) + QP (scores), so it shares the
 contract-access gate. PvE and PvP each pay a small, separately-capped QP reward (PvP also scores
-war points), but shop items are the real QP sink: every item is a per-battle consumable spent for
-each fight it's equipped for (win or lose, whether or not it triggered). Equips are a sticky
+war points). Consumable items are spent for each fight they're equipped for (win or lose,
+whether or not they triggered); reusable gear is kept. Equips are a sticky
 loadout -- they stay set even at 0 stock and simply aren't fielded until you restock, so you never
 have to re-equip. In PvP only the challenger's items are spent.
 """
@@ -104,16 +104,19 @@ class ShopView(discord.ui.View):
         embed = discord.Embed(
             title="\N{CROSSED SWORDS} Autobattle Item Shop",
             description="\n".join(head)
-            + "\n\nItems are spent each fight they're equipped for (in PvP, only the attacker's).",
+            + "\n\nConsumables are spent per fight (in PvP, only the attacker's). Reusable gear is kept.",
             color=discord.Color.gold(),
         )
         for iid, it in self._slice():
             have = owned.get(iid, 0)
             emoji = it.get("emoji") or "\N{PACKAGE}"
             suffix = f"  \N{MIDDLE DOT}  owned: {have}" if have else ""
+            description = it.get("description", "")
+            if not it.get("consumable", True):
+                description += "\nReusable."
             embed.add_field(
                 name=f"{emoji} {it['name']} - {int(it.get('price', 0)):,} QP{suffix}",
-                value=it.get("description", ""),
+                value=description,
                 inline=False,
             )
         embed.set_footer(text=f"Page {self.page + 1}/{self.pages}")
@@ -320,7 +323,7 @@ class Autobattle(commands.Cog):
 
     # --- /ab shop --------------------------------------------------------------------------------
 
-    @ab.command(name="shop", description="Browse and buy consumable battle items with QP.")
+    @ab.command(name="shop", description="Browse and buy battle items with QP.")
     @app_commands.describe(quantity="Buy this many of each item per tap (default 1)")
     async def shop(self, interaction: discord.Interaction, quantity: "int | None" = 1) -> None:
         if not self._allowed(interaction.user.id):
@@ -586,13 +589,17 @@ class Autobattle(commands.Cog):
             return None
 
     async def _consume_items(self, gid, uid, player_team, initial) -> "list[str]":
-        """Spend one copy of each item that was equipped for the fight (win or lose, whether or not
-        it triggered). The equip is a STICKY loadout: it stays set even at 0 stock -- it just isn't
+        """Spend one copy of each equipped consumable (win or lose, whether or not it triggered).
+        Reusable gear is kept. The equip is a STICKY loadout: it stays set even at 0 stock -- it just isn't
         fielded until you restock (see _side) -- so players never have to re-equip. Display lines."""
         lines = []
         for c in player_team:
             was = initial.get(c["servant_id"])
             if not was:
+                continue
+            item = items.get_item(was)
+            if item and not item.get("consumable", True):
+                lines.append(f"{_item_tag(was)} (reusable)")
                 continue
             remaining = await self.bot.contracts.add_item(gid, uid, was, -1)
             tail = "out of stock, restock to use" if remaining <= 0 else f"{remaining} left"
