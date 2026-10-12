@@ -597,6 +597,18 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual([str(button.emoji) for button in view.children], icons)
                 self.assertTrue(all(button.label is None for button in view.children))
 
+    async def test_spill_reply_matches_each_clicked_candy(self):
+        event = await self.service.create_event(1, 2, "candy_spill", slots=3)
+        view = CandyEventView(self.cog, event, self.servant.face)
+        self.cog._views.add(view)
+        view.message = SimpleNamespace(edit=AsyncMock(), delete=AsyncMock())
+        for slot, button in enumerate(view.children):
+            i = interaction(100 * (slot + 1))
+            await button.callback(i)
+            embed = i.followup.send.call_args.kwargs["embed"]
+            self.assertEqual(embed.title, f"{button.emoji} Candy Collected!")
+            self.assertIn("You took a candy from Liz's stash!", embed.description)
+
     async def test_successful_spill_callbacks_disable_buttons_and_report_bonus(self):
         event = await self.service.create_event(1, 2, "candy_spill", slots=2)
         view = CandyEventView(self.cog, event, self.servant.face)

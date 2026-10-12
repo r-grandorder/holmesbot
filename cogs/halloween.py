@@ -366,7 +366,8 @@ class CandyEventView(discord.ui.View):
             )
             if result.status != "ok":
                 text = {"expired": "Event ended.",
-                        "duplicate": "You already claimed this event.",
+                        "duplicate": ("You already took a candy!" if self.event["kind"] == "candy_spill" else
+                                      "You already claimed this event."),
                         "taken": "Already claimed.",
                         "invalid": "That candy is unavailable."}[result.status]
                 return await interaction.followup.send(text, ephemeral=True)
@@ -393,7 +394,10 @@ class CandyEventView(discord.ui.View):
                     text += "\nNo QP to take."
             if result.bonus:
                 text += f"\n**{result.bonus} bonus candy** for each player!"
-            title = {"trick": "🎃 Trick!", "treat": "🍬 Treat!", "collect": "🍬 Candy Collected!"}[action]
+            if action == "collect":
+                title = f"{self.children[slot].emoji} Candy Collected!"
+            else:
+                title = {"trick": "🎃 Trick!", "treat": "🍬 Treat!"}[action]
             embed = discord.Embed(title=title, description=text, color=discord.Color.orange())
             footer = f"Your candy: {result.balance:,}"
             if result.qp_balance is not None:
