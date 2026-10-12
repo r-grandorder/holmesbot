@@ -70,7 +70,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00404.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 305600,
@@ -145,7 +146,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00402.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 705000,
@@ -210,7 +212,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 2800800,
@@ -283,7 +286,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 2800900,
@@ -350,7 +354,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00603.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 305700,
@@ -423,7 +428,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00403.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 106200,
@@ -492,7 +498,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00700.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 505800,
@@ -563,7 +570,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 2801000,
@@ -631,7 +639,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 901900,
@@ -711,7 +720,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 305800,
@@ -783,7 +793,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 705100,
@@ -859,7 +870,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00312.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 2801100,
@@ -940,7 +952,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 305900,
@@ -1014,7 +1027,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 4000100,
@@ -1082,7 +1096,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00306.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 106300,
@@ -1161,7 +1176,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00821.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 405800,
@@ -1235,7 +1251,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00512.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 705200,
@@ -1311,7 +1328,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 2301100,
@@ -1379,7 +1397,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 306000,
@@ -1452,7 +1471,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00403.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 205400,
@@ -1531,7 +1551,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00605.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 1001900,
@@ -1602,7 +1623,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00509.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 405700,
@@ -1674,7 +1696,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00305.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 605100,
@@ -1743,7 +1766,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00512.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 1102100,
@@ -1812,7 +1836,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 306100,
@@ -1883,7 +1908,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 106400,
@@ -1958,7 +1984,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 306200,
@@ -2028,7 +2055,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 1102200,
@@ -2104,7 +2132,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00306.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 2801200,
@@ -2171,7 +2200,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00315.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 106500,
@@ -2246,7 +2276,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00419.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 505900,
@@ -2319,7 +2350,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00515.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 605200,
@@ -2395,7 +2427,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 1002000,
@@ -2467,7 +2500,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00313.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 306400,
@@ -2539,7 +2573,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00300.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 106600,
@@ -2610,7 +2645,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00404.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 505600,
@@ -2683,7 +2719,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00301.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 405600,
@@ -2758,7 +2795,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 1102000,
@@ -2826,7 +2864,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 205500,
@@ -2902,7 +2941,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00321.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 1002200,
@@ -2974,7 +3014,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00404.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 106700,
@@ -3046,7 +3087,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 306300,
@@ -3116,7 +3158,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 605300,
@@ -3179,7 +3222,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00822.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 705300,
@@ -3251,7 +3295,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 2301200,
@@ -3324,7 +3369,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00411.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 506000,
@@ -3396,7 +3442,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00510.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 405900,
@@ -3474,7 +3521,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00509.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 1102300,
@@ -3550,7 +3598,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00411.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 205600,
@@ -3620,7 +3669,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00403.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 2801300,
@@ -3692,7 +3742,8 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00316.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   },
   {
     "id": 705400,
@@ -3762,6 +3813,7 @@
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
       }
     ],
-    "summon_line": null
+    "summon_line": null,
+    "growth_lines": []
   }
 ]
