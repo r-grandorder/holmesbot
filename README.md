@@ -38,7 +38,8 @@ or **Candy Spill** (1 candy per player, plus 1 extra each if
 everyone collects their piece). Drop chances and cooldowns are unchanged; grail replacements
 still award the original grails.
 Trick's four outcomes are equally likely: Liz charges 500 QP for admission, Mecha Eli-chan
-charges 1,000 QP for repairs, or Liz/Carmilla gives 2 candy. The risk is shown before choosing.
+charges 1,000 QP for repairs, or Liz/Carmilla gives 2 candy. The public prompt keeps to Liz's
+invitation; the private result reports the actual candy received and QP lost.
 Penalties use only available spendable QP, never create debt, and leave lifetime scores
 and existing candy/grails unchanged. Claims and QP penalties commit together, once per event.
 Result embeds use the speaking character's permitted Atlas face, including Carmilla and

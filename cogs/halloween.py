@@ -220,31 +220,23 @@ class CandyEventView(discord.ui.View):
 
     def render(self) -> discord.Embed:
         spill = self.event["kind"] == "candy_spill"
-        trick_rewards = " or ".join(str(n) for n in sorted({outcome.candy for outcome in H.TRICKS if outcome.candy}))
-        win_chance = 100 * sum(outcome.candy > 0 for outcome in H.TRICKS) // len(H.TRICKS)
-        penalties = sorted({outcome.qp_loss for outcome in H.TRICKS if outcome.qp_loss})
-        trick_penalties = " or ".join(f"{amount:,}" for amount in penalties)
         description = (
             '**Liz:** "Master! The candy was supposed to fall AFTER my grand entrance! Catch it!"\n\n'
             f"{H.SPILL_CANDY} candy per player. Collect all {self.event['slots']} to give every participant "
             f"**{H.SPILL_BONUS} bonus candy**."
             if spill else
-            '**Liz:** "Trick or treat, my little fans? Choose wisely!"\n\n'
-            f"First to choose claims the event. **Treat** gives {H.TREAT_CANDY} candy, with no penalty. "
-            f"**Trick** has a **{win_chance}% chance of {trick_rewards} candy**. Otherwise, you get no candy "
-            f"and lose **{trick_penalties} QP**, up to your available balance."
+            '**Liz:** "Trick or treat, my little fans? Choose wisely!"'
         )
         if self.outcome_flavor:
             description = self.outcome_flavor
         if self.event["grails"]:
             description += "\nEach claim also includes **1 Holy Grail**."
-        description += "\nFeed your candy to a servant with /candy."
         if self.complete:
             description += "\n\nAll collected!" if spill else "\n\nEvent claimed!"
             if spill:
                 description += f" Every participant received **{H.SPILL_BONUS} extra candy**."
         elif self.expired:
-            description += "\n\nThe stagehands sweep away the unclaimed candy."
+            description += "\n\nEvent ended."
         else:
             description += f"\nEnds <t:{int(self.event['expires_at'])}:R>."
         embed = discord.Embed(title="Candy Spill!" if spill else "Trick or Treat!",
@@ -254,7 +246,10 @@ class CandyEventView(discord.ui.View):
         if self.claim_log:
             embed.add_field(name="Treats collected" if spill else "Result",
                             value="\n".join(self.claim_log)[-1024:], inline=False)
-        embed.set_footer(text=f"{len(self.claimed_slots)}/{self.event['slots']} claimed | One claim per player")
+        footer = f"{len(self.claimed_slots)}/{self.event['slots']} claimed"
+        if spill:
+            footer += " | One claim per player"
+        embed.set_footer(text=footer)
         return embed
 
     def _finish(self) -> None:

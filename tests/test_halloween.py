@@ -466,7 +466,7 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         await view.claim(first, "collect", 0)
         self.assertEqual(await self.service.balance(1, 100), before)
 
-    async def test_trick_discloses_risk_and_updates_both_portraits_to_the_speaker(self):
+    async def test_trick_updates_both_portraits_to_the_speaker(self):
         await self.seed_qp()
         for outcome in H.TRICKS:
             with self.subTest(outcome=outcome):
@@ -476,8 +476,6 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                 view.message = SimpleNamespace(edit=AsyncMock())
                 initial = view.render()
                 self.assertEqual(initial.thumbnail.url, self.servant.face)
-                self.assertIn("50% chance of 2 candy", initial.description)
-                self.assertIn("500 or 1,000 QP", initial.description)
                 i = interaction()
                 with patch("services.halloween.random.choice", return_value=outcome):
                     await view.claim(i, "trick", 0)
