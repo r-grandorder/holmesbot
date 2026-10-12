@@ -80,6 +80,8 @@ class Config:
     halloween_whitelist: frozenset[int] = frozenset()
     halloween_start_at: datetime | None = None
     halloween_end_at: datetime | None = None
+    # Disable automatic replacements without disabling manual events or candy feeding.
+    halloween_random_events: bool = True
 
     def halloween_allowed(self, user_id: int) -> bool:
         return (
@@ -94,6 +96,9 @@ class Config:
             and (self.halloween_start_at is None or now >= self.halloween_start_at)
             and (self.halloween_end_at is None or now < self.halloween_end_at)
         )
+
+    def halloween_drops_active(self, now: datetime | None = None) -> bool:
+        return self.halloween_random_events and self.halloween_active(now)
 
     @property
     def dashboard_enabled(self) -> bool:
@@ -156,6 +161,8 @@ class Config:
             halloween_whitelist=halloween_whitelist,
             halloween_start_at=halloween_start,
             halloween_end_at=halloween_end,
+            halloween_random_events=os.environ.get("HALLOWEEN_RANDOM_EVENTS", "true").strip().lower()
+            in ("1", "true", "yes", "on", "enabled"),
             contract_summon_cost=int(os.environ.get("CONTRACT_SUMMON_COST") or "100"),
             shop_grail_cost=int(os.environ.get("SHOP_GRAIL_COST") or "10000"),
             shop_ticket_cost=int(os.environ.get("SHOP_TICKET_COST") or "100000"),

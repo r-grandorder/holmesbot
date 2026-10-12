@@ -26,12 +26,19 @@ Halloween commands and leaves ordinary drops alone. Restart the bot after changi
 ```dotenv
 CONTRACT_WHITELIST=123456789012345678
 HALLOWEEN_WHITELIST=123456789012345678
+HALLOWEEN_RANDOM_EVENTS=true
 HALLOWEEN_START_AT=
 HALLOWEEN_END_AT=
 ```
 
-Use `/summonconfig eventchannel` to choose the automatic drop channels. During the active window, Halloween
-fully replaces ordinary ember/grail events. Eligible players' single drops become
+For manual testing only, set `HALLOWEEN_RANDOM_EVENTS=false` and restart the bot.
+Whitelisted moderators can still use `/halloweenevent`, players can claim those events,
+and `/candy` still works. Ordinary ember/grail drops and `/triggerevent` continue normally.
+Whitelists and event dates still apply. The setting defaults to `true` when unset.
+
+Use `/summonconfig eventchannel` to choose the automatic drop channels. During the active
+window, Halloween fully replaces ordinary ember/grail events when `HALLOWEEN_RANDOM_EVENTS=true`.
+Eligible players' single drops become
 **Trick or Treat** (first claimant chooses Treat for 1 guaranteed
 candy, or Trick for a 50% chance of 2 or 4 candy and a 50% chance of no candy plus a QP penalty)
 or **Candy Spill** (1 candy per player, plus 1 extra each if
@@ -49,17 +56,18 @@ encores and a completed spill, and pout for admission fees. Opening lines keep t
 matching expression throughout the event. Carmilla and Mecha Eli-chan use their own
 permitted Atlas faces; the completed Trick or Treat message updates its thumbnail and
 removes Liz's attachment. Missing local images fall back to Liz's permitted Atlas face.
-QP encounters continue normally. Unlisted players cannot trigger ordinary ember/grail
-events during the window, and only whitelisted players can trigger and claim Halloween
-events. Testers' event messages are visible in the channel. A whitelisted moderator can
+QP encounters continue normally. With random Halloween events enabled, unlisted players cannot
+trigger ordinary ember/grail events during the window. Only whitelisted players can trigger
+and claim Halloween events. Testers' event messages are visible in the channel. A whitelisted moderator can
 use `/halloweenevent` to spawn either event in the current channel or the optional `channel`
 without waiting for a roll. Manual triggers work outside the automatic drop channels,
 wherever the bot can post; the whitelist and active dates still apply.
 Manual triggers can run alongside other Halloween events in the same channel. Each event
-allows one claim per player and ends independently. Automatic drops skip channels with an
-active Halloween event instead of falling back to ordinary events. These rolls still consume their usual
-drop cooldown. `/triggerevent` blocks ordinary ember/grail spawns during the window and
-directs moderators to `/halloweenevent`; its QP option remains available.
+allows one claim per player and ends independently. Automatic Halloween drops skip channels
+with an active Halloween event instead of falling back to ordinary events. These rolls still
+consume their usual drop cooldown. With random Halloween events enabled, `/triggerevent`
+blocks ordinary ember/grail spawns during the window and directs moderators to
+`/halloweenevent`; its QP option remains available.
 
 `/candy [user] [servant] [quantity]` spends your candy to feed one of your servants, or
 another player's servant when `user` is selected. It defaults to the recipient's active

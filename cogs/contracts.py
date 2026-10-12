@@ -1524,7 +1524,7 @@ class ContractsCog(commands.Cog):
             )
         value = event.value if event else random.choice([v for v, _ in _EVENTS])
         halloween = self.bot.get_cog("HalloweenCog")
-        if value != "qp_reward" and halloween and self.bot.config.halloween_active():
+        if value != "qp_reward" and halloween and self.bot.config.halloween_drops_active():
             return await interaction.response.send_message(
                 "Halloween is active. Use /halloweenevent for candy drops.",
                 ephemeral=True,

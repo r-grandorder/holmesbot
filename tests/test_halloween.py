@@ -49,6 +49,18 @@ class HalloweenConfigTests(unittest.TestCase):
             self.assertFalse(cfg.halloween_open or cfg.halloween_whitelist)
             self.assertFalse(cfg.halloween_allowed(100))
             self.assertFalse(cfg.halloween_active())
+            self.assertFalse(cfg.halloween_drops_active())
+
+    def test_random_event_switch_preserves_manual_access(self):
+        self.assertTrue(config(HALLOWEEN_WHITELIST="100").halloween_drops_active())
+        for value in ("", "false", "off", "0", "true", "1", "yes", "on", "enabled", " TRUE "):
+            with self.subTest(value=value):
+                cfg = config(HALLOWEEN_WHITELIST="100", HALLOWEEN_RANDOM_EVENTS=value)
+                enabled = value.strip().lower() in ("true", "1", "yes", "on", "enabled")
+                self.assertEqual(cfg.halloween_drops_active(), enabled)
+                self.assertTrue(cfg.halloween_active())
+                self.assertTrue(cfg.halloween_allowed(100))
+                self.assertFalse(cfg.halloween_allowed(999))
 
     def test_testers_need_both_whitelists(self):
         cfg = config(HALLOWEEN_WHITELIST="100, 200 300", CONTRACT_WHITELIST="100,200")
@@ -63,9 +75,12 @@ class HalloweenConfigTests(unittest.TestCase):
         cfg = config(HALLOWEEN_WHITELIST="100", HALLOWEEN_START_AT="2026-10-20T00:00:00-07:00",
                      HALLOWEEN_END_AT="2026-11-01T00:00:00-07:00")
         self.assertFalse(cfg.halloween_active(cfg.halloween_start_at - dt.timedelta(seconds=1)))
+        self.assertFalse(cfg.halloween_drops_active(cfg.halloween_start_at - dt.timedelta(seconds=1)))
         self.assertTrue(cfg.halloween_active(cfg.halloween_start_at))
+        self.assertTrue(cfg.halloween_drops_active(cfg.halloween_start_at))
         self.assertTrue(cfg.halloween_active(cfg.halloween_end_at - dt.timedelta(seconds=1)))
         self.assertFalse(cfg.halloween_active(cfg.halloween_end_at))
+        self.assertFalse(cfg.halloween_drops_active(cfg.halloween_end_at))
         self.assertTrue(cfg.halloween_allowed(100))
 
     def test_invalid_dates_fail_with_clear_error(self):
@@ -514,19 +529,38 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                     await contracts._spawn_chat_drop("channel", uid, kind)
                     spawner.assert_not_awaited()
 
-    async def test_all_normal_drops_resume_outside_halloween_window(self):
+    async def test_all_normal_drops_continue_when_halloween_replacement_is_off(self):
         contracts = ContractsCog(self.bot)
         self.bot.get_cog = lambda _: self.cog
         for settings in ({}, {"HALLOWEEN_WHITELIST": "100", "HALLOWEEN_START_AT": "2099-01-01T00:00:00Z"},
+                         {"HALLOWEEN_WHITELIST": "100", "HALLOWEEN_RANDOM_EVENTS": "false"},
                          {"HALLOWEEN_WHITELIST": "100", "HALLOWEEN_END_AT": "2020-01-01T00:00:00Z"}):
             self.bot.config = config(**settings)
             for kind, method in (("grail_single", "_spawn_single"), ("grail_box", "_spawn_box"),
                                  ("ember", "_spawn_ember"), ("ember_box", "_spawn_ember_box")):
-                with self.subTest(settings=settings, kind=kind):
-                    spawner = AsyncMock()
-                    setattr(contracts, method, spawner)
-                    await contracts._spawn_chat_drop("channel", 100, kind)
-                    spawner.assert_awaited_once_with("channel")
+                for uid in (100, 999):
+                    with self.subTest(settings=settings, kind=kind, uid=uid):
+                        spawner = AsyncMock()
+                        setattr(contracts, method, spawner)
+                        await contracts._spawn_chat_drop("channel", uid, kind)
+                        spawner.assert_awaited_once_with("channel")
+
+    async def test_triggerevent_allows_normal_events_in_manual_halloween_mode(self):
+        self.bot.config = config(HALLOWEEN_WHITELIST="100", HALLOWEEN_RANDOM_EVENTS="false")
+        contracts = ContractsCog(self.bot)
+        self.bot.get_cog = lambda _: self.cog
+        i = interaction()
+        i.user.guild_permissions = discord.Permissions(manage_messages=True)
+        i.channel = SimpleNamespace(mention="#events")
+        for kind, method in (("grail_single", "_spawn_single"), ("grail_box", "_spawn_box"),
+                             ("ember", "_spawn_ember"), ("ember_box", "_spawn_ember_box")):
+            with self.subTest(kind=kind):
+                spawner = AsyncMock()
+                setattr(contracts, method, spawner)
+                await contracts.triggerevent.callback(
+                    contracts, i, app_commands.Choice(name=kind, value=kind),
+                )
+                spawner.assert_awaited_once_with(i.channel)
 
     async def test_triggerevent_cannot_bypass_halloween_but_can_still_spawn_qp(self):
         contracts = ContractsCog(self.bot)
@@ -834,7 +868,30 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         self.bot.guild_config.is_event_channel_allowed.assert_awaited_once_with(1, 20, None)
         automatic_channel.send.assert_not_awaited()
 
+    async def test_manual_mode_can_spawn_claim_and_feed_without_random_events(self):
+        self.bot.config = config(HALLOWEEN_WHITELIST="100,200", HALLOWEEN_RANDOM_EVENTS="false")
+        self.bot.guild_config.is_event_channel_allowed.return_value = False
+        channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), mention="#testing", send=AsyncMock())
+        for kind, action in (("trick_or_treat", "treat"), ("candy_spill", "collect")):
+            with self.subTest(kind=kind):
+                self.assertFalse(await self.cog.spawn_event(channel, kind))
+                before = channel.send.await_count
+                i = interaction()
+                i.user.guild_permissions = discord.Permissions(manage_messages=True)
+                i.channel = channel
+                await self.cog.halloweenevent.callback(self.cog, i, app_commands.Choice(name=kind, value=kind))
+                self.assertEqual(channel.send.await_count, before + 1)
+                view = channel.send.call_args.kwargs["view"]
+                await view.claim(interaction(200), action, 0)
+        self.bot.guild_config.is_event_channel_allowed.assert_not_awaited()
+        self.assertEqual(await self.service.balance(1, 200), 2)
+        await self.contracts.contract(1, 200, H.HOST_ID)
+        await self.cog.candy.callback(self.cog, interaction(200), quantity=2)
+        self.assertEqual(await self.service.balance(1, 200), 0)
+        self.assertGreater((await self.contracts.active(1, 200))["level"], 1)
+
     async def test_manual_event_requires_whitelist_and_staff_access(self):
+        self.bot.config = config(HALLOWEEN_WHITELIST="100", HALLOWEEN_RANDOM_EVENTS="false")
         self.cog.spawn_event = AsyncMock(return_value=True)
         cases = (
             (999, True, False, "You don't have access to the Halloween event."),
@@ -865,7 +922,7 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
             {"HALLOWEEN_END_AT": (now - dt.timedelta(days=1)).isoformat()},
         ):
             with self.subTest(values=values):
-                self.bot.config = config(HALLOWEEN_WHITELIST="100", **values)
+                self.bot.config = config(HALLOWEEN_WHITELIST="100", HALLOWEEN_RANDOM_EVENTS="false", **values)
                 i = interaction()
                 i.user.guild_permissions = discord.Permissions(manage_messages=True)
                 i.channel = SimpleNamespace(id=2, send=AsyncMock())

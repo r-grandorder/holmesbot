@@ -91,7 +91,7 @@ class HalloweenCog(commands.Cog):
 
     async def replace_drop(self, channel, user_id: int, source: str) -> bool:
         """True handles the drop slot, including suppressed spawns during Halloween."""
-        if not self.bot.config.halloween_active():
+        if not self.bot.config.halloween_drops_active():
             return False
         # The seasonal window replaces normal drops for everyone, while the
         # whitelist still limits who can trigger and claim Halloween events.
@@ -112,6 +112,8 @@ class HalloweenCog(commands.Cog):
     async def spawn_event(
         self, channel, kind: str, *, slots: int = 5, grails: int = 0, manual: bool = False,
     ) -> bool:
+        if not manual and not self.bot.config.halloween_random_events:
+            return False
         if not self.bot.config.halloween_active() or (not manual and channel.id in self._channels):
             return False
         # Staff can test anywhere and overlap events. Automatic drops stay limited.
