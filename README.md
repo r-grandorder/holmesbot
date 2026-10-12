@@ -30,7 +30,7 @@ HALLOWEEN_START_AT=
 HALLOWEEN_END_AT=
 ```
 
-Use `/summonconfig eventchannel` to choose the channels. During the active window, Halloween
+Use `/summonconfig eventchannel` to choose the automatic drop channels. During the active window, Halloween
 fully replaces ordinary ember/grail events. Eligible players' single drops become
 **Trick or Treat** (first claimant chooses Treat for 1 guaranteed
 candy, or Trick for a 50% chance of 2 candy and a 50% chance of no candy plus a QP penalty)
@@ -47,7 +47,9 @@ Mecha Eli-chan; the completed Trick or Treat message also updates its thumbnail.
 QP encounters continue normally. Unlisted players cannot trigger ordinary ember/grail
 events during the window, and only whitelisted players can trigger and claim Halloween
 events. Testers' event messages are visible in the channel. A whitelisted moderator can
-use `/halloweenevent` to spawn either event in an event channel without waiting for a roll.
+use `/halloweenevent` to spawn either event in the current channel or the optional `channel`
+without waiting for a roll. Manual triggers work outside the automatic drop channels,
+wherever the bot can post; the whitelist and active dates still apply.
 Only one Halloween event can run in a channel at once; extra rolled ember/grail drops are
 skipped instead of falling back to ordinary events. These rolls still consume their usual
 drop cooldown. `/triggerevent` blocks ordinary ember/grail spawns during the window and

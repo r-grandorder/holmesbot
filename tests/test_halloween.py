@@ -561,6 +561,94 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(all(b.disabled for b in view.children))
         self.assertFalse(self.cog._channels)
 
+    async def test_manual_events_work_outside_automatic_channels(self):
+        self.bot.guild_config.is_event_channel_allowed.return_value = False
+        channel_id = 10
+        for kind, name in (("trick_or_treat", "Trick or Treat"), ("candy_spill", "Candy Spill")):
+            for explicit_channel in (False, True):
+                with self.subTest(kind=kind, explicit_channel=explicit_channel):
+                    channel_id += 1
+                    message = SimpleNamespace(edit=AsyncMock(), delete=AsyncMock())
+                    target = SimpleNamespace(id=channel_id, guild=SimpleNamespace(id=1),
+                                             mention=f"<#{channel_id}>", send=AsyncMock(return_value=message))
+                    i = interaction()
+                    i.user.guild_permissions = discord.Permissions(manage_messages=True)
+                    i.channel = SimpleNamespace(send=AsyncMock()) if explicit_channel else target
+                    await HalloweenCog.halloweenevent.callback(
+                        self.cog, i, app_commands.Choice(name=name, value=kind),
+                        channel=target if explicit_channel else None,
+                    )
+                    target.send.assert_awaited_once()
+                    self.assertIn(target.id, self.cog._channels)
+                    i.followup.send.assert_awaited_once_with(f"Started {name} in {target.mention}.", ephemeral=True)
+                    if explicit_channel:
+                        i.channel.send.assert_not_awaited()
+        self.bot.guild_config.is_event_channel_allowed.assert_not_awaited()
+        automatic_channel = SimpleNamespace(id=20, guild=SimpleNamespace(id=1), send=AsyncMock())
+        self.assertTrue(await self.cog.replace_drop(automatic_channel, 100, "ember"))
+        self.bot.guild_config.is_event_channel_allowed.assert_awaited_once_with(1, 20, None)
+        automatic_channel.send.assert_not_awaited()
+
+    async def test_manual_event_requires_whitelist_and_staff_access(self):
+        self.cog.spawn_event = AsyncMock(return_value=True)
+        cases = (
+            (999, True, False, "You don't have access to the Halloween event."),
+            (999, False, True, "You don't have access to the Halloween event."),
+            (100, False, False, "Only moderators can start events."),
+            (100, False, True, None),
+        )
+        for uid, moderator, owner, denial in cases:
+            with self.subTest(uid=uid, moderator=moderator, owner=owner):
+                self.cog.spawn_event.reset_mock()
+                self.bot.is_owner = AsyncMock(return_value=owner)
+                i = interaction(uid)
+                i.user.guild_permissions = discord.Permissions(manage_messages=moderator)
+                i.channel = SimpleNamespace(mention="#testing")
+                await HalloweenCog.halloweenevent.callback(
+                    self.cog, i, app_commands.Choice(name="Trick or Treat", value="trick_or_treat"),
+                )
+                if denial:
+                    i.response.send_message.assert_awaited_once_with(denial, ephemeral=True)
+                    self.cog.spawn_event.assert_not_awaited()
+                else:
+                    self.cog.spawn_event.assert_awaited_once_with(i.channel, "trick_or_treat", manual=True)
+
+    async def test_manual_events_still_respect_active_dates(self):
+        now = dt.datetime.now(dt.timezone.utc)
+        for values in (
+            {"HALLOWEEN_START_AT": (now + dt.timedelta(days=1)).isoformat()},
+            {"HALLOWEEN_END_AT": (now - dt.timedelta(days=1)).isoformat()},
+        ):
+            with self.subTest(values=values):
+                self.bot.config = config(HALLOWEEN_WHITELIST="100", **values)
+                i = interaction()
+                i.user.guild_permissions = discord.Permissions(manage_messages=True)
+                i.channel = SimpleNamespace(id=2, send=AsyncMock())
+                await HalloweenCog.halloweenevent.callback(
+                    self.cog, i, app_commands.Choice(name="Candy Spill", value="candy_spill"),
+                )
+                i.channel.send.assert_not_awaited()
+                self.assertFalse(self.cog._channels)
+                i.followup.send.assert_awaited_once_with("Halloween events aren't active right now.", ephemeral=True)
+
+    async def test_manual_events_cannot_overlap_in_a_channel(self):
+        self.bot.guild_config.is_event_channel_allowed.return_value = False
+        channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), mention="#testing", send=AsyncMock())
+        interactions = [interaction(), interaction()]
+        for i in interactions:
+            i.channel = channel
+            i.user.guild_permissions = discord.Permissions(manage_messages=True)
+        await asyncio.gather(*(
+            HalloweenCog.halloweenevent.callback(
+                self.cog, i, app_commands.Choice(name="Candy Spill", value="candy_spill"),
+            ) for i in interactions
+        ))
+        channel.send.assert_awaited_once()
+        self.assertCountEqual(
+            [i.followup.send.call_args.args[0] for i in interactions],
+            ["Started Candy Spill in #testing.", "There's already a Halloween event in #testing."],
+        )
+
     async def test_discord_message_updates_leave_unclaimed_buttons_enabled(self):
         for kind in ("trick_or_treat", "candy_spill"):
             with self.subTest(kind=kind):

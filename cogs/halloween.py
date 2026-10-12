@@ -73,12 +73,16 @@ class HalloweenCog(commands.Cog):
         await self.spawn_event(channel, kind, slots=slots, grails=grails)
         return True
 
-    async def spawn_event(self, channel, kind: str, *, slots: int = 5, grails: int = 0) -> bool:
+    async def spawn_event(
+        self, channel, kind: str, *, slots: int = 5, grails: int = 0, manual: bool = False,
+    ) -> bool:
         if not self.bot.config.halloween_active() or channel.id in self._channels:
             return False
-        parent_id = channel.parent_id if isinstance(channel, discord.Thread) else None
-        if not await self.bot.guild_config.is_event_channel_allowed(channel.guild.id, channel.id, parent_id):
-            return False
+        # Staff can test anywhere; automatic drops still use the configured channels.
+        if not manual:
+            parent_id = channel.parent_id if isinstance(channel, discord.Thread) else None
+            if not await self.bot.guild_config.is_event_channel_allowed(channel.guild.id, channel.id, parent_id):
+                return False
         # Recheck after the asynchronous channel lookup, before reserving the channel.
         if channel.id in self._channels or not self.bot.config.halloween_active():
             return False
@@ -129,7 +133,7 @@ class HalloweenCog(commands.Cog):
     @app_commands.command(name="halloweenevent", description="(Mods) Start a Halloween event.")
     @app_commands.guild_only()
     @app_commands.choices(event=_EVENT_CHOICES)
-    @app_commands.describe(event="Event to start", channel="Event channel (defaults to here)")
+    @app_commands.describe(event="Event to start", channel="Channel to post in (defaults to here)")
     async def halloweenevent(
         self, interaction: discord.Interaction, event: app_commands.Choice[str],
         channel: discord.TextChannel | None = None,
@@ -140,9 +144,13 @@ class HalloweenCog(commands.Cog):
             return await interaction.response.send_message("Only moderators can start events.", ephemeral=True)
         await interaction.response.defer(ephemeral=True)
         target = channel or interaction.channel
-        spawned = await self.spawn_event(target, event.value)
-        text = (f"Started {event.name} in {target.mention}." if spawned else
-                "Couldn't start the event. Check its dates, /summonconfig eventchannel, and any active event here.")
+        spawned = await self.spawn_event(target, event.value, manual=True)
+        if spawned:
+            text = f"Started {event.name} in {target.mention}."
+        elif not self.bot.config.halloween_active():
+            text = "Halloween events aren't active right now."
+        else:
+            text = f"There's already a Halloween event in {target.mention}."
         await interaction.followup.send(text, ephemeral=True)
 
     @app_commands.command(name="candy", description="Feed Halloween candy to your servant.")
