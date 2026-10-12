@@ -394,7 +394,7 @@ class CandyEventView(discord.ui.View):
                 text += f"\n**{result.bonus} bonus candy** for each player!"
             title = {"trick": "🎃 Trick!", "treat": "🍬 Treat!", "collect": "🍬 Candy Collected!"}[action]
             embed = discord.Embed(title=title, description=text, color=discord.Color.orange())
-            footer = f"{result.balance:,} candy left"
+            footer = f"Your candy: {result.balance:,}"
             if result.qp_balance is not None:
                 footer += f" | {result.qp_balance:,} QP left"
             embed.set_footer(text=footer)
