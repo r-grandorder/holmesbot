@@ -184,7 +184,7 @@ class HalloweenCog(commands.Cog):
             description += " (cap reached)"
         lines = s.growth_lines if s else ()
         description += f'\n\n*"{random.choice(lines)}"*' if lines else f"\n\n{name} enjoys the Halloween treats."
-        embed = discord.Embed(title="A Halloween Treat", description=description, color=discord.Color.orange())
+        embed = discord.Embed(title="🍬 A Halloween Treat", description=description, color=discord.Color.orange())
         face = await self._face(s)
         if face:
             embed.set_thumbnail(url=face)
@@ -269,7 +269,7 @@ class CandyEventView(discord.ui.View):
             description += "\n\nEvent ended."
         else:
             description += f"\nEnds <t:{int(self.event['expires_at'])}:R>."
-        embed = discord.Embed(title="Candy Spill!" if spill else "Trick or Treat!",
+        embed = discord.Embed(title="🍬 Candy Spill!" if spill else "🎃 Trick or Treat!",
                               description=description, color=discord.Color.orange())
         if self.face:
             embed.set_thumbnail(url=self.face)
@@ -365,7 +365,7 @@ class CandyEventView(discord.ui.View):
                     text += "\nNo QP to take."
             if result.bonus:
                 text += f"\n**{result.bonus} bonus candy** for each player!"
-            title = {"trick": "Trick!", "treat": "Treat!", "collect": "Candy Collected!"}[action]
+            title = {"trick": "🎃 Trick!", "treat": "🍬 Treat!", "collect": "🍬 Candy Collected!"}[action]
             embed = discord.Embed(title=title, description=text, color=discord.Color.orange())
             footer = f"{result.balance:,} candy left"
             if result.qp_balance is not None:
