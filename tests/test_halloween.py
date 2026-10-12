@@ -273,40 +273,44 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.service.claim(event["id"], 1, 2, 100, action="treat")).status, "ok")
 
     async def test_feeding_preserves_ownership_and_caps_without_wasting_stock(self):
-        await self.seed_candy()
-        self.assertEqual((await self.contracts.feed_xp(1, 100, 100, 502600, "candy", 5))[0], "not_owned")
-        self.assertEqual(await self.service.balance(1, 100), 20)
-        await self.contracts.contract(1, 100, 502600)
-        await self.contracts.set_active_level(1, 100, 59)
-        result = await self.contracts.feed_xp(1, 100, 100, 502600, "candy", 20)
-        self.assertEqual(result, ("ok", 1, 59, 60, 60))
-        self.assertEqual(await self.service.balance(1, 100), 19)
-        self.assertEqual((await self.contracts.feed_xp(1, 100, 100, 502600, "candy"))[0], "at_cap")
-        self.assertEqual(await self.service.balance(1, 100), 19)
-        with self.assertRaises(ValueError):
-            await self.contracts.feed_xp(1, 100, 200, 502600, "candy")
+        for target_id in (100, 200):
+            with self.subTest(target_id=target_id):
+                await self.seed_candy()
+                self.assertEqual((await self.contracts.feed_xp(1, 100, target_id, 502600, "candy", 5))[0], "not_owned")
+                self.assertEqual(await self.service.balance(1, 100), 20)
+                await self.contracts.contract(1, target_id, 502600)
+                await self.contracts.set_active_level(1, target_id, 59)
+                result = await self.contracts.feed_xp(1, 100, target_id, 502600, "candy", 20)
+                self.assertEqual(result, ("ok", 1, 59, 60, 60))
+                self.assertEqual(await self.service.balance(1, 100), 19)
+                self.assertEqual((await self.contracts.feed_xp(1, 100, target_id, 502600, "candy"))[0], "at_cap")
+                self.assertEqual(await self.service.balance(1, 100), 19)
 
     async def test_concurrent_feeds_cannot_spend_the_same_candy(self):
-        await self.seed_candy(amount=1)
-        await self.contracts.contract(1, 100, 502600)
-        results = await asyncio.gather(*(
-            self.contracts.feed_xp(1, 100, 100, 502600, "candy", 1) for _ in range(2)
-        ))
-        self.assertEqual(sorted(r[0] for r in results), ["no_items", "ok"])
-        self.assertEqual(await self.service.balance(1, 100), 0)
-        self.assertEqual((await self.contracts.active(1, 100))["level"], 31)
+        for target_id in (100, 200):
+            with self.subTest(target_id=target_id):
+                await self.seed_candy(amount=1)
+                await self.contracts.contract(1, target_id, 502600)
+                results = await asyncio.gather(*(
+                    self.contracts.feed_xp(1, 100, target_id, 502600, "candy", 1) for _ in range(2)
+                ))
+                self.assertEqual(sorted(r[0] for r in results), ["no_items", "ok"])
+                self.assertEqual(await self.service.balance(1, 100), 0)
+                self.assertEqual((await self.contracts.active(1, target_id))["level"], 31)
 
     async def test_feed_xp_failure_rolls_back_spending(self):
-        await self.seed_candy(amount=3)
-        await self.contracts.contract(1, 100, 502600)
         await self.db._conn.executescript(
             "CREATE TRIGGER fail_xp BEFORE UPDATE OF level ON servant_contracts "
             "BEGIN SELECT RAISE(ABORT, 'xp failure'); END;"
         )
-        with self.assertRaisesRegex(Exception, "xp failure"):
-            await self.contracts.feed_xp(1, 100, 100, 502600, "candy", 3)
-        self.assertEqual(await self.service.balance(1, 100), 3)
-        self.assertEqual((await self.contracts.active(1, 100))["level"], 1)
+        for target_id in (100, 200):
+            with self.subTest(target_id=target_id):
+                await self.seed_candy(amount=3)
+                await self.contracts.contract(1, target_id, 502600)
+                with self.assertRaisesRegex(Exception, "xp failure"):
+                    await self.contracts.feed_xp(1, 100, target_id, 502600, "candy", 3)
+                self.assertEqual(await self.service.balance(1, 100), 3)
+                self.assertEqual((await self.contracts.active(1, target_id))["level"], 1)
 
     async def test_one_candy_applies_full_xp_above_base_cap(self):
         await self.seed_candy(amount=1)
@@ -353,6 +357,101 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.service.balance(1, 100), 18)
         choices = await self.cog.candy_servants(i, "Elisabeth")
         self.assertEqual([c.value for c in choices], [502600])
+
+    async def test_gift_spends_only_givers_candy_and_shows_recipients_reaction_publicly(self):
+        await self.seed_candy(amount=5)
+        await self.seed_candy(uid=200, amount=9)
+        await self.contracts.contract(1, 100, 601700)
+        await self.contracts.contract(1, 200, 502600)
+        i = interaction()
+        recipient = SimpleNamespace(id=200, display_name="Alex")
+        await self.cog.candy.callback(self.cog, i, user=recipient)
+        self.assertEqual(await self.service.balance(1, 100), 4)
+        self.assertEqual(await self.service.balance(1, 200), 9)
+        self.assertEqual((await self.contracts.active(1, 100))["level"], 1)
+        self.assertEqual((await self.contracts.active(1, 200))["level"], 31)
+        i.response.defer.assert_awaited_once_with(ephemeral=True)
+        private, public = i.followup.send.await_args_list
+        self.assertTrue(private.kwargs["ephemeral"])
+        self.assertIn("4 candy left", private.args[0])
+        self.assertFalse(public.kwargs["ephemeral"])
+        embed = public.kwargs["embed"]
+        self.assertIn("**Tester** gave **Alex's Elisabeth Bathory (Halloween)** **1 candy**!", embed.description)
+        self.assertIn("Lv 1 -> **31**", embed.description)
+        self.assertIn("Thanks!", embed.description)
+        self.assertEqual(embed.thumbnail.url, self.servant.face)
+        self.assertNotIn("candy left", embed.footer.text)
+        self.assertEqual(public.kwargs["allowed_mentions"].to_dict()["parse"], [])
+
+    async def test_gift_servant_picker_and_explicit_choice_use_recipients_roster(self):
+        await self.seed_candy()
+        await self.contracts.contract(1, 100, 1000400)
+        await self.contracts.contract(1, 200, 601700)
+        await self.contracts.contract(1, 200, 502600)
+        i = interaction()
+        recipient = SimpleNamespace(id=200, display_name="Alex")
+        for selected in (recipient, recipient.id):
+            i.namespace = SimpleNamespace(user=selected)
+            choices = await self.cog.candy_servants(i, "")
+            self.assertCountEqual([choice.value for choice in choices], [601700, 502600])
+            choices = await self.cog.candy_servants(i, "Carmilla")
+            self.assertEqual([choice.value for choice in choices], [601700])
+        await self.cog.candy.callback(self.cog, i, user=recipient, servant=601700)
+        roster = {row["servant_id"]: row for row in await self.contracts.owned(1, 200)}
+        self.assertEqual(roster[601700]["level"], 31)
+        self.assertEqual(roster[502600]["level"], 1)
+        self.assertEqual((await self.contracts.active(1, 100))["level"], 1)
+        embed = i.followup.send.call_args.kwargs["embed"]
+        self.assertIn("Alex's Carmilla", embed.description)
+        self.assertEqual(embed.thumbnail.url, self.bot.servants.get(601700).face)
+
+    async def test_gift_failures_are_private_and_do_not_spend_candy(self):
+        recipient = SimpleNamespace(id=200, display_name="Alex")
+        await self.seed_candy(amount=3)
+        await self.seed_candy(uid=200, amount=9)
+
+        async def check_failure(expected, *, balance=3, servant=None):
+            i = interaction()
+            await self.cog.candy.callback(self.cog, i, user=recipient, servant=servant)
+            i.followup.send.assert_awaited_once_with(expected, ephemeral=True)
+            self.assertEqual(await self.service.balance(1, 100), balance)
+            self.assertEqual(await self.service.balance(1, 200), 9)
+
+        await check_failure("Alex has no active servant.")
+        await self.contracts.contract(1, 200, 502600)
+        await check_failure("Alex doesn't own that servant.", servant=601700)
+        await self.seed_candy(amount=0)
+        await check_failure("You have no candy.", balance=0)
+        self.assertEqual((await self.contracts.active(1, 200))["level"], 1)
+        await self.seed_candy(amount=3)
+        await self.contracts.set_active_level(1, 200, 60)
+        await check_failure("Already at the Lv 60 cap. Use /grail to raise it.")
+
+    async def test_gift_requires_halloween_access_for_both_players(self):
+        await self.seed_candy()
+        for uid, recipient_id in ((999, 200), (100, 999)):
+            with self.subTest(uid=uid, recipient_id=recipient_id):
+                await self.contracts.contract(1, recipient_id, 502600)
+                i = interaction(uid)
+                recipient = SimpleNamespace(id=recipient_id, display_name="Alex")
+                i.namespace = SimpleNamespace(user=recipient)
+                await self.cog.candy.callback(self.cog, i, user=recipient)
+                self.assertTrue(i.response.send_message.call_args.kwargs["ephemeral"])
+                i.response.defer.assert_not_awaited()
+                i.followup.send.assert_not_awaited()
+                self.assertEqual(await self.cog.candy_servants(i, ""), [])
+                self.assertEqual((await self.contracts.active(1, recipient_id))["level"], 1)
+        self.assertEqual(await self.service.balance(1, 100), 20)
+
+    async def test_explicit_self_target_still_feeds_privately(self):
+        await self.seed_candy(amount=1)
+        await self.contracts.contract(1, 100, 502600)
+        i = interaction()
+        await self.cog.candy.callback(self.cog, i, user=i.user)
+        self.assertEqual(i.followup.send.await_count, 1)
+        self.assertTrue(i.followup.send.call_args.kwargs["ephemeral"])
+        self.assertEqual(await self.service.balance(1, 100), 0)
+        self.assertEqual((await self.contracts.active(1, 100))["level"], 31)
 
     async def test_restricted_thumbnail_and_missing_dialogue_fallback(self):
         self.bot.servants = ServantIndex([Servant(id=10, name="Custom", class_name="caster", rarity=4,

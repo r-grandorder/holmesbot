@@ -55,9 +55,14 @@ skipped instead of falling back to ordinary events. These rolls still consume th
 drop cooldown. `/triggerevent` blocks ordinary ember/grail spawns during the window and
 directs moderators to `/halloweenevent`; its QP option remains available.
 
-`/candy [servant] [quantity]` feeds one of your owned servants (active by default), granting
-3,000 XP per candy, equal to one Hellfire or six Embers of Wisdom. The private response
-shows their existing face thumbnail and an Atlas level-up subtitle, with no audio.
+`/candy [user] [servant] [quantity]` spends your candy to feed one of your servants, or
+another player's servant when `user` is selected. It defaults to the recipient's active
+servant; the servant picker shows their roster. Both players need Halloween access.
+Each candy grants 3,000 XP, equal to one Hellfire or six Embers of Wisdom. Feeding your
+own servant stays private. Gifts show a public embed naming the giver and recipient,
+with the servant's existing face thumbnail and an Atlas level-up subtitle, with no audio.
+Errors and the giver's remaining candy balance stay private. For example,
+`/candy user:@Alex quantity:1` feeds Alex's active servant using one of your candies.
 Missing dialogue falls back to a descriptive response;
 this includes the current JP-only roster, whose Atlas export has no subtitles. Art
 restrictions still apply. `/items` includes the candy balance. Feeding keeps surplus

@@ -245,8 +245,6 @@ class ContractService:
         col = {"embers": "embers", "hellfire": "hellfire", "candy": "candy"}[kind]
         xp_each = {"embers": contract_game.EMBER_XP, "hellfire": contract_game.HELLFIRE_XP,
                    "candy": contract_game.CANDY_XP}[kind]
-        if kind == "candy" and giver_id != target_id:
-            raise ValueError("Candy can only be fed to your own servants")
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 row = await conn.fetchrow(

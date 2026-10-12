@@ -153,33 +153,52 @@ class HalloweenCog(commands.Cog):
             text = f"There's already a Halloween event in {target.mention}."
         await interaction.followup.send(text, ephemeral=True)
 
-    @app_commands.command(name="candy", description="Feed Halloween candy to your servant.")
+    @app_commands.command(name="candy", description="Feed Halloween candy to your servant or another player's.")
     @app_commands.guild_only()
-    @app_commands.describe(servant="Servant to feed (defaults to your active one)", quantity="Candy to use (default 1)")
+    @app_commands.describe(
+        user="Whose servant to feed (defaults to yours)",
+        servant="Servant to feed (defaults to their active one)",
+        quantity="Candy to use (default 1)",
+    )
     async def candy(
-        self, interaction: discord.Interaction, servant: int | None = None,
+        self, interaction: discord.Interaction, user: discord.Member | None = None, servant: int | None = None,
         quantity: app_commands.Range[int, 1, 1000] = 1,
     ) -> None:
         if not self.allowed(interaction.user.id):
             return await interaction.response.send_message(_DENY, ephemeral=True)
+        target = user or interaction.user
+        is_self = target.id == interaction.user.id
+        if not self.allowed(target.id):
+            return await interaction.response.send_message(
+                "That player doesn't have access to the Halloween event.", ephemeral=True,
+            )
         await interaction.response.defer(ephemeral=True)
         gid, uid = interaction.guild_id, interaction.user.id
+        target_name = discord.utils.escape_markdown(target.display_name)
         if servant is None:
-            active = await self.bot.contracts.active(gid, uid)
+            active = await self.bot.contracts.active(gid, target.id)
             if active is None:
-                return await interaction.followup.send("Choose a servant to feed, or summon one with /summon.", ephemeral=True)
+                text = ("Choose a servant to feed, or summon one with /summon." if is_self else
+                        f"{target_name} has no active servant.")
+                return await interaction.followup.send(text, ephemeral=True)
             servant = active["servant_id"]
         s = self.bot.servants.get(servant)
-        status, used, old, new, cap = await self.bot.contracts.feed_xp(gid, uid, uid, servant, "candy", quantity)
+        status, used, old, new, cap = await self.bot.contracts.feed_xp(gid, uid, target.id, servant, "candy", quantity)
         if status != "ok":
             text = {
-                "not_owned": "You don't own that servant. Check /servants.",
+                "not_owned": ("You don't own that servant. Check /servants." if is_self else
+                              f"{target_name} doesn't own that servant."),
                 "no_items": "You have no candy.",
                 "at_cap": f"Already at the Lv {cap} cap. Use /grail to raise it.",
             }[status]
             return await interaction.followup.send(text, ephemeral=True)
-        name = s.name if s else "Your servant"
-        description = f"Fed **{used} candy** to **{name}**.\nLv {old} -> **{new}**"
+        name = discord.utils.escape_markdown(s.name) if s else ("Your servant" if is_self else "servant")
+        if is_self:
+            description = f"Fed **{used} candy** to **{name}**."
+        else:
+            giver_name = discord.utils.escape_markdown(interaction.user.display_name)
+            description = f"**{giver_name}** gave **{target_name}'s {name}** **{used} candy**!"
+        description += f"\nLv {old} -> **{new}**"
         if new >= cap:
             description += " (cap reached)"
         lines = s.growth_lines if s else ()
@@ -189,14 +208,25 @@ class HalloweenCog(commands.Cog):
         if face:
             embed.set_thumbnail(url=face)
         remaining = await self.service.balance(gid, uid)
-        embed.set_footer(text=f"{remaining:,} candy left | {contract_game.CANDY_XP:,} XP per candy")
-        await interaction.followup.send(embed=embed, ephemeral=True, allowed_mentions=discord.AllowedMentions.none())
+        footer = f"{contract_game.CANDY_XP:,} XP per candy"
+        if is_self:
+            footer = f"{remaining:,} candy left | {footer}"
+        else:
+            # The first followup inherits the deferred response's private visibility.
+            # Resolve that response before sending the public gift embed.
+            await interaction.followup.send(f"Fed **{used} candy**. {remaining:,} candy left.", ephemeral=True)
+        embed.set_footer(text=footer)
+        await interaction.followup.send(embed=embed, ephemeral=is_self, allowed_mentions=discord.AllowedMentions.none())
 
     @candy.autocomplete("servant")
     async def candy_servants(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[int]]:
         if not interaction.guild_id or not self.allowed(interaction.user.id):
             return []
-        roster = await self.bot.contracts.owned(interaction.guild_id, interaction.user.id)
+        user = getattr(getattr(interaction, "namespace", None), "user", None)
+        target_id = (user.id if hasattr(user, "id") else user) or interaction.user.id
+        if not self.allowed(target_id):
+            return []
+        roster = await self.bot.contracts.owned(interaction.guild_id, target_id)
         choices = []
         for row in roster:
             s = self.bot.servants.get(row["servant_id"])
