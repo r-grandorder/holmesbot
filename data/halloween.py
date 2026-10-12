@@ -7,6 +7,7 @@ EVENT_SECONDS = 120
 TREAT_CANDY = 1
 SPILL_CANDY = 1
 SPILL_BONUS = 1
+SPILL_EMOJIS = ("🍬", "🍭", "🍫")
 
 SPILL_LINES = (
     "Master! I dropped my candy stash, help!",

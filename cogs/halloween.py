@@ -257,8 +257,10 @@ class CandyEventView(discord.ui.View):
             self._button("Treat", "treat", 0, discord.ButtonStyle.success)
             self._button("Trick", "trick", 0, discord.ButtonStyle.primary)
         else:
-            for slot in range(event["slots"]):
-                self._button(f"Candy {slot + 1}", "collect", slot, discord.ButtonStyle.primary)
+            emojis = [H.SPILL_EMOJIS[slot % len(H.SPILL_EMOJIS)] for slot in range(event["slots"])]
+            random.shuffle(emojis)
+            for slot, emoji in enumerate(emojis):
+                self._button(None, "collect", slot, discord.ButtonStyle.primary, emoji=emoji)
 
     def start_timer(self) -> None:
         if self._expiry_task is None and not self.is_finished():
@@ -273,8 +275,8 @@ class CandyEventView(discord.ui.View):
             self._expiry_task.cancel()
         super().stop()
 
-    def _button(self, label: str, action: str, slot: int, style) -> None:
-        button = discord.ui.Button(label=label, style=style, row=slot // 5)
+    def _button(self, label: str | None, action: str, slot: int, style, *, emoji: str | None = None) -> None:
+        button = discord.ui.Button(label=label, emoji=emoji, style=style, row=slot // 5)
 
         async def callback(interaction):
             await self.claim(interaction, action, slot)
@@ -372,7 +374,6 @@ class CandyEventView(discord.ui.View):
             self.complete = result.complete
             if self.event["kind"] == "candy_spill":
                 self.children[slot].disabled = True
-                self.children[slot].label = "Collected"
             name = discord.utils.escape_markdown(interaction.user.display_name)
             reward = f"{result.candy} candy" + (" + 1 Holy Grail" if result.grails else "")
             loss = f" Lost **{result.qp_lost:,} QP**." if result.qp_lost else ""

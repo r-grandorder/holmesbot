@@ -576,6 +576,27 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                         self.assertTrue(view.render().description.startswith(view.outcome_flavor))
                     choose.assert_called_once_with(lines)
 
+    async def test_spill_emoji_buttons_keep_their_slots_and_appearance_after_claims(self):
+        for slots in (3, 5, 8):
+            with self.subTest(slots=slots):
+                event = await self.service.create_event(1, 2, "candy_spill", slots=slots)
+                with patch("cogs.halloween.random.shuffle", side_effect=lambda emojis: emojis.reverse()):
+                    view = CandyEventView(self.cog, event, self.servant.face)
+                self.cog._views.add(view)
+                view.message = SimpleNamespace(edit=AsyncMock())
+                icons = [str(button.emoji) for button in view.children]
+                expected = [H.SPILL_EMOJIS[slot % len(H.SPILL_EMOJIS)] for slot in range(slots)]
+                self.assertEqual(icons, expected[::-1])
+                self.assertTrue(all(button.label is None for button in view.children))
+                self.assertEqual(len({button.custom_id for button in view.children}), slots)
+                self.assertEqual([button.row for button in view.children], [slot // 5 for slot in range(slots)])
+                await view.children[-1].callback(interaction())
+                self.assertEqual(view.claimed_slots, (slots - 1,))
+                self.assertTrue(view.children[-1].disabled)
+                self.assertTrue(all(not button.disabled for button in view.children[:-1]))
+                self.assertEqual([str(button.emoji) for button in view.children], icons)
+                self.assertTrue(all(button.label is None for button in view.children))
+
     async def test_successful_spill_callbacks_disable_buttons_and_report_bonus(self):
         event = await self.service.create_event(1, 2, "candy_spill", slots=2)
         view = CandyEventView(self.cog, event, self.servant.face)
