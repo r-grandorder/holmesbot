@@ -10,6 +10,8 @@ import unittest
 from unittest.mock import AsyncMock, patch
 
 from discord import app_commands
+import discord
+from discord.ui.view import ViewStore
 
 from config import Config
 from cogs.contracts import ContractsCog
@@ -460,8 +462,8 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(view.complete)
         self.assertTrue(all(b.disabled for b in view.children))
         self.assertFalse(self.cog._channels)
-        self.assertIn("Everyone also received", last.followup.send.call_args.kwargs["embed"].description)
-        self.assertIn("Every participant received", view.render().description)
+        self.assertIn("1 bonus candy", last.followup.send.call_args.kwargs["embed"].description)
+        self.assertIn("1 bonus candy", view.render().description)
         before = await self.service.balance(1, 100)
         await view.claim(first, "collect", 0)
         self.assertEqual(await self.service.balance(1, 100), before)
@@ -486,7 +488,7 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(view.message.edit.call_args.kwargs["embed"].thumbnail.url, face)
                 self.assertIn(outcome.flavor, view.render().description)
                 if outcome.qp_loss:
-                    self.assertIn(f"lost **{outcome.qp_loss:,} QP**", reply["embed"].description)
+                    self.assertIn(f"Lost **{outcome.qp_loss:,} QP**", reply["embed"].description)
 
     async def test_restricted_or_missing_guest_portrait_does_not_retain_liz(self):
         outcome = next(x for x in H.TRICKS if x.servant_id == 601700)
@@ -537,14 +539,14 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                 i = interaction()
                 with patch("services.halloween.random.choice", return_value=outcome):
                     await view.claim(i, "trick", 0)
-                text = i.followup.send.call_args.kwargs["embed"].description
-                self.assertIn("QP remaining: **0**", text)
+                embed = i.followup.send.call_args.kwargs["embed"]
+                text = embed.description
+                self.assertIn("0 QP left", embed.footer.text)
                 if starting:
-                    self.assertIn("You lost **125 QP**", text)
-                    self.assertIn("limited to your available QP", text)
+                    self.assertIn("Lost **125 QP**", text)
                 else:
-                    self.assertIn("you lost nothing", text)
-                self.assertNotIn("lost **1,000 QP**", text)
+                    self.assertIn("No QP to take", text)
+                self.assertNotIn("Lost **1,000 QP**", text)
 
     async def test_channel_gate_single_active_event_and_timeout(self):
         channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), send=AsyncMock())
@@ -559,11 +561,85 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(all(b.disabled for b in view.children))
         self.assertFalse(self.cog._channels)
 
+    async def test_discord_message_updates_leave_unclaimed_buttons_enabled(self):
+        for kind in ("trick_or_treat", "candy_spill"):
+            with self.subTest(kind=kind):
+                event = await self.service.create_event(1, 2, kind)
+                view = CandyEventView(self.cog, event, self.servant.face)
+                self.cog._views.add(view)
+                store = ViewStore(SimpleNamespace())
+                store.add_view(view, message_id=123)
+                store.update_from_message(123, view.to_components())
+                self.assertTrue(view.is_dispatching())
+                self.assertFalse(view.is_finished())
+                self.assertFalse(view.expired)
+                self.assertTrue(all(not button.disabled for button in view.children))
+                self.assertEqual(await self.db.pool.fetchval(
+                    "SELECT COUNT(*) FROM halloween_claims WHERE event_id = $1", event["id"],
+                ), 0)
+                view.stop()
+
+    async def test_slow_message_post_does_not_use_up_the_event_window(self):
+        message = SimpleNamespace(edit=AsyncMock(), delete=AsyncMock())
+
+        async def send(**kwargs):
+            await asyncio.sleep(0.25)
+            return message
+
+        channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), send=send)
+        with patch.object(H, "EVENT_SECONDS", 0.2):
+            self.assertTrue(await self.cog.spawn_event(channel, "trick_or_treat"))
+        self.assertEqual(len(self.cog._views), 1)
+        view = next(iter(self.cog._views))
+        self.assertFalse(view.expired)
+        self.assertTrue(all(not button.disabled for button in view.children))
+        stored_expiry = await self.db.pool.fetchval(
+            "SELECT expires_at FROM halloween_events WHERE id = $1", view.event["id"],
+        )
+        self.assertGreater(stored_expiry, time.time())
+        result = await self.service.claim(view.event["id"], 1, 2, 100, action="treat")
+        self.assertEqual(result.status, "ok")
+
+    async def test_expired_message_is_pruned_even_if_the_final_edit_fails(self):
+        event = await self.service.create_event(1, 2, "candy_spill")
+        view = CandyEventView(self.cog, event, None)
+        self.cog._views.add(view)
+        view.message = SimpleNamespace(
+            edit=AsyncMock(side_effect=discord.HTTPException(SimpleNamespace(status=500, reason="failure"), "test")),
+            delete=AsyncMock(),
+        )
+        with self.assertLogs("cogs.halloween", level="WARNING"):
+            await view.on_timeout()
+        await asyncio.wait_for(view._cleanup_task, timeout=1)
+        view.message.delete.assert_awaited_once_with()
+        self.assertTrue(all(button.disabled for button in view.children))
+        self.assertFalse(self.cog._channels)
+
+    async def test_posted_event_is_deleted_if_deadline_activation_fails(self):
+        message = SimpleNamespace(edit=AsyncMock(), delete=AsyncMock())
+        channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), send=AsyncMock(return_value=message))
+        self.cog.service.set_deadline = AsyncMock(side_effect=RuntimeError("database unavailable"))
+        with self.assertRaisesRegex(RuntimeError, "database unavailable"):
+            await self.cog.spawn_event(channel, "candy_spill")
+        message.delete.assert_awaited_once_with()
+        self.assertFalse(self.cog._channels)
+        self.assertFalse(self.cog._views)
+
+    async def test_posting_event_does_not_extend_the_seasonal_end(self):
+        end = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=30)).isoformat()
+        self.bot.config = config(HALLOWEEN_WHITELIST="100", HALLOWEEN_END_AT=end)
+        message = SimpleNamespace(edit=AsyncMock(), delete=AsyncMock())
+        channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), send=AsyncMock(return_value=message))
+        self.assertTrue(await self.cog.spawn_event(channel, "candy_spill"))
+        view = next(iter(self.cog._views))
+        self.assertEqual(view.event["expires_at"], self.bot.config.halloween_end_at.timestamp())
+
     async def test_event_expires_at_absolute_deadline_without_a_click(self):
         event = await self.service.create_event(1, 2, "candy_spill", expires_at=time.time() + 0.02)
         view = CandyEventView(self.cog, event, None)
         self.cog._views.add(view)
         self.cog._channels.add(2)
+        view.start_timer()
         await asyncio.wait_for(view._expiry_task, timeout=1)
         self.assertTrue(view.expired)
         self.assertTrue(view.is_finished())

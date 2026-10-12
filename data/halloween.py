@@ -18,11 +18,11 @@ class TrickOutcome:
 
 # Four equally likely outcomes. Losses spend QP, never existing candy or grails.
 TRICKS = (
-    TrickOutcome(0, 'Liz presents a concert ticket. "Surprise! That was the VIP entrance. Admission, please!"',
+    TrickOutcome(0, 'Liz hands you a ticket. "VIP admission isn\'t free, you know!"',
                  qp_loss=500),
-    TrickOutcome(0, 'Mecha Eli-chan catches you beside a smoking confetti cannon. "You touched Elisabeth\'s stage controls. The repair bill is yours."',
+    TrickOutcome(0, 'Mecha Eli-chan points at Liz\'s broken confetti cannon. "You broke it. You pay for it."',
                  servant_id=1000400, qp_loss=1000),
-    TrickOutcome(2, 'Liz mistakes your wave for an encore request. "Such a devoted fan! Here, take two!"'),
-    TrickOutcome(2, 'Carmilla presses two candies into your hand. "In exchange, you never mention this concert to me again."',
+    TrickOutcome(2, 'Liz beams. "An encore? For a fan like you, take two!"'),
+    TrickOutcome(2, 'Carmilla slips you two candies. "Not a word about this concert."',
                  servant_id=601700),
 )

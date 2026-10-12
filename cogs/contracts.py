@@ -497,7 +497,7 @@ class ContractsCog(commands.Cog):
         view = RosterView(target, entries)
         await interaction.response.send_message(embed=view.render(), view=view, ephemeral=True)
 
-    @app_commands.command(name="items", description="See your QP and Holy Grails.")
+    @app_commands.command(name="items", description="See your QP and items.")
     @app_commands.guild_only()
     async def items(self, interaction: discord.Interaction) -> None:
         if not self._allowed(interaction.user.id):
@@ -522,7 +522,7 @@ class ContractsCog(commands.Cog):
         if halloween and halloween.allowed(uid):
             candy = await halloween.service.balance(gid, uid)
             embed.add_field(name="Halloween Candy", value=f"{candy:,}")
-            embed.set_footer(text="Feed XP with /ember or Halloween candy with /candy")
+            embed.set_footer(text="Feed your servants with /ember or /candy")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.command(name="shop", description="Visit Da Vinci's Workshop to spend QP on Holy Grails and Summon Tickets.")
@@ -1526,7 +1526,7 @@ class ContractsCog(commands.Cog):
         halloween = self.bot.get_cog("HalloweenCog")
         if value != "qp_reward" and halloween and self.bot.config.halloween_active():
             return await interaction.response.send_message(
-                "Halloween has replaced grail and ember events. Use /halloweenevent to spawn Trick or Treat or Candy Spill.",
+                "Halloween is active. Use /halloweenevent for candy drops.",
                 ephemeral=True,
             )
         target = channel or interaction.channel

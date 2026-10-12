@@ -60,6 +60,12 @@ class HalloweenService:
                 )
         return event
 
+    async def set_deadline(self, event_id: str, expires_at: float) -> None:
+        """Start the claim window after Discord has accepted the event message."""
+        await self.pool.execute(
+            "UPDATE halloween_events SET expires_at = $2 WHERE id = $1", event_id, expires_at,
+        )
+
     async def claim(
         self, event_id: str, guild_id: int, channel_id: int, user_id: int,
         *, action: str = "collect", slot: int = 0,
@@ -88,9 +94,9 @@ class HalloweenService:
                     candy, flavor = outcome.candy, outcome.flavor
                     servant_id, qp_penalty = outcome.servant_id, outcome.qp_loss
                 elif action == "treat":
-                    candy, flavor = H.TREAT_CANDY, 'Liz hands you a Halloween candy. "A special treat for my little fan!"'
+                    candy, flavor = H.TREAT_CANDY, '**Liz:** "A treat for my little fan!"'
                 else:
-                    candy, flavor = H.SPILL_CANDY, "You catch one of the candies Liz meant to throw during her encore."
+                    candy, flavor = H.SPILL_CANDY, "You catch a candy from Liz's stash."
                 await conn.execute(
                     "INSERT INTO halloween_claims (event_id, user_id, slot, candy) VALUES ($1, $2, $3, $4)",
                     event_id, user_id, slot, candy,

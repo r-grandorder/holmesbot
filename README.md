@@ -64,7 +64,9 @@ candy when the servant reaches its cap. Claims, group bonuses, and XP spending a
 Optional `HALLOWEEN_START_AT` and `HALLOWEEN_END_AT` accept ISO timestamps with a timezone.
 At the end, ordinary drops resume automatically. Leave the whitelist enabled so collected
 candy remains usable; clearing it disables the commands too, without deleting balances.
-New events last two minutes at most, and end sooner if the seasonal end time arrives.
+New events last two minutes from when their message is posted, and end sooner if the
+seasonal end time arrives. Expired messages are deleted immediately; completed events
+show their result for 15 seconds before deletion. Cleanup retries transient failures.
 In-progress event buttons expire on bot restart, as ordinary drop buttons do; awarded candy
 is persistent. The container's normal Atlas sync bakes in the dialogue. For local development,
 run `make sync-data` to refresh the NA and JP indexes after updating the sync script.
