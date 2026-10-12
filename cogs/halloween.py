@@ -28,11 +28,19 @@ class HalloweenCog(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.service = HalloweenService(bot.db.pool)
-        self._channels: set[int] = set()
+        # Track each active event and pending post so manual events can overlap.
+        self._channels: dict[int, set[object]] = {}
         self._views: set[CandyEventView] = set()
 
     def allowed(self, user_id: int) -> bool:
         return self.bot.config.halloween_allowed(user_id)
+
+    def _release_channel(self, channel_id: int, reservation: object) -> None:
+        active = self._channels.get(channel_id)
+        if active is not None:
+            active.discard(reservation)
+            if not active:
+                del self._channels[channel_id]
 
     async def cog_unload(self) -> None:
         for view in tuple(self._views):
@@ -76,17 +84,18 @@ class HalloweenCog(commands.Cog):
     async def spawn_event(
         self, channel, kind: str, *, slots: int = 5, grails: int = 0, manual: bool = False,
     ) -> bool:
-        if not self.bot.config.halloween_active() or channel.id in self._channels:
+        if not self.bot.config.halloween_active() or (not manual and channel.id in self._channels):
             return False
-        # Staff can test anywhere; automatic drops still use the configured channels.
+        # Staff can test anywhere and overlap events. Automatic drops stay limited.
         if not manual:
             parent_id = channel.parent_id if isinstance(channel, discord.Thread) else None
             if not await self.bot.guild_config.is_event_channel_allowed(channel.guild.id, channel.id, parent_id):
                 return False
         # Recheck after the asynchronous channel lookup, before reserving the channel.
-        if channel.id in self._channels or not self.bot.config.halloween_active():
+        if (not manual and channel.id in self._channels) or not self.bot.config.halloween_active():
             return False
-        self._channels.add(channel.id)
+        reservation = object()
+        self._channels.setdefault(channel.id, set()).add(reservation)
         view = None
         try:
             expires = time.time() + H.EVENT_SECONDS
@@ -99,6 +108,8 @@ class HalloweenCog(commands.Cog):
             face = await self._face(self.bot.servants.get(H.HOST_ID))
             view = CandyEventView(self, event, face)
             self._views.add(view)
+            self._channels[channel.id].add(view)
+            self._release_channel(channel.id, reservation)
             # Sending can wait on Discord's rate limit. Start the timer only once
             # the message exists, and keep early clicks behind the activation lock.
             async with view._lock:
@@ -122,10 +133,9 @@ class HalloweenCog(commands.Cog):
                      event["id"], channel.id, max(0, deadline - time.time()))
             return True
         except Exception:
-            self._channels.discard(channel.id)
+            self._release_channel(channel.id, reservation)
             if view is not None:
-                view.stop()
-                self._views.discard(view)
+                view._finish()
                 if view.message is not None:
                     await view._delete_message(delay=0)
             raise
@@ -147,10 +157,8 @@ class HalloweenCog(commands.Cog):
         spawned = await self.spawn_event(target, event.value, manual=True)
         if spawned:
             text = f"Started {event.name} in {target.mention}."
-        elif not self.bot.config.halloween_active():
-            text = "Halloween events aren't active right now."
         else:
-            text = f"There's already a Halloween event in {target.mention}."
+            text = "Halloween events aren't active right now."
         await interaction.followup.send(text, ephemeral=True)
 
     @app_commands.command(name="candy", description="Feed Halloween candy to your servant or another player's.")
@@ -316,7 +324,7 @@ class CandyEventView(discord.ui.View):
             button.disabled = True
         self.stop()
         self.cog._views.discard(self)
-        self.cog._channels.discard(self.event["channel_id"])
+        self.cog._release_channel(self.event["channel_id"], self)
 
     async def _update_message(self) -> None:
         # View._refresh(components) belongs to discord.py's gateway handling.

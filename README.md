@@ -50,8 +50,9 @@ events. Testers' event messages are visible in the channel. A whitelisted modera
 use `/halloweenevent` to spawn either event in the current channel or the optional `channel`
 without waiting for a roll. Manual triggers work outside the automatic drop channels,
 wherever the bot can post; the whitelist and active dates still apply.
-Only one Halloween event can run in a channel at once; extra rolled ember/grail drops are
-skipped instead of falling back to ordinary events. These rolls still consume their usual
+Manual triggers can run alongside other Halloween events in the same channel. Each event
+allows one claim per player and ends independently. Automatic drops skip channels with an
+active Halloween event instead of falling back to ordinary events. These rolls still consume their usual
 drop cooldown. `/triggerevent` blocks ordinary ember/grail spawns during the window and
 directs moderators to `/halloweenevent`; its QP option remains available.
 

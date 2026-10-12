@@ -614,7 +614,7 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         view = CandyEventView(self.cog, event, self.servant.face)
         view.message = SimpleNamespace(edit=AsyncMock())
         self.cog._views.add(view)
-        self.cog._channels.add(2)
+        self.cog._channels[2] = {view}
         first, last = interaction(100), interaction(200)
         await asyncio.gather(view.claim(first, "collect", 0), view.claim(last, "collect", 1))
         self.assertTrue(view.complete)
@@ -789,23 +789,73 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
                 self.assertFalse(self.cog._channels)
                 i.followup.send.assert_awaited_once_with("Halloween events aren't active right now.", ephemeral=True)
 
-    async def test_manual_events_cannot_overlap_in_a_channel(self):
+    async def test_manual_events_can_overlap_and_be_claimed_independently(self):
         self.bot.guild_config.is_event_channel_allowed.return_value = False
         channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), mention="#testing", send=AsyncMock())
-        interactions = [interaction(), interaction()]
+        choices = [app_commands.Choice(name="Candy Spill", value="candy_spill"),
+                   app_commands.Choice(name="Candy Spill", value="candy_spill"),
+                   app_commands.Choice(name="Trick or Treat", value="trick_or_treat")]
+        interactions = [interaction() for _ in choices]
         for i in interactions:
             i.channel = channel
             i.user.guild_permissions = discord.Permissions(manage_messages=True)
         await asyncio.gather(*(
-            HalloweenCog.halloweenevent.callback(
-                self.cog, i, app_commands.Choice(name="Candy Spill", value="candy_spill"),
-            ) for i in interactions
+            HalloweenCog.halloweenevent.callback(self.cog, i, choice)
+            for i, choice in zip(interactions, choices)
         ))
-        channel.send.assert_awaited_once()
-        self.assertCountEqual(
-            [i.followup.send.call_args.args[0] for i in interactions],
-            ["Started Candy Spill in #testing.", "There's already a Halloween event in #testing."],
-        )
+        self.assertEqual(channel.send.await_count, 3)
+        for i, choice in zip(interactions, choices):
+            i.followup.send.assert_awaited_once_with(f"Started {choice.name} in #testing.", ephemeral=True)
+        views = tuple(self.cog._views)
+        self.assertEqual(len({view.event["id"] for view in views}), 3)
+        for _ in range(2):  # One claim in each event, followed by rejected duplicate clicks.
+            await asyncio.gather(*(
+                view.claim(interaction(), "collect" if view.event["kind"] == "candy_spill" else "treat", 0)
+                for view in views
+            ))
+            self.assertEqual(await self.service.balance(1, 100), 3)
+        spills = {view for view in views if view.event["kind"] == "candy_spill"}
+        self.assertEqual(self.cog._channels[2], spills)
+        self.bot.guild_config.is_event_channel_allowed.return_value = True
+        self.assertFalse(await self.cog.spawn_event(channel, "candy_spill"))
+
+    async def test_expiring_one_event_does_not_end_others_or_unblock_automatic_drops(self):
+        messages = [SimpleNamespace(edit=AsyncMock(), delete=AsyncMock()) for _ in range(3)]
+        channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), send=AsyncMock(side_effect=messages))
+        self.assertTrue(await self.cog.spawn_event(channel, "candy_spill"))
+        first = next(iter(self.cog._views))
+        self.assertTrue(await self.cog.spawn_event(channel, "candy_spill", manual=True))
+        second = next(view for view in self.cog._views if view is not first)
+        await first.on_timeout()
+        await first._cleanup_task
+        messages[0].delete.assert_awaited_once()
+        messages[1].delete.assert_not_awaited()
+        await first.on_timeout()  # Releasing an ended event again must be harmless.
+        self.assertEqual(self.cog._channels[2], {second})
+        self.assertTrue(all(not button.disabled for button in second.children))
+        self.assertFalse(await self.cog.spawn_event(channel, "candy_spill"))
+        await second.on_timeout()
+        await second._cleanup_task
+        messages[1].delete.assert_awaited_once()
+        self.assertFalse(self.cog._channels)
+        self.assertTrue(await self.cog.spawn_event(channel, "candy_spill"))
+
+    async def test_failed_manual_spawn_does_not_release_another_events_channel(self):
+        channel = SimpleNamespace(id=2, guild=SimpleNamespace(id=1), send=AsyncMock(
+            side_effect=lambda **kwargs: SimpleNamespace(edit=AsyncMock(), delete=AsyncMock()),
+        ))
+        self.assertTrue(await self.cog.spawn_event(channel, "candy_spill", manual=True))
+        first = next(iter(self.cog._views))
+        for operation in ("create_event", "set_deadline"):
+            with self.subTest(operation=operation):
+                with patch.object(self.cog.service, operation, side_effect=RuntimeError("database unavailable")):
+                    with self.assertRaisesRegex(RuntimeError, "database unavailable"):
+                        await self.cog.spawn_event(channel, "candy_spill", manual=True)
+                self.assertEqual(self.cog._views, {first})
+                self.assertEqual(self.cog._channels[2], {first})
+                self.assertTrue(all(not button.disabled for button in first.children))
+                first.message.delete.assert_not_awaited()
+                self.assertFalse(await self.cog.spawn_event(channel, "candy_spill"))
 
     async def test_discord_message_updates_leave_unclaimed_buttons_enabled(self):
         for kind in ("trick_or_treat", "candy_spill"):
@@ -884,7 +934,7 @@ class HalloweenFlowTests(unittest.IsolatedAsyncioTestCase):
         event = await self.service.create_event(1, 2, "candy_spill", expires_at=time.time() + 0.02)
         view = CandyEventView(self.cog, event, None)
         self.cog._views.add(view)
-        self.cog._channels.add(2)
+        self.cog._channels[2] = {view}
         view.start_timer()
         await asyncio.wait_for(view._expiry_task, timeout=1)
         self.assertTrue(view.expired)
