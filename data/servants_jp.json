@@ -1,155 +1,5 @@
 [
   {
-    "id": 205300,
-    "name": "Tutankhamun",
-    "className": "archer",
-    "rarity": 5,
-    "atk_base": 1742,
-    "atk_max": 11276,
-    "hp_base": 2096,
-    "hp_max": 14295,
-    "gender": "male",
-    "attribute": "human",
-    "traits": [
-      "genderMale",
-      "classArcher",
-      "attributeHuman",
-      "alignmentLawful",
-      "alignmentGood",
-      "fiveStarServant",
-      "servant",
-      "divine",
-      "humanoid",
-      "weakToEnumaElish",
-      "divineOrDemonOrUndead",
-      "king",
-      "hominidaeServant",
-      "hasCostume",
-      "defender",
-      "standardClassServant",
-      "canBeInBattle",
-      "unknown"
-    ],
-    "art": {
-      "1": "https://static.atlasacademy.io/JP/CharaGraph/205300/205300a@1.png",
-      "2": "https://static.atlasacademy.io/JP/CharaGraph/205300/205300a@2.png",
-      "3": "https://static.atlasacademy.io/JP/CharaGraph/205300/205300b@1.png",
-      "4": "https://static.atlasacademy.io/JP/CharaGraph/205300/205300b@2.png"
-    },
-    "figure": {
-      "1": "https://static.atlasacademy.io/JP/CharaFigure/2053000/2053000_merged.png",
-      "2": "https://static.atlasacademy.io/JP/CharaFigure/2053001/2053001_merged.png",
-      "3": "https://static.atlasacademy.io/JP/CharaFigure/2053002/2053002_merged.png"
-    },
-    "face": "https://static.atlasacademy.io/JP/Faces/f_2053000.png",
-    "commands": {
-      "1": "https://static.atlasacademy.io/JP/Servants/Commands/205300/card_servant_1.png",
-      "2": "https://static.atlasacademy.io/JP/Servants/Commands/205300/card_servant_2.png",
-      "3": "https://static.atlasacademy.io/JP/Servants/Commands/205300/card_servant_3.png"
-    },
-    "cv": "Abe Rika",
-    "jp": true,
-    "aliases": [
-      "tutankhamon",
-      "tut"
-    ],
-    "skills": [
-      {
-        "num": 1,
-        "name": "Valley of the Kings B",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00601.png"
-      },
-      {
-        "num": 2,
-        "name": "The Annihilated el-Amarna EX",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00305.png"
-      },
-      {
-        "num": 3,
-        "name": "???",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00404.png"
-      }
-    ],
-    "summon_line": null,
-    "growth_lines": []
-  },
-  {
-    "id": 305600,
-    "name": "Van Gogh (Miner)",
-    "className": "lancer",
-    "rarity": 4,
-    "atk_base": 1543,
-    "atk_max": 9261,
-    "hp_base": 1947,
-    "hp_max": 12173,
-    "gender": "female",
-    "attribute": "human",
-    "traits": [
-      "genderFemale",
-      "classLancer",
-      "attributeHuman",
-      "alignmentChaotic",
-      "alignmentBalanced",
-      "fourStarServant",
-      "servant",
-      "threatToHumanity",
-      "humanoid",
-      "weakToEnumaElish",
-      "hominidaeServant",
-      "childServant",
-      "existenceOutsideTheDomain",
-      "hasCostume",
-      "standardClassServant",
-      "canBeInBattle",
-      "unknown"
-    ],
-    "art": {
-      "1": "https://static.atlasacademy.io/JP/CharaGraph/305600/305600a@1.png",
-      "2": "https://static.atlasacademy.io/JP/CharaGraph/305600/305600a@2.png",
-      "3": "https://static.atlasacademy.io/JP/CharaGraph/305600/305600b@1.png",
-      "4": "https://static.atlasacademy.io/JP/CharaGraph/305600/305600b@2.png"
-    },
-    "figure": {
-      "1": "https://static.atlasacademy.io/JP/CharaFigure/3056000/3056000_merged.png",
-      "2": "https://static.atlasacademy.io/JP/CharaFigure/3056001/3056001_merged.png",
-      "3": "https://static.atlasacademy.io/JP/CharaFigure/3056002/3056002_merged.png"
-    },
-    "face": "https://static.atlasacademy.io/JP/Faces/f_3056000.png",
-    "commands": {
-      "1": "https://static.atlasacademy.io/JP/Servants/Commands/305600/card_servant_1.png",
-      "2": "https://static.atlasacademy.io/JP/Servants/Commands/305600/card_servant_2.png",
-      "3": "https://static.atlasacademy.io/JP/Servants/Commands/305600/card_servant_3.png"
-    },
-    "cv": "Karin Takahashi",
-    "jp": true,
-    "aliases": [
-      "vangoghminor",
-      "goghminer",
-      "goghminor",
-      "miner",
-      "minor"
-    ],
-    "skills": [
-      {
-        "num": 1,
-        "name": "Void Space Art (Solid Geometry) B",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00317.png"
-      },
-      {
-        "num": 2,
-        "name": "De Aardappeleters C",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00412.png"
-      },
-      {
-        "num": 3,
-        "name": "Departure of the Sun EX",
-        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00402.png"
-      }
-    ],
-    "summon_line": null,
-    "growth_lines": []
-  },
-  {
     "id": 705000,
     "name": "Louhi",
     "className": "berserker",
@@ -3740,6 +3590,74 @@
         "num": 3,
         "name": "Great Decisive Battle at the Southern Sea EX",
         "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00316.png"
+      }
+    ],
+    "summon_line": null,
+    "growth_lines": []
+  },
+  {
+    "id": 406100,
+    "name": "Saika Magoichi",
+    "className": "rider",
+    "rarity": 4,
+    "atk_base": 1512,
+    "atk_max": 9074,
+    "hp_base": 1805,
+    "hp_max": 11286,
+    "gender": "female",
+    "attribute": "human",
+    "traits": [
+      "genderFemale",
+      "classRider",
+      "attributeHuman",
+      "alignmentLawful",
+      "alignmentSummer",
+      "fourStarServant",
+      "servant",
+      "humanoid",
+      "weakToEnumaElish",
+      "riding",
+      "hominidaeServant",
+      "summerModeServant",
+      "standardClassServant",
+      "canBeInBattle",
+      "unknown"
+    ],
+    "art": {
+      "1": "https://static.atlasacademy.io/JP/CharaGraph/406100/406100a@1.png",
+      "2": "https://static.atlasacademy.io/JP/CharaGraph/406100/406100a@2.png",
+      "3": "https://static.atlasacademy.io/JP/CharaGraph/406100/406100b@1.png",
+      "4": "https://static.atlasacademy.io/JP/CharaGraph/406100/406100b@2.png"
+    },
+    "figure": {
+      "1": "https://static.atlasacademy.io/JP/CharaFigure/4061000/4061000_merged.png",
+      "2": "https://static.atlasacademy.io/JP/CharaFigure/4061001/4061001_merged.png",
+      "3": "https://static.atlasacademy.io/JP/CharaFigure/4061002/4061002_merged.png"
+    },
+    "face": "https://static.atlasacademy.io/JP/Faces/f_4061000.png",
+    "commands": {
+      "1": "https://static.atlasacademy.io/JP/Servants/Commands/406100/card_servant_1.png",
+      "2": "https://static.atlasacademy.io/JP/Servants/Commands/406100/card_servant_2.png",
+      "3": "https://static.atlasacademy.io/JP/Servants/Commands/406100/card_servant_3.png"
+    },
+    "cv": "Naomi Ohzora",
+    "jp": true,
+    "aliases": [],
+    "skills": [
+      {
+        "num": 1,
+        "name": "ぴょんぴょんライド B",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00402.png"
+      },
+      {
+        "num": 2,
+        "name": "雑賀マリンコンバット B",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00314.png"
+      },
+      {
+        "num": 3,
+        "name": "Ｆ・Ｓ・Ａ C",
+        "icon": "https://static.atlasacademy.io/JP/SkillIcons/skill_00302.png"
       }
     ],
     "summon_line": null,
